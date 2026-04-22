@@ -1,0 +1,152 @@
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase, type Negocio } from '@/lib/supabase';
+
+export default function BuscarNegociosPage() {
+  const [negocios, setNegocios] = useState<Negocio[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [categoria, setCategoria] = useState<string>('todas');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('negocios')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!cancelled) {
+        setNegocios((data ?? []) as Negocio[]);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const categorias = useMemo(() => {
+    const set = new Set<string>();
+    negocios.forEach(n => { if (n.categoria) set.add(n.categoria); });
+    return ['todas', ...Array.from(set).sort()];
+  }, [negocios]);
+
+  const filtrados = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return negocios.filter(n => {
+      if (categoria !== 'todas' && n.categoria !== categoria) return false;
+      if (!q) return true;
+      return (
+        n.nombre.toLowerCase().includes(q) ||
+        (n.descripcion ?? '').toLowerCase().includes(q) ||
+        (n.direccion ?? '').toLowerCase().includes(q)
+      );
+    });
+  }, [negocios, query, categoria]);
+
+  return (
+    <div style={{ padding: '32px 32px 64px', maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
+          Buscar negocios
+        </h1>
+        <p style={{ color: 'rgba(250,250,250,0.55)', fontSize: 14, marginTop: 6 }}>
+          Encuentra el negocio que buscas y reserva tu cita.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por nombre, dirección…"
+          style={{ ...inputStyle, flex: '1 1 260px' }}
+        />
+        <select
+          value={categoria}
+          onChange={(e) => setCategoria(e.target.value)}
+          style={{ ...inputStyle, minWidth: 180, cursor: 'pointer' }}
+        >
+          {categorias.map(c => (
+            <option key={c} value={c} style={{ background: '#050A30' }}>
+              {c === 'todas' ? 'Todas las categorías' : c}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <div style={{ color: 'rgba(250,250,250,0.45)', fontSize: 14 }}>Cargando negocios…</div>
+      ) : filtrados.length === 0 ? (
+        <div style={{
+          background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.10)',
+          borderRadius: 12, padding: 40, textAlign: 'center', color: 'rgba(250,250,250,0.55)',
+        }}>
+          No se han encontrado negocios{query ? ` para "${query}"` : ''}.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+          {filtrados.map(n => (
+            <button
+              key={n.id}
+              onClick={() => navigate(`/n/${n.slug}`)}
+              style={{
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: 12, padding: 18, cursor: 'pointer', textAlign: 'left',
+                fontFamily: 'inherit', color: '#FAFAFA',
+                display: 'flex', flexDirection: 'column', gap: 10,
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(100,141,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(100,141,255,0.35)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {n.logo_url ? (
+                  <img src={n.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} />
+                ) : (
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 10, background: '#004AAD',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 16, fontWeight: 700,
+                  }}>
+                    {n.nombre.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{
+                    fontSize: 15, fontWeight: 600, lineHeight: 1.3,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    {n.nombre}
+                  </div>
+                  {n.categoria && (
+                    <div style={{ fontSize: 11, color: '#648DFF', marginTop: 2 }}>{n.categoria}</div>
+                  )}
+                </div>
+              </div>
+              {n.descripcion && (
+                <div style={{
+                  fontSize: 12, color: 'rgba(250,250,250,0.55)', lineHeight: 1.5,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}>
+                  {n.descripcion}
+                </div>
+              )}
+              {n.direccion && (
+                <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.40)' }}>
+                  📍 {n.direccion}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const inputStyle: CSSProperties = {
+  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 8, padding: '10px 14px', color: '#FAFAFA', fontSize: 14,
+  fontFamily: 'inherit', outline: 'none',
+};

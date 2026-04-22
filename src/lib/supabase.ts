@@ -27,6 +27,7 @@ export interface Usuario {
   nombre: string;
   email: string;
   telefono: string | null;
+  foto_url: string | null;
   created_at: string;
 }
 
@@ -69,6 +70,7 @@ export interface Cita {
   id: string;
   negocio_id: string;
   servicio_id: string;
+  cliente_id: string | null;
   cliente_nombre: string;
   cliente_telefono: string;
   cliente_email: string | null;

@@ -1,8 +1,8 @@
 import { Outlet, Navigate } from 'react-router-dom';
-import Sidebar from '@/components/app/Sidebar';
+import ClienteSidebar from '@/components/app/ClienteSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function AppLayout() {
+export default function ClienteLayout() {
   const { session, usuario, loading } = useAuth();
 
   if (loading) {
@@ -17,18 +17,15 @@ export default function AppLayout() {
     );
   }
 
-  if (!session) {
-    return <Navigate to="/iniciarSesion" replace />;
-  }
-
-  if (usuario && usuario.rol === 'cliente') {
-    return <Navigate to="/app/buscar" replace />;
-  }
+  if (!session) return <Navigate to="/iniciarSesion" replace />;
+  if (usuario && usuario.rol !== 'cliente') return <Navigate to="/panel" replace />;
 
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: '#050A30', color: '#FAFAFA' }}>
-      <Sidebar />
-      <Outlet />
+      <ClienteSidebar />
+      <main style={{ flex: 1, overflow: 'auto' }}>
+        <Outlet />
+      </main>
     </div>
   );
 }

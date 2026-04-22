@@ -76,3 +76,23 @@ docs/
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Supabase migrations / scripts (locales, se ejecutan desde el dashboard de Supabase)
+supabase/
+
+# Notas locales / scratch
+notas/
+scratch/
+TODO.md
+NOTES.md
+
+# Backups y temporales
+*.bak
+*.backup
+*.tmp
+*.swp
+*~
+
+# Archivos del sistema operativo (extra)
+desktop.ini
+$RECYCLE.BIN/

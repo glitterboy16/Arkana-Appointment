@@ -53,9 +53,9 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
     setLoading(true);
     try {
       if (mode === 'login') {
-        const { error, rol: rolUsuario } = await signIn(form.email, form.password);
+        const { error, rol: rolUsuario } = await signIn(form.email, form.password, rol);
         if (error) { setError(traducirError(error)); return; }
-        navigate(rolUsuario === 'negocio' ? '/panel' : '/');
+        navigate(rolUsuario === 'negocio' ? '/panel' : '/app/buscar');
       } else {
         if (!form.name.trim()) { setError('Introduce tu nombre'); return; }
         if (form.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
@@ -86,7 +86,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           });
           if (error) { setError(traducirError(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
-          navigate('/');
+          navigate('/app/buscar');
         }
       }
     } finally {

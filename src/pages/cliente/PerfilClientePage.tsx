@@ -1,0 +1,221 @@
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function PerfilClientePage() {
+  const { usuario, refreshUsuario } = useAuth();
+  const [nombre, setNombre] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (usuario) {
+      setNombre(usuario.nombre);
+      setTelefono(usuario.telefono ?? '');
+    }
+  }, [usuario]);
+
+  if (!usuario) return null;
+
+  const handleSave = async () => {
+    setMsg(null);
+    if (!nombre.trim()) { setMsg({ type: 'err', text: 'El nombre no puede estar vacío' }); return; }
+    const tel = telefono.trim().replace(/\s/g, '');
+    if (tel && !/^[6-9]\d{8}$|^\+\d{7,15}$/.test(tel)) {
+      setMsg({ type: 'err', text: 'Teléfono no válido (ej. 612345678 o +34612345678)' });
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ nombre: nombre.trim(), telefono: tel || null })
+      .eq('id', usuario.id);
+    setSaving(false);
+
+    if (error) {
+      setMsg({ type: 'err', text: 'Error al guardar. Intenta de nuevo.' });
+      return;
+    }
+    await refreshUsuario();
+    setMsg({ type: 'ok', text: 'Perfil actualizado' });
+  };
+
+  const handleFile = async (file: File) => {
+    setMsg(null);
+    if (!file.type.startsWith('image/')) {
+      setMsg({ type: 'err', text: 'Selecciona un archivo de imagen' });
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setMsg({ type: 'err', text: 'La imagen debe pesar menos de 3 MB' });
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const path = `${usuario.id}/avatar-${Date.now()}.${ext}`;
+
+    const { error: upErr } = await supabase.storage
+      .from('avatares')
+      .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+    if (upErr) {
+      setUploading(false);
+      setMsg({ type: 'err', text: 'Error al subir la imagen.' });
+      return;
+    }
+
+    const { data: pub } = supabase.storage.from('avatares').getPublicUrl(path);
+    const fotoUrl = pub.publicUrl;
+
+    const { error: updErr } = await supabase
+      .from('usuarios')
+      .update({ foto_url: fotoUrl })
+      .eq('id', usuario.id);
+
+    setUploading(false);
+
+    if (updErr) {
+      setMsg({ type: 'err', text: 'Imagen subida pero no se pudo guardar.' });
+      return;
+    }
+
+    await refreshUsuario();
+    setMsg({ type: 'ok', text: 'Foto actualizada' });
+  };
+
+  const handleRemoveFoto = async () => {
+    if (!usuario.foto_url) return;
+    setUploading(true);
+    await supabase.from('usuarios').update({ foto_url: null }).eq('id', usuario.id);
+    await refreshUsuario();
+    setUploading(false);
+    setMsg({ type: 'ok', text: 'Foto eliminada' });
+  };
+
+  return (
+    <div style={{ padding: '32px 32px 64px', maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mi perfil</h1>
+        <p style={{ color: 'rgba(250,250,250,0.55)', fontSize: 14, marginTop: 6 }}>
+          Tus datos personales.
+        </p>
+      </div>
+
+      {msg && (
+        <div style={{
+          background: msg.type === 'ok' ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)',
+          border: `1px solid ${msg.type === 'ok' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
+          borderRadius: 8, padding: '10px 14px', fontSize: 13,
+          color: msg.type === 'ok' ? '#22C55E' : '#EF4444', marginBottom: 16,
+        }}>
+          {msg.text}
+        </div>
+      )}
+
+      <section style={cardStyle}>
+        <h2 style={sectionTitleStyle}>Foto de perfil</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
+          {usuario.foto_url ? (
+            <img src={usuario.foto_url} alt="" style={{
+              width: 84, height: 84, borderRadius: '50%', objectFit: 'cover',
+              border: '2px solid rgba(100,141,255,0.40)',
+            }} />
+          ) : (
+            <div style={{
+              width: 84, height: 84, borderRadius: '50%', background: '#004AAD',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 32, fontWeight: 700, color: '#FAFAFA',
+            }}>
+              {usuario.nombre.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              style={btnPrimary(uploading)}
+            >
+              {uploading ? 'Subiendo…' : usuario.foto_url ? 'Cambiar foto' : 'Subir foto'}
+            </button>
+            {usuario.foto_url && (
+              <button onClick={handleRemoveFoto} disabled={uploading} style={btnGhost}>
+                Eliminar foto
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section style={cardStyle}>
+        <h2 style={sectionTitleStyle}>Datos</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 12 }}>
+          <div>
+            <label style={labelStyle}>Nombre</label>
+            <input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </div>
+          <div>
+            <label style={labelStyle}>Email</label>
+            <input style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} value={usuario.email} disabled />
+            <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginTop: 4 }}>
+              No se puede cambiar el email desde aquí.
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Teléfono</label>
+            <input
+              style={inputStyle}
+              type="tel"
+              inputMode="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              placeholder="612345678"
+            />
+          </div>
+          <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary(saving), marginTop: 4, alignSelf: 'flex-start' }}>
+            {saving ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const cardStyle: CSSProperties = {
+  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, padding: 20, marginBottom: 16,
+};
+const sectionTitleStyle: CSSProperties = {
+  fontSize: 14, fontWeight: 600, color: '#FAFAFA', margin: 0,
+};
+const inputStyle: CSSProperties = {
+  width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)',
+  border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '11px 14px',
+  color: '#FAFAFA', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+};
+const labelStyle: CSSProperties = {
+  fontSize: 12, color: 'rgba(250,250,250,0.55)', display: 'block', marginBottom: 5,
+};
+const btnPrimary = (disabled: boolean): CSSProperties => ({
+  padding: '10px 18px', borderRadius: 8, border: 'none',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  background: '#004AAD', color: '#FAFAFA', fontSize: 13, fontWeight: 600,
+  fontFamily: 'inherit', opacity: disabled ? 0.6 : 1,
+});
+const btnGhost: CSSProperties = {
+  padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+  background: 'transparent', color: 'rgba(250,250,250,0.55)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  fontSize: 12, fontFamily: 'inherit',
+};
