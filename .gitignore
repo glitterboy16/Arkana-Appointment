@@ -70,3 +70,9 @@ build/
 # otros
 design-export/
 docs/
+
+# Playwright (local, no subir)
+.playwright-mcp/
+playwright-report/
+test-results/
+playwright/.cache/

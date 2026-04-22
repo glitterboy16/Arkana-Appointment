@@ -27,7 +27,7 @@ const IconCliente = () => (
 export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   const [rol, setRol] = useState<Rol>('negocio');
   const [mode, setMode] = useState<AuthMode>(defaultMode);
-  const [form, setForm] = useState({ email: '', password: '', name: '', business: '' });
+  const [form, setForm] = useState({ email: '', password: '', name: '', business: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -72,10 +72,17 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
           navigate('/panel');
         } else {
+          const telefono = form.phone.trim().replace(/\s/g, '');
+          if (!telefono) { setError('Introduce tu teléfono'); return; }
+          if (!/^[6-9]\d{8}$|^\+\d{7,15}$/.test(telefono)) {
+            setError('Introduce un número de teléfono válido (ej. 612345678 o +34612345678)');
+            return;
+          }
           const { error, needsConfirmation } = await signUpCliente({
             email: form.email,
             password: form.password,
             nombre: form.name.trim(),
+            telefono,
           });
           if (error) { setError(traducirError(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
@@ -208,6 +215,20 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               <div>
                 <label style={labelStyle}>Nombre del negocio</label>
                 <input style={inputStyle} value={form.business} onChange={set('business')} placeholder="Ej. Clínica Dental Sonrisa" />
+              </div>
+            )}
+            {mode === 'register' && rol === 'cliente' && (
+              <div>
+                <label style={labelStyle}>Teléfono</label>
+                <input
+                  style={inputStyle}
+                  type="tel"
+                  value={form.phone}
+                  onChange={set('phone')}
+                  placeholder="612345678"
+                  autoComplete="tel"
+                  inputMode="tel"
+                />
               </div>
             )}
             <div>
