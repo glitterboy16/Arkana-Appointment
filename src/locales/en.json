@@ -1,0 +1,186 @@
+{
+  "common": {
+    "brand": "Arkana Appointments",
+    "close": "Close",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "update": "Update",
+    "loading": "Loading...",
+    "notAvailable": "Not available",
+    "noImage": "No image",
+    "unexpectedError": "An unexpected error occurred."
+  },
+  "languages": {
+    "es": "Spanish",
+    "en": "English",
+    "ja": "Japanese"
+  },
+  "navbar": {
+    "logoAlt": "Arkana Appointments logo",
+    "avatarAlt": "{{user}} avatar",
+    "greeting": "Hi, {{user}}",
+    "userFallback": "User",
+    "myAppointments": "My appointments",
+    "profile": "Profile",
+    "admin": "Admin",
+    "logout": "Log out",
+    "login": "Log in",
+    "createAccount": "Create account",
+    "themeToDark": "Enable dark mode",
+    "themeToLight": "Enable light mode",
+    "language": "Language"
+  },
+  "home": {
+    "hero": {
+      "title": "Manage your business appointments without the hassle",
+      "subtitle": "Create your profile, share your QR code and let your clients book in seconds. No calls, no paperwork.",
+      "start": "Register your business",
+      "goToDashboard": "Go to my dashboard",
+      "haveAccount": "I already have an account"
+    },
+    "features": {
+      "qr": {
+        "title": "Unique QR per business",
+        "content": "Every business gets its own QR code. Your clients scan it and book instantly."
+      },
+      "schedule": {
+        "title": "Real-time availability",
+        "content": "Show your available time slots and avoid overlaps. You control when you work."
+      },
+      "simple": {
+        "title": "Frictionless booking",
+        "content": "The client arrives, picks a time and confirms. No mandatory sign-up, no unnecessary steps."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "© 2026 Arkana Appointments. Appointment management for businesses."
+  },
+  "auth": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Your password",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Your username",
+      "emailFullLabel": "Email address",
+      "emailFullPlaceholder": "Your email address",
+      "passwordRepeatLabel": "Repeat password",
+      "passwordRepeatPlaceholder": "Repeat your password",
+      "avatarOptional": "Optional profile picture"
+    },
+    "login": {
+      "title": "Log in",
+      "subtitle": "Enter your credentials to access Arkana Appointments.",
+      "forgotPassword": "Forgot your password?",
+      "submit": "Log in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account yet?",
+      "createNow": "Create your account now",
+      "invalidCredentials": "Invalid credentials",
+      "userInfoError": "Could not retrieve user information",
+      "welcomeBack": "Welcome back",
+      "connectionError": "A connection error occurred"
+    },
+    "register": {
+      "title": "Sign up",
+      "subtitle": "Create a new account to get started.",
+      "submit": "Sign up",
+      "submitting": "Creating account...",
+      "emailUnavailable": "This email is not available",
+      "registerError": "Registration error: {{message}}",
+      "welcomeUser": "Welcome {{user}}"
+    },
+    "recover": {
+      "title": "Recover access",
+      "subtitle": "We will send instructions to your email address.",
+      "submit": "Send email",
+      "inbox": "Check your inbox.",
+      "backHome": "Back to home"
+    }
+  },
+  "profile": {
+    "title": "My profile",
+    "notLoggedIn": "You are not logged in. Sign in to view your profile.",
+    "unavailableEmail": "Email not available",
+    "editProfile": "Edit profile",
+    "backToDashboard": "Go to my dashboard",
+    "editModalTitle": "Edit profile",
+    "avatarAlt": "{{user}} avatar",
+    "form": {
+      "subtitle": "Update your personal information and profile picture.",
+      "avatarTitle": "Profile picture",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Your username",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "Your email address",
+      "newPasswordLabel": "New password (optional)",
+      "newPasswordPlaceholder": "New password",
+      "repeatNewPasswordLabel": "Repeat new password",
+      "repeatNewPasswordPlaceholder": "Repeat new password",
+      "saving": "Saving...",
+      "saveChanges": "Save changes",
+      "loadProfileError": "Could not load your profile. Please sign in again.",
+      "loadError": "Error loading profile",
+      "updateError": "Error updating: {{message}}",
+      "unknownError": "Unknown error",
+      "updateSuccess": "Profile updated successfully"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "User Administration Panel",
+      "description": "Here you can view all registered users on the platform and manage their roles.",
+      "loading": "Loading user list...",
+      "loadError": "You do not have permission or an error occurred while loading users.",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "role": "Role",
+        "createdAt": "Joined",
+        "actions": "Actions"
+      },
+      "noName": "No name",
+      "avatarAlt": "{{user}} avatar",
+      "roleUpdated": "Role updated successfully",
+      "roleUpdateError": "Error updating role",
+      "deleteUserError": "Error deleting user",
+      "deleteUserSuccess": "User deleted successfully",
+      "confirmDeleteTitle": "Are you sure?",
+      "confirmDeleteText": "The user \"{{user}}\" and all their data will be permanently deleted.",
+      "confirmDeleteAction": "Yes, delete",
+      "editRole": "Edit role"
+    },
+    "roles": {
+      "user": "User",
+      "admin": "Admin"
+    },
+    "stats": {
+      "title": "System statistics",
+      "description": "Overview of the data stored in Arkana Appointments.",
+      "loading": "Loading statistics...",
+      "registeredClients": "Registered clients",
+      "registeredBusinesses": "Registered businesses",
+      "appointmentsToday": "Appointments today",
+      "appointmentsTotal": "Total appointments"
+    }
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "validation": {
+    "requiredName": "Name is required",
+    "onlyLettersSpaces": "Only letters and spaces are allowed",
+    "passwordMin": "Minimum 6 characters",
+    "requiredEmail": "Email is required",
+    "invalidEmail": "Email format is not valid",
+    "passwordsNoMatch": "Passwords do not match"
+  }
+}

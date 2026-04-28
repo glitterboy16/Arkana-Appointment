@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Notion__notion-create-pages",
+      "Bash(git checkout *)",
+      "Bash(git push *)",
+      "Bash(npx claude-mem *)",
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "mcp__claude_ai_Notion__notion-update-page",
+      "Bash(npx tsc *)",
+      "Bash(mkdir -p ~/.claude/skills/code-simplifier)",
+      "Bash(curl -s https://lobehub.com/skills/fanyang89-skills-code-simplifier/skill.md)",
+      "Bash(tee ~/.claude/skills/code-simplifier/SKILL.md)",
+      "Bash(gh api *)",
+      "Bash(curl -Ls https://lobehub.com/skills/fanyang89-skills-code-simplifier/skill.md)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Skill(update-config)",
+      "Read(//c/Users/villo/.claude/**)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(list\\(d.keys\\(\\)\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('/c/Users/villo/.claude/settings.json'\\)\\); print\\('OK settings.json'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('/c/Users/villo/.claude/.mcp.json'\\)\\); print\\('OK .mcp.json'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('C:/Users/villo/.claude/settings.json'\\)\\); print\\('OK settings.json'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('C:/Users/villo/.claude/.mcp.json'\\)\\); print\\('OK .mcp.json'\\)\")",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__read_text_file",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(gunzip -c \"C:\\\\Users\\\\villo\\\\.claude\\\\projects\\\\C--Users-villo-Documents-Claude-Projects-Arkana-Appointment\\\\b19ee2bb-e3c1-4c01-9ca0-cd1a3810be2c\\\\tool-results\\\\webfetch-1777367917814-xalluf.bin\")",
+      "Bash(tar -t)",
+      "Bash(tar -x --wildcards \"*/colors_and_type.css\" \"*/project/README.md\" \"*/SKILL.md\" \"*/ui_kits/web_app/*.jsx\" \"*/ui_kits/web_app/index.html\" \"*/chats/chat1.md\" -O)",
+      "Bash(cp /tmp/arkana_design/arkana-appointments-design-system/project/assets/logo-icon.png \"/c/Users/villo/Documents/Claude/Projects/Arkana Appointment/public/assets/logo-icon.png\")",
+      "Bash(cp /tmp/arkana_design/arkana-appointments-design-system/project/assets/logo-icon.svg \"/c/Users/villo/Documents/Claude/Projects/Arkana Appointment/public/assets/logo-icon.svg\")",
+      "Bash(cp /tmp/arkana_design/arkana-appointments-design-system/project/assets/logo-full.svg \"/c/Users/villo/Documents/Claude/Projects/Arkana Appointment/public/assets/logo-full.svg\")",
+      "Bash(cp /tmp/arkana_design/arkana-appointments-design-system/project/assets/logo-full.png \"/c/Users/villo/Documents/Claude/Projects/Arkana Appointment/public/assets/logo-full.png\")"
+    ]
+  }
+}
