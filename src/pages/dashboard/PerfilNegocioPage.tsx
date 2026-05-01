@@ -19,12 +19,12 @@ interface DiaState {
 function ProfileSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--app-surface)', border: '1px solid var(--app-border)',
       borderRadius: 12, overflow: 'hidden', marginBottom: 14,
     }}>
       <div style={{
-        padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)',
-        fontSize: 13, fontWeight: 700, color: 'rgba(250,250,250,0.70)', letterSpacing: '0.03em',
+        padding: '14px 18px', borderBottom: '1px solid var(--app-border)',
+        fontSize: 13, fontWeight: 700, color: 'var(--app-muted)', letterSpacing: '0.03em',
       }}>
         {title}
       </div>
@@ -37,14 +37,14 @@ function ScheduleRow({ dia, index, state, onChange }: { dia: string; index: numb
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      borderBottom: '1px solid var(--app-border)',
     }}>
-      <div style={{ width: 90, fontSize: 13, color: state.activo ? '#FAFAFA' : 'rgba(250,250,250,0.35)' }}>{dia}</div>
+      <div style={{ width: 90, fontSize: 13, color: state.activo ? 'var(--app-text)' : 'var(--app-subtle)' }}>{dia}</div>
       <div
         onClick={() => onChange(index, { activo: !state.activo })}
         style={{
           width: 36, height: 20, borderRadius: 10, cursor: 'pointer', transition: 'all 200ms ease',
-          background: state.activo ? '#648DFF' : 'rgba(255,255,255,0.15)', position: 'relative', flexShrink: 0,
+          background: state.activo ? '#648DFF' : 'var(--app-border)', position: 'relative', flexShrink: 0,
         }}
       >
         <div style={{
@@ -58,26 +58,26 @@ function ScheduleRow({ dia, index, state, onChange }: { dia: string; index: numb
             value={state.hora_inicio}
             onChange={(e) => onChange(index, { hora_inicio: e.target.value })}
             style={{
-              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 6, padding: '5px 8px', color: '#FAFAFA', fontSize: 12, fontFamily: 'inherit', outline: 'none',
+              background: 'var(--app-input-bg)', border: '1px solid var(--app-border)',
+              borderRadius: 6, padding: '5px 8px', color: 'var(--app-text)', fontSize: 12, fontFamily: 'inherit', outline: 'none',
             }}
           >
             {HORAS_INICIO.map((t) => <option key={t}>{t}</option>)}
           </select>
-          <span style={{ color: 'rgba(250,250,250,0.30)', fontSize: 12 }}>→</span>
+          <span style={{ color: 'var(--app-subtle)', fontSize: 12 }}>→</span>
           <select
             value={state.hora_fin}
             onChange={(e) => onChange(index, { hora_fin: e.target.value })}
             style={{
-              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 6, padding: '5px 8px', color: '#FAFAFA', fontSize: 12, fontFamily: 'inherit', outline: 'none',
+              background: 'var(--app-input-bg)', border: '1px solid var(--app-border)',
+              borderRadius: 6, padding: '5px 8px', color: 'var(--app-text)', fontSize: 12, fontFamily: 'inherit', outline: 'none',
             }}
           >
             {HORAS_FIN.map((t) => <option key={t}>{t}</option>)}
           </select>
         </div>
       ) : (
-        <span style={{ fontSize: 12, color: 'rgba(250,250,250,0.25)' }}>Cerrado</span>
+        <span style={{ fontSize: 12, color: 'var(--app-subtle)' }}>Cerrado</span>
       )}
     </div>
   );
@@ -91,7 +91,7 @@ function ServiceTag({ servicio, onEdit }: { servicio: Servicio; onEdit: (s: Serv
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
+      background: 'var(--app-surface)', border: '1px solid var(--app-border)',
       borderRadius: 9, marginBottom: 8,
     }}>
       <div style={{
@@ -99,16 +99,16 @@ function ServiceTag({ servicio, onEdit }: { servicio: Servicio; onEdit: (s: Serv
         background: servicio.color ?? '#648DFF',
       }} />
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#FAFAFA' }}>{servicio.nombre}</div>
-        <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.40)', marginTop: 1 }}>{servicio.duracion_min} min</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)' }}>{servicio.nombre}</div>
+        <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 1 }}>{servicio.duracion_min} min</div>
       </div>
       <div style={{ fontSize: 13, fontWeight: 700, color: '#648DFF' }}>{precio}</div>
       <button
         type="button"
         onClick={() => onEdit(servicio)}
         style={{
-          padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)',
-          background: 'transparent', color: 'rgba(250,250,250,0.45)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+          padding: '4px 10px', borderRadius: 6, border: '1px solid var(--app-border)',
+          background: 'transparent', color: 'var(--app-muted)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
         }}
       >
         Editar
@@ -142,9 +142,9 @@ export default function PerfilNegocioPage() {
   const [servicioForm, setServicioForm] = useState<ServicioFormState>({ nombre: '', duracion_min: '30', precio_centimos: '0', color: '#648DFF' });
 
   const inputStyle: CSSProperties = {
-    width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)',
-    border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px 14px',
-    color: '#FAFAFA', fontSize: 13, fontFamily: 'inherit', outline: 'none',
+    width: '100%', boxSizing: 'border-box', background: 'var(--app-input-bg)',
+    border: '1px solid var(--app-border)', borderRadius: 8, padding: '10px 14px',
+    color: 'var(--app-text)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
   };
 
   useEffect(() => {
@@ -276,19 +276,19 @@ export default function PerfilNegocioPage() {
 
   if (loading) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080C3E', color: 'rgba(250,250,250,0.35)', fontSize: 14 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--app-bg)', color: 'var(--app-subtle)', fontSize: 14 }}>
         Cargando…
       </div>
     );
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: '#080C3E' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.07)',
-        background: '#050A30', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 28px', borderBottom: '1px solid var(--app-border)',
+        background: 'var(--app-bg-elevated)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
           Perfil del negocio
         </div>
         <Btn variant="primary" size="sm" onClick={handleGuardar} disabled={saving}>
@@ -302,11 +302,11 @@ export default function PerfilNegocioPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
+                <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
                 <input style={inputStyle} value={info.nombre} onChange={(e) => setInfo({ ...info, nombre: e.target.value })} />
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Categoría</label>
+                <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Categoría</label>
                 <select
                   style={{ ...inputStyle, appearance: 'none' }}
                   value={info.categoria}
@@ -325,16 +325,16 @@ export default function PerfilNegocioPage() {
             </div>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Teléfono</label>
+                <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Teléfono</label>
                 <input style={inputStyle} value={info.telefono} onChange={(e) => setInfo({ ...info, telefono: e.target.value })} placeholder="+34 600 000 000" />
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Dirección</label>
+                <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Dirección</label>
                 <input style={inputStyle} value={info.direccion} onChange={(e) => setInfo({ ...info, direccion: e.target.value })} placeholder="Calle, ciudad" />
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Descripción</label>
+              <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Descripción</label>
               <textarea
                 style={{ ...inputStyle, resize: 'vertical', minHeight: 72, lineHeight: 1.5 }}
                 value={info.descripcion}
@@ -359,7 +359,7 @@ export default function PerfilNegocioPage() {
 
         <ProfileSection title="Servicios">
           {servicios.length === 0 && !showServicioForm && (
-            <div style={{ fontSize: 13, color: 'rgba(250,250,250,0.35)', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, color: 'var(--app-subtle)', marginBottom: 12 }}>
               Aún no tienes servicios. Añade uno para que tus clientes puedan reservar.
             </div>
           )}
@@ -369,29 +369,29 @@ export default function PerfilNegocioPage() {
 
           {showServicioForm && (
             <div style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+              background: 'var(--app-surface-hover)', border: '1px solid var(--app-border)',
               borderRadius: 10, padding: '16px', marginBottom: 10,
             }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', marginBottom: 12 }}>
                 {editingServicio ? 'Editar servicio' : 'Nuevo servicio'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Nombre</label>
+                  <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Nombre</label>
                   <input style={inputStyle} value={servicioForm.nombre} onChange={(e) => setServicioForm({ ...servicioForm, nombre: e.target.value })} placeholder="Ej. Corte de pelo" />
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Duración (min)</label>
+                    <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Duración (min)</label>
                     <input style={inputStyle} type="number" min="5" step="5" value={servicioForm.duracion_min} onChange={(e) => setServicioForm({ ...servicioForm, duracion_min: e.target.value })} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 4 }}>Precio (€)</label>
+                    <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Precio (€)</label>
                     <input style={inputStyle} type="number" min="0" step="0.5" value={servicioForm.precio_centimos} onChange={(e) => setServicioForm({ ...servicioForm, precio_centimos: e.target.value })} />
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', display: 'block', marginBottom: 8 }}>Color</label>
+                  <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 8 }}>Color</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {DEFAULT_COLORES.map((c) => (
                       <div
@@ -399,7 +399,7 @@ export default function PerfilNegocioPage() {
                         onClick={() => setServicioForm({ ...servicioForm, color: c })}
                         style={{
                           width: 24, height: 24, borderRadius: '50%', background: c, cursor: 'pointer',
-                          border: servicioForm.color === c ? '2px solid #FAFAFA' : '2px solid transparent',
+                          border: servicioForm.color === c ? '2px solid var(--app-text)' : '2px solid transparent',
                           transition: 'border 150ms',
                         }}
                       />
@@ -435,11 +435,11 @@ export default function PerfilNegocioPage() {
               {qrUrl && <QRCode value={qrUrl} size={80} bgColor="#FAFAFA" fgColor="#050A30" />}
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA', marginBottom: 6 }}>Tu QR único</div>
-              <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.50)', lineHeight: 1.5, marginBottom: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', marginBottom: 6 }}>Tu QR único</div>
+              <div style={{ fontSize: 12, color: 'var(--app-muted)', lineHeight: 1.5, marginBottom: 6 }}>
                 {qrUrl}
               </div>
-              <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.40)', lineHeight: 1.5, marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: 'var(--app-subtle)', lineHeight: 1.5, marginBottom: 12 }}>
                 Comparte este código para que tus clientes reserven directamente sin registrarse.
               </div>
               <div style={{ display: 'flex', gap: 8 }}>

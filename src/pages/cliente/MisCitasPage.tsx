@@ -16,7 +16,7 @@ interface CitaConDetalle {
 }
 
 const ESTADO_LABEL: Record<EstadoCita, { label: string; color: string; bg: string }> = {
-  new:       { label: 'Pendiente de revisar', color: '#FAFAFA', bg: 'rgba(100,141,255,0.18)' },
+  new:       { label: 'Pendiente de revisar', color: '#648DFF', bg: 'rgba(100,141,255,0.18)' },
   pending:   { label: 'Pendiente',            color: '#F59E0B', bg: 'rgba(245,158,11,0.15)'  },
   confirmed: { label: 'Confirmada',           color: '#22C55E', bg: 'rgba(34,197,94,0.15)'   },
   cancelled: { label: 'Cancelada',            color: '#EF4444', bg: 'rgba(239,68,68,0.15)'   },
@@ -59,21 +59,22 @@ export default function MisCitasPage() {
     <div style={{ padding: '32px 32px 64px', maxWidth: 900, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mis citas</h1>
-        <p style={{ color: 'rgba(250,250,250,0.55)', fontSize: 14, marginTop: 6 }}>
+        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Tus reservas en los negocios.
         </p>
       </div>
 
       <div style={{
-        display: 'flex', gap: 4, background: 'rgba(255,255,255,0.06)',
+        display: 'flex', gap: 4, background: 'var(--app-surface)',
         padding: 4, borderRadius: 9, marginBottom: 20, width: 'fit-content',
+        border: '1px solid var(--app-border)',
       }}>
         {(['proximas', 'pasadas', 'todas'] as const).map(f => (
           <button key={f} onClick={() => setFiltro(f)} style={{
             padding: '7px 16px', borderRadius: 6, border: 'none', cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
             background: filtro === f ? '#004AAD' : 'transparent',
-            color: filtro === f ? '#FAFAFA' : 'rgba(250,250,250,0.55)',
+            color: filtro === f ? '#FAFAFA' : 'var(--app-muted)',
             transition: 'all 150ms ease',
           }}>
             {f === 'proximas' ? 'Próximas' : f === 'pasadas' ? 'Pasadas' : 'Todas'}
@@ -82,13 +83,13 @@ export default function MisCitasPage() {
       </div>
 
       {loading ? (
-        <div style={{ color: 'rgba(250,250,250,0.45)', fontSize: 14 }}>Cargando…</div>
+        <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando…</div>
       ) : filtradas.length === 0 ? (
         <div style={{
-          background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.10)',
+          background: 'var(--app-surface)', border: '1px dashed var(--app-border)',
           borderRadius: 12, padding: 40, textAlign: 'center',
         }}>
-          <div style={{ fontSize: 14, color: 'rgba(250,250,250,0.55)', marginBottom: 12 }}>
+          <div style={{ fontSize: 14, color: 'var(--app-muted)', marginBottom: 12 }}>
             {filtro === 'proximas' ? 'No tienes citas próximas.' : 'Sin citas para mostrar.'}
           </div>
           <Link to="/app/buscar" style={{
@@ -104,7 +105,7 @@ export default function MisCitasPage() {
             const estado = ESTADO_LABEL[c.estado];
             return (
               <div key={c.id} style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+                background: 'var(--app-surface)', border: '1px solid var(--app-border)',
                 borderRadius: 12, padding: 16,
                 display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
               }}>
@@ -114,7 +115,7 @@ export default function MisCitasPage() {
                   <div style={{
                     width: 48, height: 48, borderRadius: 10, background: '#004AAD',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 17, fontWeight: 700, flexShrink: 0,
+                    fontSize: 17, fontWeight: 700, flexShrink: 0, color: '#FAFAFA',
                   }}>
                     {c.negocio?.nombre?.charAt(0).toUpperCase() ?? '?'}
                   </div>
@@ -123,7 +124,7 @@ export default function MisCitasPage() {
                   <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>
                     {c.negocio?.nombre ?? 'Negocio eliminado'}
                   </div>
-                  <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.55)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--app-muted)' }}>
                     {c.servicio?.nombre ?? 'Servicio'} · {format(parseISO(c.fecha), "d 'de' MMMM", { locale: es })} · {c.hora_inicio.slice(0, 5)}
                   </div>
                 </div>

@@ -15,15 +15,15 @@ export default function ConfiguracionNegocioPage() {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: '#080C3E' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.07)',
-        background: '#050A30', flexShrink: 0,
+        padding: '16px 28px', borderBottom: '1px solid var(--app-border)',
+        background: 'var(--app-bg-elevated)', flexShrink: 0,
       }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
           Configuración
         </div>
-        <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.45)', marginTop: 4 }}>
+        <div style={{ fontSize: 12, color: 'var(--app-muted)', marginTop: 4 }}>
           Preferencias de tu cuenta de negocio.
         </div>
       </div>
@@ -43,9 +43,9 @@ export default function ConfiguracionNegocioPage() {
                   onClick={() => setTema(t)}
                   style={{
                     flex: 1, padding: '14px 12px', borderRadius: 10, cursor: 'pointer',
-                    background: active ? 'rgba(100,141,255,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: active ? '1px solid rgba(100,141,255,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                    color: '#FAFAFA', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+                    background: active ? 'rgba(100,141,255,0.12)' : 'var(--app-surface)',
+                    border: active ? '1px solid rgba(100,141,255,0.55)' : '1px solid var(--app-border)',
+                    color: 'var(--app-text)', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                     transition: 'all 150ms ease',
                   }}
@@ -54,7 +54,7 @@ export default function ConfiguracionNegocioPage() {
                     size={26}
                     style={active
                       ? { color: '#648DFF', fill: 'currentColor', stroke: 'currentColor', strokeWidth: 0 }
-                      : { color: 'rgba(250,250,250,0.55)', fill: 'none', stroke: 'currentColor', strokeWidth: 1 }
+                      : { color: 'var(--app-muted)', fill: 'none', stroke: 'currentColor', strokeWidth: 1 }
                     }
                   />
                   Modo {t === 'oscuro' ? 'oscuro' : 'claro'}
@@ -77,14 +77,14 @@ export default function ConfiguracionNegocioPage() {
 }
 
 const cardStyle: CSSProperties = {
-  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--app-surface)', border: '1px solid var(--app-border)',
   borderRadius: 12, padding: 20, marginBottom: 16,
 };
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 14, fontWeight: 600, color: '#FAFAFA', margin: 0,
+  fontSize: 14, fontWeight: 600, color: 'var(--app-text)', margin: 0,
 };
 const helperStyle: CSSProperties = {
-  fontSize: 12, color: 'rgba(250,250,250,0.55)', marginTop: 4, marginBottom: 0,
+  fontSize: 12, color: 'var(--app-muted)', marginTop: 4, marginBottom: 0,
 };
 const btnDanger: CSSProperties = {
   marginTop: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer',

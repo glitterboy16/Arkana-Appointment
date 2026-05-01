@@ -86,17 +86,17 @@ export default function NotificacionesPage() {
     <div style={{ padding: '32px 32px 64px', maxWidth: 720, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones</h1>
-        <p style={{ color: 'rgba(250,250,250,0.55)', fontSize: 14, marginTop: 6 }}>
+        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Actividad reciente de tus citas.
         </p>
       </div>
 
       {loading ? (
-        <div style={{ color: 'rgba(250,250,250,0.45)', fontSize: 14 }}>Cargando…</div>
+        <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando…</div>
       ) : notis.length === 0 ? (
         <div style={{
-          background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.10)',
-          borderRadius: 12, padding: 40, textAlign: 'center', color: 'rgba(250,250,250,0.55)',
+          background: 'var(--app-surface)', border: '1px dashed var(--app-border)',
+          borderRadius: 12, padding: 40, textAlign: 'center', color: 'var(--app-muted)',
         }}>
           No tienes notificaciones por ahora.
         </div>
@@ -104,7 +104,7 @@ export default function NotificacionesPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {notis.map(n => (
             <div key={n.id} style={{
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--app-surface)', border: '1px solid var(--app-border)',
               borderRadius: 10, padding: 14,
               display: 'flex', alignItems: 'flex-start', gap: 12,
             }}>
@@ -117,8 +117,8 @@ export default function NotificacionesPage() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{n.titulo}</div>
-                <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.55)' }}>{n.detalle}</div>
-                <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--app-muted)' }}>{n.detalle}</div>
+                <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 4 }}>
                   hace {formatDistanceToNow(n.fecha, { locale: es })}
                 </div>
               </div>

@@ -101,7 +101,7 @@ export default function PerfilClientePage() {
     <div style={{ padding: '32px 32px 64px', maxWidth: 640, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mi perfil</h1>
-        <p style={{ color: 'rgba(250,250,250,0.55)', fontSize: 14, marginTop: 6 }}>
+        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Tus datos personales.
         </p>
       </div>
@@ -168,7 +168,7 @@ export default function PerfilClientePage() {
           <div>
             <label style={labelStyle}>Email</label>
             <input style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} value={usuario.email} disabled />
-            <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 4 }}>
               No se puede cambiar el email desde aquí.
             </div>
           </div>
@@ -193,19 +193,19 @@ export default function PerfilClientePage() {
 }
 
 const cardStyle: CSSProperties = {
-  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--app-surface)', border: '1px solid var(--app-border)',
   borderRadius: 12, padding: 20, marginBottom: 16,
 };
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 14, fontWeight: 600, color: '#FAFAFA', margin: 0,
+  fontSize: 14, fontWeight: 600, color: 'var(--app-text)', margin: 0,
 };
 const inputStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '11px 14px',
-  color: '#FAFAFA', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+  width: '100%', boxSizing: 'border-box', background: 'var(--app-input-bg)',
+  border: '1px solid var(--app-border)', borderRadius: 8, padding: '11px 14px',
+  color: 'var(--app-text)', fontSize: 14, fontFamily: 'inherit', outline: 'none',
 };
 const labelStyle: CSSProperties = {
-  fontSize: 12, color: 'rgba(250,250,250,0.55)', display: 'block', marginBottom: 5,
+  fontSize: 12, color: 'var(--app-muted)', display: 'block', marginBottom: 5,
 };
 const btnPrimary = (disabled: boolean): CSSProperties => ({
   padding: '10px 18px', borderRadius: 8, border: 'none',
@@ -215,7 +215,7 @@ const btnPrimary = (disabled: boolean): CSSProperties => ({
 });
 const btnGhost: CSSProperties = {
   padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
-  background: 'transparent', color: 'rgba(250,250,250,0.55)',
-  border: '1px solid rgba(255,255,255,0.12)',
+  background: 'transparent', color: 'var(--app-muted)',
+  border: '1px solid var(--app-border)',
   fontSize: 12, fontFamily: 'inherit',
 };
