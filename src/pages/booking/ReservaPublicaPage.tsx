@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format, addDays, getISODay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArkanaIcons, Btn } from '@/components/app/Shared';
+import { ArkanaIcons, Btn, LogoArkana } from '@/components/app/Shared';
 import { supabase, type Negocio, type Servicio, type Disponibilidad } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import logoIcon from '@/assets/Logo Arkana 1.svg';
 
 interface DayOption {
   date: Date;
@@ -218,7 +217,7 @@ export default function ReservaPublicaPage() {
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
       }}>
         <div style={{ width: 26, height: 26, background: '#004AAD', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src={logoIcon} alt="" style={{ width: 18, height: 18, objectFit: 'contain', filter: 'brightness(10)' }} />
+          <LogoArkana size={18} />
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
         <span style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginLeft: 'auto' }}>Reserva gratuita · sin registro</span>
@@ -234,7 +233,7 @@ export default function ReservaPublicaPage() {
               width: 60, height: 60, borderRadius: 16, background: '#004AAD',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
             }}>
-              <img src={logoIcon} alt="" style={{ width: 40, height: 40, objectFit: 'contain', filter: 'brightness(10)' }} />
+              <LogoArkana size={40} />
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
               {negocio!.nombre}

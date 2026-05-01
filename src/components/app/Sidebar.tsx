@@ -1,8 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArkanaIcons, Avatar } from './Shared';
+import { ArkanaIcons, Avatar, LogoArkana } from './Shared';
 import { useAuth } from '@/contexts/AuthContext';
-import logoIcon from '@/assets/Logo Arkana 1.svg';
 
 interface NavItem {
   id: string;
@@ -62,7 +61,7 @@ export default function Sidebar() {
           width: 30, height: 30, background: '#004AAD', borderRadius: 8,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <img src={logoIcon} alt="" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'brightness(10)' }} />
+          <LogoArkana size={22} />
         </div>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA', letterSpacing: '-0.01em' }}>Arkana</div>
