@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CiDark, CiLight } from 'react-icons/ci';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -29,6 +30,7 @@ export default function ConfiguracionPage() {
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           {(['oscuro', 'claro'] as const).map(t => {
             const active = tema === t;
+            const Icon = t === 'oscuro' ? CiDark : CiLight;
             return (
               <button
                 key={t}
@@ -42,7 +44,13 @@ export default function ConfiguracionPage() {
                   transition: 'all 150ms ease',
                 }}
               >
-                <span style={{ fontSize: 20 }}>{t === 'oscuro' ? '🌙' : '☀️'}</span>
+                <Icon
+                  size={26}
+                  style={active
+                    ? { color: '#648DFF', fill: 'currentColor', stroke: 'currentColor', strokeWidth: 0 }
+                    : { color: 'rgba(250,250,250,0.55)', fill: 'none', stroke: 'currentColor', strokeWidth: 1 }
+                  }
+                />
                 Modo {t === 'oscuro' ? 'oscuro' : 'claro'}
               </button>
             );

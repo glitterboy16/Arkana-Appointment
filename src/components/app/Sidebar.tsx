@@ -29,7 +29,7 @@ export default function Sidebar() {
       section: 'ACCESOS RÁPIDOS',
       path: negocio ? `/n/${negocio.slug}` : undefined,
     },
-    { id: 'settings', icon: ArkanaIcons.settings, label: 'Configuración' },
+    { id: 'settings', icon: ArkanaIcons.settings, label: 'Configuración', path: '/panel/configuracion' },
     {
       id: 'logout', icon: ArkanaIcons.logout, label: 'Cerrar sesión',
       action: async () => { await signOut(); navigate('/'); },
