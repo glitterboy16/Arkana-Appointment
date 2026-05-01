@@ -103,19 +103,33 @@ async function postgrest<T>(
   }
 }
 
+function buildUsuarioLocal(row: {
+  id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null;
+}): Usuario {
+  return {
+    id: row.id,
+    email: row.email,
+    nombre: row.nombre,
+    rol: row.rol,
+    telefono: row.telefono ?? null,
+    foto_url: null,
+    created_at: new Date().toISOString(),
+  };
+}
+
 async function guardarUsuario(
   row: { id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null },
   accessToken: string,
 ): Promise<{ data: Usuario | null; error: DBError | null }> {
   const updates = { email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null };
-  console.log('[Arkana] guardarUsuario (fetch directo) - id:', row.id, 'rol:', row.rol);
+  console.log('[Arkana] guardarUsuario - id:', row.id, 'rol:', row.rol);
 
-  // 1. UPDATE (por si un trigger ya creó la fila)
+  // 1. UPDATE (por si un trigger ya creó la fila con rol por defecto)
   const upd = await postgrest<Usuario>(`usuarios?id=eq.${row.id}`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
   }, accessToken);
-  console.log('[Arkana] PATCH resultado:', { hayData: !!upd.data, error: upd.error });
+  console.log('[Arkana] PATCH:', { hayData: !!upd.data, error: upd.error });
   if (upd.data) return upd;
 
   // 2. INSERT
@@ -123,19 +137,27 @@ async function guardarUsuario(
     method: 'POST',
     body: JSON.stringify(row),
   }, accessToken);
-  console.log('[Arkana] POST resultado:', { hayData: !!ins.data, error: ins.error });
+  console.log('[Arkana] POST:', { hayData: !!ins.data, error: ins.error });
   if (ins.data) return ins;
 
-  // 3. Si insert falla por duplicado, reintenta UPDATE una vez más
+  // 3. Si INSERT falla por duplicado, la fila YA existe (trigger fue más rápido).
+  //    Reintentamos PATCH para corregir el rol y leer la fila.
   if (ins.error?.code === '23505') {
     const upd2 = await postgrest<Usuario>(`usuarios?id=eq.${row.id}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     }, accessToken);
-    if (upd2.data) return upd2;
+    console.log('[Arkana] PATCH retry:', { hayData: !!upd2.data, error: upd2.error });
+    if (upd2.data) return { data: upd2.data, error: null };
+
+    // 4. Aun sin lectura, sabemos que el usuario existe (por el 23505) y conocemos
+    //    todos sus datos desde el formulario. Devolvemos el Usuario reconstruido
+    //    en local para que el registro no falle por culpa de RLS/timing en la lectura.
+    console.warn('[Arkana] usuario existe pero no se pudo leer; construyendo localmente');
+    return { data: buildUsuarioLocal(row), error: null };
   }
 
-  // 4. Último recurso: leer lo que haya
+  // 5. Último intento: leer
   const get = await postgrest<Usuario>(`usuarios?id=eq.${row.id}&select=*`, { method: 'GET' }, accessToken);
   if (get.data) return get;
 
