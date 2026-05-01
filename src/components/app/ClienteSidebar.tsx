@@ -54,7 +54,7 @@ export default function ClienteSidebar() {
           width: 30, height: 30, background: '#004AAD', borderRadius: 8,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <LogoArkana size={22} />
+          <LogoArkana size={22} onBrand />
         </div>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA', letterSpacing: '-0.01em' }}>Arkana</div>

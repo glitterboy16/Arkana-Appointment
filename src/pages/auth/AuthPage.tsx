@@ -122,7 +122,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               width: 52, height: 52, borderRadius: 14, background: '#004AAD',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
             }}>
-              <LogoArkana size={34} />
+              <LogoArkana size={34} onBrand />
             </div>
           </Link>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
