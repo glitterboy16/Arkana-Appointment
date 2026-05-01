@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArkanaIcons, Avatar } from './Shared';
 import { useAuth } from '@/contexts/AuthContext';
-import logoIcon from '@/assets/logo-icon.svg';
+import logoIcon from '@/assets/Logo Arkana 1.svg';
 
 interface NavItem {
   id: string;

@@ -5,7 +5,7 @@ import { es } from 'date-fns/locale';
 import { ArkanaIcons, Btn } from '@/components/app/Shared';
 import { supabase, type Negocio, type Servicio, type Disponibilidad } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import logoIcon from '@/assets/logo-icon.svg';
+import logoIcon from '@/assets/Logo Arkana 1.svg';
 
 interface DayOption {
   date: Date;
