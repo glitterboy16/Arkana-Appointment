@@ -113,6 +113,29 @@
     100% { opacity: 1; transform: scale(1); }
 }
 
+@keyframes hero-logo-appear {
+    0%   { opacity: 0; transform: translateY(-28px) scale(0.86); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes hero-logo-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+}
+
+.arkana-hero-logo-wrap {
+    display: inline-flex;
+    opacity: 0;
+    animation:
+        hero-logo-appear 1100ms cubic-bezier(0.16, 1, 0.3, 1) 100ms forwards,
+        hero-logo-float 5500ms ease-in-out 1300ms infinite;
+    will-change: transform, opacity;
+}
+
+/* SVG es azul oscuro; en dark mode lo invertimos a blanco, en light se ve nativo */
+:root .arkana-hero-logo { filter: brightness(0) invert(1); transition: filter 220ms ease; }
+:root[data-theme="light"] .arkana-hero-logo { filter: none; }
+
 /* ── Dark mode (default) ── */
 :root {
     /* Tokens shadcn-style alineados al navy Arkana (#050A30) para evitar cambios de tono entre secciones */
