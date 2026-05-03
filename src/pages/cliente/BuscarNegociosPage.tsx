@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, type Negocio } from '@/lib/supabase';
 import { InlineLoader, Skeleton } from '@/components/app/Spinner';
+import NegocioModal from '@/components/app/NegocioModal';
 
 type NegocioConServicios = Negocio & { servicios: { nombre: string }[] };
 
@@ -10,6 +11,7 @@ export default function BuscarNegociosPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [categoria, setCategoria] = useState<string>('todas');
+  const [seleccionado, setSeleccionado] = useState<Negocio | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function BuscarNegociosPage() {
           {filtrados.map(n => (
             <button
               key={n.id}
-              onClick={() => navigate(`/n/${n.slug}`)}
+              onClick={() => setSeleccionado(n)}
               style={{
                 background: 'var(--app-surface)', border: '1px solid var(--app-border)',
                 borderRadius: 12, padding: 18, cursor: 'pointer', textAlign: 'left',
@@ -168,6 +170,15 @@ export default function BuscarNegociosPage() {
           ))}
         </div>
       )}
+
+      <NegocioModal
+        negocio={seleccionado}
+        onClose={() => setSeleccionado(null)}
+        onReservar={(neg) => {
+          setSeleccionado(null);
+          navigate(`/n/${neg.slug}`);
+        }}
+      />
     </div>
   );
 }

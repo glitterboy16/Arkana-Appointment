@@ -1,11 +1,13 @@
 import { ArkanaIcons, LogoArkana } from './Shared';
+import NotificationsBell from './NotificationsBell';
 
 interface MobileTopBarProps {
   onMenu: () => void;
   title?: string;
+  showBell?: boolean;
 }
 
-export default function MobileTopBar({ onMenu, title = 'Arkana' }: MobileTopBarProps) {
+export default function MobileTopBar({ onMenu, title = 'Arkana', showBell = true }: MobileTopBarProps) {
   return (
     <div className="ark-mobile-topbar ark-only-mobile">
       <button
@@ -29,6 +31,7 @@ export default function MobileTopBar({ onMenu, title = 'Arkana' }: MobileTopBarP
           {title}
         </div>
       </div>
+      {showBell && <NotificationsBell />}
     </div>
   );
 }

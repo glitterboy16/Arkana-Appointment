@@ -82,7 +82,7 @@ export function MinimalFooter() {
             </div>
           </div>
           <div className="col-span-3 w-full md:col-span-1">
-            <span className="mb-1 text-xs text-muted-foreground">Empresa</span>
+            <span className="mb-1 text-xs text-muted-foreground">Negocio</span>
             <div className="flex flex-col gap-1">
               {company.map(({ href, title }, i) => (
                 <a
