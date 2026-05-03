@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import QRCode from 'react-qr-code';
 import toast from 'react-hot-toast';
+import { BiRightArrowAlt } from 'react-icons/bi';
 import { ArkanaIcons, Btn } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Servicio, type Disponibilidad } from '@/lib/supabase';
@@ -65,7 +66,7 @@ function ScheduleRow({ dia, index, state, onChange }: { dia: string; index: numb
           >
             {HORAS_INICIO.map((t) => <option key={t}>{t}</option>)}
           </select>
-          <span style={{ color: 'var(--app-subtle)', fontSize: 12 }}>→</span>
+          <span style={{ color: 'var(--app-subtle)', display: 'inline-flex', alignItems: 'center' }}><BiRightArrowAlt size={16} /></span>
           <select
             value={state.hora_fin}
             onChange={(e) => onChange(index, { hora_fin: e.target.value })}

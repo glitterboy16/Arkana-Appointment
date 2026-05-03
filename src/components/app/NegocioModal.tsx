@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { ArkanaIcons } from './Shared';
+import { createPortal } from 'react-dom';
+import { BiPhone, BiMap, BiSolidStar, BiX } from 'react-icons/bi';
 import { Spinner, Skeleton } from './Spinner';
 import { supabase, type Negocio, type Servicio } from '@/lib/supabase';
 import { geocode, osmEmbedUrl, osmExternalUrl, type GeoPoint } from '@/lib/geocode';
@@ -79,7 +80,7 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
 
   if (!negocio) return null;
 
-  return (
+  return createPortal(
     <div onClick={onClose} className="ark-modal-overlay">
       <div
         onClick={(e) => e.stopPropagation()}
@@ -93,13 +94,13 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
           aria-label="Cerrar"
           style={{
             position: 'absolute', top: 12, right: 12, zIndex: 2,
-            width: 36, height: 36, borderRadius: '50%', border: 'none',
+            width: 38, height: 38, borderRadius: '50%', border: 'none',
             background: 'rgba(0,0,0,0.55)', color: '#FAFAFA',
             cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             backdropFilter: 'blur(6px)',
           }}
         >
-          {ArkanaIcons.close}
+          <BiX size={22} />
         </button>
 
         <div className="ark-negocio-modal-scroll">
@@ -142,7 +143,7 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
                     marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6,
                     fontSize: 12, color: 'var(--app-muted)',
                   }}>
-                    <span style={{ color: '#F59E0B' }}>★</span>
+                    <BiSolidStar size={14} style={{ color: '#F59E0B' }} />
                     <span style={{ color: 'var(--app-text)', fontWeight: 600 }}>{negocio.rating.toFixed(1)}</span>
                     <span>·</span>
                     <span>{negocio.resenas} reseña{negocio.resenas === 1 ? '' : 's'}</span>
@@ -171,24 +172,24 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
                   href={`tel:${negocio.telefono}`}
                   style={contactItemStyle}
                 >
-                  <span style={contactIconStyle}>📞</span>
-                  <span style={{ fontSize: 14, color: 'var(--app-text)' }}>{negocio.telefono}</span>
+                  <span style={contactIconStyle}><BiPhone size={18} /></span>
+                  <span style={{ fontSize: 15, color: 'var(--app-text)' }}>{negocio.telefono}</span>
                 </a>
               ) : (
                 <div style={contactItemStyle}>
-                  <span style={contactIconStyle}>📞</span>
-                  <span style={{ fontSize: 14, color: 'var(--app-subtle)' }}>Sin teléfono publicado</span>
+                  <span style={contactIconStyle}><BiPhone size={18} /></span>
+                  <span style={{ fontSize: 15, color: 'var(--app-subtle)' }}>Sin teléfono publicado</span>
                 </div>
               )}
               {negocio.direccion ? (
                 <div style={contactItemStyle}>
-                  <span style={contactIconStyle}>📍</span>
-                  <span style={{ fontSize: 14, color: 'var(--app-text)' }}>{negocio.direccion}</span>
+                  <span style={contactIconStyle}><BiMap size={18} /></span>
+                  <span style={{ fontSize: 15, color: 'var(--app-text)' }}>{negocio.direccion}</span>
                 </div>
               ) : (
                 <div style={contactItemStyle}>
-                  <span style={contactIconStyle}>📍</span>
-                  <span style={{ fontSize: 14, color: 'var(--app-subtle)' }}>Sin dirección publicada</span>
+                  <span style={contactIconStyle}><BiMap size={18} /></span>
+                  <span style={{ fontSize: 15, color: 'var(--app-subtle)' }}>Sin dirección publicada</span>
                 </div>
               )}
             </div>
@@ -313,7 +314,8 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -329,9 +331,10 @@ const contactItemStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit',
 };
 const contactIconStyle: CSSProperties = {
-  width: 32, height: 32, borderRadius: 8, background: 'var(--app-surface)',
+  width: 36, height: 36, borderRadius: 9, background: 'var(--app-surface)',
   border: '1px solid var(--app-border)',
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  color: '#648DFF', flexShrink: 0,
 };
 const servicioRowStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,

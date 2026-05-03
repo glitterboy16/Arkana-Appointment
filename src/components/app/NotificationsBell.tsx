@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArkanaIcons } from './Shared';
+import { BiBell, BiCheck, BiX, BiRefresh, BiCalendarPlus } from 'react-icons/bi';
 import { useNotifications, type NotifKind } from '@/contexts/NotificationsContext';
 
-const KIND_STYLE: Record<NotifKind, { color: string; bg: string; icono: string }> = {
-  cita_nueva:       { color: '#648DFF', bg: 'rgba(100,141,255,0.15)', icono: '•' },
-  cita_confirmada:  { color: '#22C55E', bg: 'rgba(34,197,94,0.15)',   icono: '✓' },
-  cita_cancelada:   { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',   icono: '✕' },
-  cita_reagendada:  { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',  icono: '⟳' },
+const KIND_STYLE: Record<NotifKind, { color: string; bg: string; icono: ReactNode }> = {
+  cita_nueva:       { color: '#648DFF', bg: 'rgba(100,141,255,0.15)', icono: <BiCalendarPlus size={18} /> },
+  cita_confirmada:  { color: '#22C55E', bg: 'rgba(34,197,94,0.15)',   icono: <BiCheck size={20} /> },
+  cita_cancelada:   { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',   icono: <BiX size={20} /> },
+  cita_reagendada:  { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',  icono: <BiRefresh size={18} /> },
 };
 
 interface NotificationsBellProps {
@@ -62,7 +62,7 @@ export default function NotificationsBell({ iconColor }: NotificationsBellProps)
         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--app-nav-hover)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
       >
-        {ArkanaIcons.bell}
+        <BiBell size={20} />
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: 2, right: 2,

@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
+import { BiRightArrowAlt } from 'react-icons/bi';
 import { cn } from '@/lib/utils';
 
 type Servicio = {
@@ -250,8 +251,8 @@ function ServicesCard({ className }: { className?: string }) {
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <p className="text-sm font-bold text-foreground">{s.precio}</p>
-                  <p className="text-[10px] text-muted-foreground group-hover:text-brand-foreground">
-                    Reservar →
+                  <p className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground group-hover:text-brand-foreground">
+                    Reservar <BiRightArrowAlt className="size-3.5" />
                   </p>
                 </div>
               </button>
