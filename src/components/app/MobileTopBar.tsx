@@ -18,12 +18,12 @@ export default function MobileTopBar({ onMenu, title = 'Arkana', showBell = true
       >
         {ArkanaIcons.menu}
       </button>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
         <div style={{
-          width: 26, height: 26, background: '#004AAD', borderRadius: 7,
+          width: 32, height: 32, background: '#004AAD', borderRadius: 8,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <LogoArkana size={18} onBrand />
+          <LogoArkana size={22} onBrand />
         </div>
         <div className="ark-mobile-topbar-brand" style={{
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

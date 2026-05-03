@@ -56,19 +56,19 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   return (
     <aside className={`ark-sidebar${isOpen ? ' open' : ''}`}>
       <div style={{
-        padding: '18px 16px 14px', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '20px 18px 16px', display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '1px solid var(--app-border)', flexShrink: 0, justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
           <div style={{
-            width: 30, height: 30, background: '#004AAD', borderRadius: 8,
+            width: 36, height: 36, background: '#004AAD', borderRadius: 9,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <LogoArkana size={22} onBrand />
+            <LogoArkana size={26} onBrand />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>
-            <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Appointments</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>
+            <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 1 }}>Appointments</div>
           </div>
         </div>
         {onClose && (
@@ -77,7 +77,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             className="ark-only-mobile"
             aria-label="Cerrar menú"
             style={{
-              width: 32, height: 32, borderRadius: 8, border: 'none',
+              width: 36, height: 36, borderRadius: 9, border: 'none',
               background: 'transparent', color: 'var(--app-muted)', cursor: 'pointer',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0,
             }}
@@ -88,23 +88,23 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       </div>
 
       <div style={{
-        margin: '10px 10px 4px', background: 'var(--app-surface)',
-        border: '1px solid var(--app-border)', borderRadius: 8, padding: '8px 10px',
-        display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+        margin: '12px 12px 6px', background: 'var(--app-surface)',
+        border: '1px solid var(--app-border)', borderRadius: 10, padding: '10px 12px',
+        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
       }}>
-        <Avatar name={negocio?.nombre ?? 'Negocio'} size={26} bg="#648DFF" />
-        <div style={{ overflow: 'hidden' }}>
+        <Avatar name={negocio?.nombre ?? 'Negocio'} size={34} bg="#648DFF" />
+        <div style={{ overflow: 'hidden', minWidth: 0 }}>
           <div style={{
-            fontSize: 12, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3,
+            fontSize: 13.5, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {negocio?.nombre ?? '—'}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Plan Gratuito</div>
+          <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 2 }}>Plan Gratuito</div>
         </div>
       </div>
 
-      <nav style={{ flex: 1, paddingBottom: 12 }}>
+      <nav style={{ flex: 1, paddingBottom: 14 }}>
         {NAV_ITEMS.map((item) => {
           const showSection = item.section && item.section !== lastSection;
           if (item.section) lastSection = item.section;
@@ -114,8 +114,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <Fragment key={item.id}>
               {showSection && (
                 <div style={{
-                  fontSize: 9, letterSpacing: '0.10em', textTransform: 'uppercase',
-                  color: 'var(--app-subtle)', padding: '10px 16px 4px', fontFamily: 'monospace',
+                  fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase',
+                  color: 'var(--app-subtle)', padding: '12px 18px 6px', fontFamily: 'monospace',
                 }}>
                   {item.section}
                 </div>
@@ -123,15 +123,15 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <button
                 onClick={() => handleClick(item)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
-                  margin: '1px 8px', borderRadius: 7, fontSize: 13,
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                  margin: '2px 10px', borderRadius: 8, fontSize: 14,
                   cursor: clickable ? 'pointer' : 'default',
                   transition: 'all 150ms ease',
                   color: active ? 'var(--app-text)' : 'var(--app-muted)',
                   background: active ? 'var(--app-nav-active)' : 'transparent',
-                  fontWeight: active ? 600 : 400,
+                  fontWeight: active ? 600 : 500,
                   border: 'none',
-                  width: 'calc(100% - 16px)',
+                  width: 'calc(100% - 20px)',
                   textAlign: 'left',
                   fontFamily: 'inherit',
                   opacity: clickable ? 1 : 0.5,
