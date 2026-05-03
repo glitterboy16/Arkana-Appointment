@@ -12,7 +12,12 @@ interface NavItem {
   action?: () => void;
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { negocio, signOut } = useAuth();
@@ -43,30 +48,43 @@ export default function Sidebar() {
 
   const handleClick = (item: NavItem) => {
     if (item.action) { item.action(); return; }
-    if (item.path) navigate(item.path);
+    if (item.path) { navigate(item.path); onClose?.(); }
   };
 
   let lastSection: string | null = null;
 
   return (
-    <aside style={{
-      width: 220, height: '100%', background: 'var(--app-sidebar-bg)', borderRight: '1px solid var(--app-border)',
-      display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto', overflowX: 'hidden',
-    }}>
+    <aside className={`ark-sidebar${isOpen ? ' open' : ''}`}>
       <div style={{
         padding: '18px 16px 14px', display: 'flex', alignItems: 'center', gap: 10,
-        borderBottom: '1px solid var(--app-border)', flexShrink: 0,
+        borderBottom: '1px solid var(--app-border)', flexShrink: 0, justifyContent: 'space-between',
       }}>
-        <div style={{
-          width: 30, height: 30, background: '#004AAD', borderRadius: 8,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <LogoArkana size={22} onBrand />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 30, height: 30, background: '#004AAD', borderRadius: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <LogoArkana size={22} onBrand />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>
+            <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Appointments</div>
+          </div>
         </div>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>
-          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Appointments</div>
-        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ark-only-mobile"
+            aria-label="Cerrar menú"
+            style={{
+              width: 32, height: 32, borderRadius: 8, border: 'none',
+              background: 'transparent', color: 'var(--app-muted)', cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+            }}
+          >
+            {ArkanaIcons.close}
+          </button>
+        )}
       </div>
 
       <div style={{
@@ -75,15 +93,18 @@ export default function Sidebar() {
         display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
       }}>
         <Avatar name={negocio?.nombre ?? 'Negocio'} size={26} bg="#648DFF" />
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3 }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
             {negocio?.nombre ?? '—'}
           </div>
           <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Plan Gratuito</div>
         </div>
       </div>
 
-      <nav style={{ flex: 1 }}>
+      <nav style={{ flex: 1, paddingBottom: 12 }}>
         {NAV_ITEMS.map((item) => {
           const showSection = item.section && item.section !== lastSection;
           if (item.section) lastSection = item.section;
@@ -102,7 +123,7 @@ export default function Sidebar() {
               <button
                 onClick={() => handleClick(item)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
                   margin: '1px 8px', borderRadius: 7, fontSize: 13,
                   cursor: clickable ? 'pointer' : 'default',
                   transition: 'all 150ms ease',
@@ -115,7 +136,7 @@ export default function Sidebar() {
                   fontFamily: 'inherit',
                   opacity: clickable ? 1 : 0.5,
                 }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--app-nav-hover)'; }}
+                onMouseEnter={(e) => { if (!active && clickable) e.currentTarget.style.background = 'var(--app-nav-hover)'; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
               >
                 <span style={{ opacity: active ? 1 : 0.65, flexShrink: 0, display: 'flex', alignItems: 'center' }}>

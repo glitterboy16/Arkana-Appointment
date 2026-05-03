@@ -3,6 +3,7 @@ import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase, type EstadoCita } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { InlineLoader } from '@/components/app/Spinner';
 
 interface CitaEvento {
   id: string;
@@ -83,16 +84,16 @@ export default function NotificacionesPage() {
   }, [usuario]);
 
   return (
-    <div style={{ padding: '32px 32px 64px', maxWidth: 720, margin: '0 auto' }}>
+    <div className="ark-page" style={{ maxWidth: 720, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones</h1>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones</h1>
         <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Actividad reciente de tus citas.
         </p>
       </div>
 
       {loading ? (
-        <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando…</div>
+        <InlineLoader label="Cargando notificaciones…" minHeight={220} />
       ) : notis.length === 0 ? (
         <div style={{
           background: 'var(--app-surface)', border: '1px dashed var(--app-border)',

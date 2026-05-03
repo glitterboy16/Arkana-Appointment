@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Cita } from '@/lib/supabase';
+import { InlineLoader, Spinner } from '@/components/app/Spinner';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number; precio_centimos: number } | null;
@@ -46,8 +47,9 @@ function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onSta
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px',
+        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
         borderBottom: '1px solid var(--app-border)', transition: 'background 150ms ease',
+        flexWrap: 'wrap',
       }}
       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--app-surface-hover)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -59,23 +61,24 @@ function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onSta
         </div>
       </div>
       <Avatar name={cita.cliente_nombre} size={34} bg={avatarColor(cita.cliente_nombre)} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)' }}>{cita.cliente_nombre}</div>
-        <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginTop: 1 }}>
+      <div style={{ flex: '1 1 160px', minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cita.cliente_nombre}</div>
+        <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {cita.servicios?.nombre ?? '—'} · {cita.cliente_telefono}
         </div>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-muted)', width: 60, textAlign: 'right' }}>
+      <div className="ark-hide-mobile" style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-muted)', minWidth: 50, textAlign: 'right' }}>
         {cita.servicios ? formatPrecio(cita.servicios.precio_centimos) : '—'}
       </div>
-      <div style={{ width: 110, display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Badge status={cita.estado as AppointmentStatus} />
       </div>
-      <div style={{ display: 'flex', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        {saving && <Spinner size={12} />}
         {cita.estado === 'new' && (
           <button type="button" disabled={saving} onClick={handleConfirm} style={{
             padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(34,197,94,0.4)',
-            background: 'rgba(34,197,94,0.10)', color: '#22C55E', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+            background: 'rgba(34,197,94,0.10)', color: '#22C55E', fontSize: 11, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
             opacity: saving ? 0.5 : 1,
           }}>
             Confirmar
@@ -84,7 +87,7 @@ function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onSta
         {(cita.estado === 'new' || cita.estado === 'pending') && (
           <button type="button" disabled={saving} onClick={handleCancel} style={{
             padding: '5px 10px', borderRadius: 6, border: '1px solid var(--app-border)',
-            background: 'transparent', color: 'var(--app-muted)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+            background: 'transparent', color: 'var(--app-muted)', fontSize: 11, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
             opacity: saving ? 0.5 : 1,
           }}>
             Cancelar
@@ -145,32 +148,31 @@ export default function CitasPage() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
-      <div style={{ padding: '16px 28px', borderBottom: '1px solid var(--app-border)', background: 'var(--app-bg-elevated)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+      <div style={{ padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)', background: 'var(--app-bg-elevated)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Mis citas
           </div>
           <Btn variant="primary" size="sm">
             {ArkanaIcons.plus} Nueva cita
           </Btn>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {TABS.map((t) => (
             <button key={t.id} type="button" onClick={() => setFilter(t.id)} style={{
-              padding: '6px 16px', borderRadius: 7, border: 'none', cursor: 'pointer',
+              padding: '6px 14px', borderRadius: 7, border: 'none', cursor: 'pointer',
               fontFamily: 'inherit', fontSize: 13, fontWeight: 600, transition: 'all 150ms ease',
               background: filter === t.id ? 'rgba(100,141,255,0.15)' : 'transparent',
               color: filter === t.id ? '#648DFF' : 'var(--app-muted)',
+              whiteSpace: 'nowrap', flexShrink: 0,
             }}>{t.label}</button>
           ))}
         </div>
       </div>
 
-      <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16, flex: 1, overflowY: 'auto' }}>
+      <div className="ark-page-fade" style={{ padding: '20px clamp(14px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 16, flex: 1, overflowY: 'auto' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--app-subtle)', fontSize: 14 }}>
-            Cargando citas…
-          </div>
+          <InlineLoader label="Cargando citas…" minHeight={240} />
         ) : Object.entries(groups).length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--app-subtle)' }}>
             <div style={{ fontSize: 14 }}>No hay citas en este filtro</div>

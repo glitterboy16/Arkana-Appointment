@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogoArkana } from '@/components/app/Shared';
+import { Spinner } from '@/components/app/Spinner';
 import { useAuth } from '@/contexts/AuthContext';
 
 type AuthMode = 'login' | 'register';
@@ -249,8 +250,10 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               cursor: loading ? 'not-allowed' : 'pointer',
               background: '#004AAD', color: '#FAFAFA', fontSize: 15, fontWeight: 700,
               fontFamily: 'inherit', marginTop: 4, transition: 'all 150ms ease',
-              opacity: loading ? 0.7 : 1,
+              opacity: loading ? 0.85 : 1,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             }}>
+              {loading && <Spinner size={16} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
               {loading ? 'Cargando…' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </button>
           </form>
