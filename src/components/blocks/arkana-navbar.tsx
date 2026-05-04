@@ -11,6 +11,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
+import { LogoArkana } from '@/components/app/Shared';
 
 import {
   Accordion,
@@ -165,14 +166,14 @@ export function ArkanaNavbar({
       <div className="container mx-auto px-4 py-3 lg:px-6 lg:py-4">
         <nav className="hidden items-center justify-between lg:flex">
           <div className="flex items-center gap-6">
-            <Anchor href={logo.url} className="flex items-center gap-2 no-underline">
+            <Anchor href={logo.url} className="flex items-center gap-2.5 no-underline">
               <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                className="flex h-10 w-10 items-center justify-center rounded-lg"
                 style={{ background: '#004AAD' }}
               >
-                <CalendarClock className="size-4 text-white" />
+                <LogoArkana size={28} onBrand />
               </span>
-              <span className="text-base font-semibold tracking-tight text-foreground">
+              <span className="text-lg font-semibold tracking-tight text-foreground">
                 {logo.title}
                 <span className="ml-1 font-light text-muted-foreground">Appointments</span>
               </span>
@@ -205,14 +206,14 @@ export function ArkanaNavbar({
 
         <div className="block lg:hidden">
           <div className="flex items-center justify-between">
-            <Anchor href={logo.url} className="flex items-center gap-2 no-underline">
+            <Anchor href={logo.url} className="flex items-center gap-2.5 no-underline">
               <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                className="flex h-10 w-10 items-center justify-center rounded-lg"
                 style={{ background: '#004AAD' }}
               >
-                <CalendarClock className="size-4 text-white" />
+                <LogoArkana size={28} onBrand />
               </span>
-              <span className="text-base font-semibold tracking-tight text-foreground">
+              <span className="text-lg font-semibold tracking-tight text-foreground">
                 {logo.title}
               </span>
             </Anchor>
@@ -227,14 +228,14 @@ export function ArkanaNavbar({
               <SheetContent className="overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>
-                    <Anchor href={logo.url} className="flex items-center gap-2 no-underline">
+                    <Anchor href={logo.url} className="flex items-center gap-2.5 no-underline">
                       <span
-                        className="flex h-8 w-8 items-center justify-center rounded-lg"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg"
                         style={{ background: '#004AAD' }}
                       >
-                        <CalendarClock className="size-4 text-white" />
+                        <LogoArkana size={28} onBrand />
                       </span>
-                      <span className="text-base font-semibold tracking-tight text-foreground">
+                      <span className="text-lg font-semibold tracking-tight text-foreground">
                         {logo.title} Appointments
                       </span>
                     </Anchor>
