@@ -3,7 +3,7 @@ import Sidebar from '@/components/app/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function AppLayout() {
-  const { session, loading } = useAuth();
+  const { session, usuario, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,6 +19,10 @@ export default function AppLayout() {
 
   if (!session) {
     return <Navigate to="/iniciarSesion" replace />;
+  }
+
+  if (usuario && usuario.rol === 'cliente') {
+    return <Navigate to="/" replace />;
   }
 
   return (
