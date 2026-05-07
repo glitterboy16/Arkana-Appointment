@@ -73,45 +73,59 @@ function esAborto(err: { message?: string } | null): boolean {
   return msg.includes('aborted') || msg.includes('signal') || msg.includes('failed to fetch');
 }
 
-// Patrón UPDATE-first: muchos proyectos Supabase tienen un trigger que crea la fila
-// en `usuarios` automáticamente al hacer auth.signUp. Por eso intentamos primero
-// actualizar la fila existente. Si no existía, hacemos INSERT.
-// Reintenta hasta 3 veces ante el conocido AbortError de supabase-js.
 async function guardarUsuario(row: { id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null }): Promise<{ data: Usuario | null; error: DBError | null }> {
   const updates = { email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null };
+  console.log('[Arkana] guardarUsuario - empezando con:', { id: row.id, rol: row.rol });
 
-  for (let intento = 0; intento < 3; intento++) {
-    if (intento > 0) await new Promise(r => setTimeout(r, 250 * intento));
+  for (let intento = 0; intento < 4; intento++) {
+    if (intento > 0) {
+      const espera = 500 * intento;
+      console.log(`[Arkana] guardarUsuario - reintento ${intento} tras ${espera}ms`);
+      await new Promise(r => setTimeout(r, espera));
+    }
 
     // 1. UPDATE (si la fila ya existe gracias a un trigger)
+    console.log('[Arkana] guardarUsuario - probando UPDATE');
     const upd = await supabase
       .from('usuarios')
       .update(updates)
       .eq('id', row.id)
       .select()
       .maybeSingle();
+    console.log('[Arkana] guardarUsuario - UPDATE resultado:', { hayData: !!upd.data, error: upd.error });
 
     if (upd.data) return { data: upd.data as Usuario, error: null };
     if (upd.error && esAborto(upd.error)) continue;
     if (upd.error) return { data: null, error: upd.error };
 
     // 2. UPDATE no afectó filas → INSERT
+    console.log('[Arkana] guardarUsuario - probando INSERT');
     const ins = await supabase
       .from('usuarios')
       .insert(row)
       .select()
       .maybeSingle();
+    console.log('[Arkana] guardarUsuario - INSERT resultado:', { hayData: !!ins.data, error: ins.error });
 
     if (ins.data) return { data: ins.data as Usuario, error: null };
     if (ins.error && esAborto(ins.error)) continue;
-    // Si el insert falla con duplicado tras un update sin filas (raro), volvemos al UPDATE en la siguiente iteración
     if (ins.error?.code === '23505') continue;
     if (ins.error) return { data: null, error: ins.error };
   }
 
-  // Último recurso: leer la fila tal cual está en la BD. Si existe, devolvemos eso.
-  const { data: existente } = await supabase.from('usuarios').select('*').eq('id', row.id).maybeSingle();
-  if (existente) return { data: existente as Usuario, error: null };
+  // Último recurso: leer la fila tal cual está en la BD
+  console.log('[Arkana] guardarUsuario - reintentos agotados, leyendo fila existente');
+  const { data: existente, error: errLeer } = await supabase.from('usuarios').select('*').eq('id', row.id).maybeSingle();
+  console.log('[Arkana] guardarUsuario - lectura final:', { hayData: !!existente, error: errLeer });
+  if (existente) {
+    // Si está pero con rol distinto al solicitado, intentamos un último UPDATE
+    if ((existente as Usuario).rol !== row.rol) {
+      console.log('[Arkana] guardarUsuario - rol distinto, último intento de UPDATE');
+      const fix = await supabase.from('usuarios').update(updates).eq('id', row.id).select().maybeSingle();
+      if (fix.data) return { data: fix.data as Usuario, error: null };
+    }
+    return { data: existente as Usuario, error: null };
+  }
 
   return { data: null, error: { message: 'No se pudieron guardar los datos tras varios intentos.' } };
 }
@@ -150,12 +164,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string, expectedRol: RolUsuario) => {
+    console.log('[Arkana] signIn - inicio para email:', email, 'esperado:', expectedRol);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
+    if (error) { console.error('[Arkana] signIn - error auth:', error); return { error: error.message }; }
     if (!data.user || !data.session) return { error: 'No se pudo iniciar sesión.' };
 
+    console.log('[Arkana] signIn - auth OK, fetching usuario para id:', data.user.id);
     const usr = await fetchUsuario(data.user.id);
-    const rolReal = (usr?.rol ?? 'negocio') as RolUsuario;
+    console.log('[Arkana] signIn - usuario en BD:', usr);
+
+    if (!usr) {
+      await supabase.auth.signOut();
+      return { error: 'Tu cuenta existe pero no tiene perfil. Vuelve a registrarte o contacta soporte.' };
+    }
+
+    const rolReal = usr.rol;
 
     if (rolReal !== expectedRol) {
       await supabase.auth.signOut();
@@ -166,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(data.session);
     setUsuario(usr);
     setNegocio(neg);
+    console.log('[Arkana] signIn - éxito, rol:', rolReal);
     return { error: null, rol: rolReal };
   };
 
