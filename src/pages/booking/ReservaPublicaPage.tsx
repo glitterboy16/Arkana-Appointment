@@ -4,6 +4,7 @@ import { format, addDays, getISODay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArkanaIcons, Btn } from '@/components/app/Shared';
 import { supabase, type Negocio, type Servicio, type Disponibilidad } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import logoIcon from '@/assets/logo-icon.svg';
 
 interface DayOption {
@@ -92,6 +93,17 @@ export default function ReservaPublicaPage() {
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { usuario } = useAuth();
+
+  useEffect(() => {
+    if (usuario && usuario.rol === 'cliente') {
+      setForm(f => ({
+        nombre: f.nombre || usuario.nombre,
+        telefono: f.telefono || usuario.telefono || '',
+        email: f.email || usuario.email,
+      }));
+    }
+  }, [usuario]);
 
   useEffect(() => {
     if (!slug) { setPageState('notfound'); return; }
@@ -156,6 +168,7 @@ export default function ReservaPublicaPage() {
     const { error } = await supabase.from('citas').insert({
       negocio_id: negocio.id,
       servicio_id: selectedServicio,
+      cliente_id: usuario?.rol === 'cliente' ? usuario.id : null,
       cliente_nombre: form.nombre.trim(),
       cliente_telefono: form.telefono.trim(),
       cliente_email: form.email.trim() || null,

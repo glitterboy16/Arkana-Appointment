@@ -21,11 +21,12 @@ interface AuthCtx {
   usuario: Usuario | null;
   negocio: Negocio | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null; rol?: RolUsuario }>;
+  signIn: (email: string, password: string, expectedRol: RolUsuario) => Promise<{ error: string | null; rol?: RolUsuario }>;
   signUpNegocio: (data: SignUpNegocioData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signUpCliente: (data: SignUpClienteData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signOut: () => Promise<void>;
   refreshNegocio: () => Promise<void>;
+  refreshUsuario: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, expectedRol: RolUsuario) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
 
@@ -96,7 +97,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('id', data.user.id)
       .single();
 
-    return { error: null, rol: (usr?.rol ?? 'negocio') as RolUsuario };
+    const rolReal = (usr?.rol ?? 'negocio') as RolUsuario;
+
+    if (rolReal !== expectedRol) {
+      await supabase.auth.signOut();
+      const real = rolReal === 'negocio' ? 'negocio' : 'cliente';
+      return { error: `Esta cuenta es de ${real}. Cambia el selector arriba para entrar.` };
+    }
+
+    return { error: null, rol: rolReal };
   };
 
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
@@ -176,8 +185,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) setNegocio(data as Negocio);
   };
 
+  const refreshUsuario = async () => {
+    if (!session?.user) return;
+    const { data } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+    if (data) setUsuario(data as Usuario);
+  };
+
   return (
-    <AuthContext.Provider value={{ session, usuario, negocio, loading, signIn, signUpNegocio, signUpCliente, signOut, refreshNegocio }}>
+    <AuthContext.Provider value={{ session, usuario, negocio, loading, signIn, signUpNegocio, signUpCliente, signOut, refreshNegocio, refreshUsuario }}>
       {children}
     </AuthContext.Provider>
   );
