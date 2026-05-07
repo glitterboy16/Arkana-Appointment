@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Usuario, type Negocio, type RolUsuario } from '@/lib/supabase';
 
@@ -13,6 +13,7 @@ export interface SignUpClienteData {
   email: string;
   password: string;
   nombre: string;
+  telefono: string;
 }
 
 interface AuthCtx {
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loading, setLoading] = useState(true);
+  const isRegistering = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -67,13 +69,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      if (session?.user) {
+      if (!session) {
+        setUsuario(null);
+        setNegocio(null);
+        return;
+      }
+      // skip during signup — state is set directly after inserts complete
+      if (isRegistering.current) return;
+      if (session.user) {
         const { usuario, negocio } = await fetchUserData(session.user.id);
         setUsuario(usuario);
         setNegocio(negocio);
-      } else {
-        setUsuario(null);
-        setNegocio(null);
       }
     });
 
@@ -94,39 +100,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
+    isRegistering.current = true;
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error: error.message };
-    if (!data.user) return { error: 'No se pudo crear el usuario' };
+    if (error) { isRegistering.current = false; return { error: error.message }; }
+    if (!data.user) { isRegistering.current = false; return { error: 'No se pudo crear el usuario' }; }
+
+    if (!data.session) {
+      isRegistering.current = false;
+      return { error: null, needsConfirmation: true };
+    }
 
     const slug = generarSlug(nombreNegocio);
 
-    const [{ error: errUsr }, { error: errNeg }] = await Promise.all([
-      supabase.from('usuarios').insert({ id: data.user.id, email, nombre, rol: 'negocio' }),
-      supabase.from('negocios').insert({ usuario_id: data.user.id, nombre: nombreNegocio, slug }),
-    ]);
+    const { data: newUsr, error: errUsr } = await supabase
+      .from('usuarios')
+      .insert({ id: data.user.id, email, nombre, rol: 'negocio' })
+      .select()
+      .single();
 
-    if (errUsr || errNeg) {
-      return { error: 'Error guardando datos. Comprueba que el email no está ya registrado.' };
-    }
+    if (errUsr) { isRegistering.current = false; return { error: 'Error guardando datos del usuario.' }; }
 
-    if (!data.session) return { error: null, needsConfirmation: true };
+    const { data: newNeg, error: errNeg } = await supabase
+      .from('negocios')
+      .insert({ usuario_id: data.user.id, nombre: nombreNegocio, slug })
+      .select()
+      .single();
+
+    if (errNeg) { isRegistering.current = false; return { error: 'Error guardando datos del negocio.' }; }
+
+    setUsuario(newUsr as Usuario);
+    setNegocio(newNeg as Negocio);
+    isRegistering.current = false;
     return { error: null };
   };
 
-  const signUpCliente = async ({ email, password, nombre }: SignUpClienteData) => {
+  const signUpCliente = async ({ email, password, nombre, telefono }: SignUpClienteData) => {
+    isRegistering.current = true;
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error: error.message };
-    if (!data.user) return { error: 'No se pudo crear el usuario' };
+    if (error) { isRegistering.current = false; return { error: error.message }; }
+    if (!data.user) { isRegistering.current = false; return { error: 'No se pudo crear el usuario' }; }
 
-    const { error: errUsr } = await supabase
+    if (!data.session) {
+      isRegistering.current = false;
+      return { error: null, needsConfirmation: true };
+    }
+
+    const { data: newUsr, error: errUsr } = await supabase
       .from('usuarios')
-      .insert({ id: data.user.id, email, nombre, rol: 'cliente' });
+      .insert({ id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null })
+      .select()
+      .single();
 
     if (errUsr) {
+      isRegistering.current = false;
       return { error: 'Error guardando datos. Comprueba que el email no está ya registrado.' };
     }
 
-    if (!data.session) return { error: null, needsConfirmation: true };
+    setUsuario(newUsr as Usuario);
+    setNegocio(null);
+    isRegistering.current = false;
     return { error: null };
   };
 
