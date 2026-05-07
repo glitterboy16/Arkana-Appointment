@@ -1,12 +1,18 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase, type Usuario, type Negocio } from '@/lib/supabase';
+import { supabase, type Usuario, type Negocio, type RolUsuario } from '@/lib/supabase';
 
-export interface SignUpData {
+export interface SignUpNegocioData {
   email: string;
   password: string;
   nombre: string;
   nombreNegocio: string;
+}
+
+export interface SignUpClienteData {
+  email: string;
+  password: string;
+  nombre: string;
 }
 
 interface AuthCtx {
@@ -14,8 +20,9 @@ interface AuthCtx {
   usuario: Usuario | null;
   negocio: Negocio | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (data: SignUpData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null; rol?: RolUsuario }>;
+  signUpNegocio: (data: SignUpNegocioData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
+  signUpCliente: (data: SignUpClienteData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signOut: () => Promise<void>;
   refreshNegocio: () => Promise<void>;
 }
@@ -28,6 +35,17 @@ async function fetchUserData(userId: string) {
     supabase.from('negocios').select('*').eq('usuario_id', userId).single(),
   ]);
   return { usuario: usr as Usuario | null, negocio: neg as Negocio | null };
+}
+
+function generarSlug(nombre: string): string {
+  return nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .concat('-', Math.random().toString(36).slice(2, 6));
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -63,23 +81,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+
+    const { data: usr } = await supabase
+      .from('usuarios')
+      .select('rol')
+      .eq('id', data.user.id)
+      .single();
+
+    return { error: null, rol: (usr?.rol ?? 'negocio') as RolUsuario };
   };
 
-  const signUp = async ({ email, password, nombre, nombreNegocio }: SignUpData) => {
+  const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario' };
 
-    const slug = nombreNegocio
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9\s]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .concat('-', Math.random().toString(36).slice(2, 6));
+    const slug = generarSlug(nombreNegocio);
 
     const [{ error: errUsr }, { error: errNeg }] = await Promise.all([
       supabase.from('usuarios').insert({ id: data.user.id, email, nombre, rol: 'negocio' }),
@@ -87,13 +106,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
 
     if (errUsr || errNeg) {
-      return { error: 'Error guardando datos. Intenta de nuevo.' };
+      return { error: 'Error guardando datos. Comprueba que el email no está ya registrado.' };
     }
 
-    if (!data.session) {
-      return { error: null, needsConfirmation: true };
+    if (!data.session) return { error: null, needsConfirmation: true };
+    return { error: null };
+  };
+
+  const signUpCliente = async ({ email, password, nombre }: SignUpClienteData) => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { error: error.message };
+    if (!data.user) return { error: 'No se pudo crear el usuario' };
+
+    const { error: errUsr } = await supabase
+      .from('usuarios')
+      .insert({ id: data.user.id, email, nombre, rol: 'cliente' });
+
+    if (errUsr) {
+      return { error: 'Error guardando datos. Comprueba que el email no está ya registrado.' };
     }
 
+    if (!data.session) return { error: null, needsConfirmation: true };
     return { error: null };
   };
 
@@ -112,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, usuario, negocio, loading, signIn, signUp, signOut, refreshNegocio }}>
+    <AuthContext.Provider value={{ session, usuario, negocio, loading, signIn, signUpNegocio, signUpCliente, signOut, refreshNegocio }}>
       {children}
     </AuthContext.Provider>
   );
