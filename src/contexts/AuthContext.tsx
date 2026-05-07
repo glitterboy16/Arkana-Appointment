@@ -73,7 +73,23 @@ function traducirErrorBD(err: DBError, contexto: 'usuario' | 'negocio'): string 
   if (msg.includes('jwt') || msg.includes('not authenticated')) {
     return 'La sesión ha expirado. Recarga la página e intenta de nuevo.';
   }
+  if (msg.includes('aborted') || msg.includes('signal')) {
+    return 'La conexión se cortó. Vuelve a intentarlo.';
+  }
   return `No se pudieron guardar tus datos: ${err.message}`;
+}
+
+// Reintenta cuando el cliente de Supabase aborta la request por carrera con el cambio de sesión
+async function withRetry<T>(fn: () => Promise<{ data: T | null; error: DBError | null }>, maxIntentos = 3) {
+  let lastResult: { data: T | null; error: DBError | null } = { data: null, error: null };
+  for (let i = 0; i < maxIntentos; i++) {
+    lastResult = await fn();
+    const msg = lastResult.error?.message?.toLowerCase() ?? '';
+    const fueAbortado = msg.includes('aborted') || msg.includes('signal') || msg.includes('failed to fetch');
+    if (!lastResult.error || !fueAbortado) return lastResult;
+    await new Promise(r => setTimeout(r, 200 * (i + 1)));
+  }
+  return lastResult;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -134,6 +150,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, rol: rolReal };
   };
 
+  // Intenta upsert + reintenta + verifica si la fila se guardó (tolera abortos del cliente Supabase)
+  const upsertUsuario = async (row: Record<string, unknown>) => {
+    const upsertResult = await withRetry<Usuario>(async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .upsert(row, { onConflict: 'id' })
+        .select()
+        .single();
+      return { data: data as Usuario | null, error };
+    });
+    if (upsertResult.data) return upsertResult;
+
+    // Si falló, comprobar si el dato sí se guardó (caso clásico de abort tras escritura exitosa)
+    const verificacion = await withRetry<Usuario>(async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', row.id as string)
+        .maybeSingle();
+      return { data: data as Usuario | null, error };
+    });
+    if (verificacion.data) return { data: verificacion.data, error: null };
+    return upsertResult;
+  };
+
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
     isRegistering.current = true;
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -147,31 +188,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const slug = generarSlug(nombreNegocio);
 
-    // upsert para tolerar triggers de Supabase que ya hayan creado la fila
-    const { data: newUsr, error: errUsr } = await supabase
-      .from('usuarios')
-      .upsert({ id: data.user.id, email, nombre, rol: 'negocio' }, { onConflict: 'id' })
-      .select()
-      .single();
+    const { data: newUsr, error: errUsr } = await upsertUsuario({
+      id: data.user.id, email, nombre, rol: 'negocio',
+    });
 
-    if (errUsr) {
+    if (errUsr || !newUsr) {
       isRegistering.current = false;
-      return { error: traducirErrorBD(errUsr, 'usuario') };
+      return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario' };
     }
 
-    const { data: newNeg, error: errNeg } = await supabase
-      .from('negocios')
-      .insert({ usuario_id: data.user.id, nombre: nombreNegocio, slug })
-      .select()
-      .single();
+    const negResult = await withRetry<Negocio>(async () => {
+      const { data, error } = await supabase
+        .from('negocios')
+        .insert({ usuario_id: newUsr.id, nombre: nombreNegocio, slug })
+        .select()
+        .single();
+      return { data: data as Negocio | null, error };
+    });
 
-    if (errNeg) {
+    if (negResult.error || !negResult.data) {
       isRegistering.current = false;
-      return { error: traducirErrorBD(errNeg, 'negocio') };
+      return { error: negResult.error ? traducirErrorBD(negResult.error, 'negocio') : 'No se pudo crear el negocio' };
     }
 
-    setUsuario(newUsr as Usuario);
-    setNegocio(newNeg as Negocio);
+    setUsuario(newUsr);
+    setNegocio(negResult.data);
     isRegistering.current = false;
     return { error: null };
   };
@@ -187,21 +228,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null, needsConfirmation: true };
     }
 
-    const { data: newUsr, error: errUsr } = await supabase
-      .from('usuarios')
-      .upsert(
-        { id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null },
-        { onConflict: 'id' },
-      )
-      .select()
-      .single();
+    const { data: newUsr, error: errUsr } = await upsertUsuario({
+      id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null,
+    });
 
-    if (errUsr) {
+    if (errUsr || !newUsr) {
       isRegistering.current = false;
-      return { error: traducirErrorBD(errUsr, 'usuario') };
+      return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario' };
     }
 
-    setUsuario(newUsr as Usuario);
+    setUsuario(newUsr);
     setNegocio(null);
     isRegistering.current = false;
     return { error: null };
