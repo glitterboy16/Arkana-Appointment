@@ -68,29 +68,52 @@ function traducirErrorBD(err: DBError, contexto: 'usuario' | 'negocio'): string 
   return `No se pudieron guardar tus datos: ${err.message}`;
 }
 
-// Inserta o, si ya existe la fila (porque un trigger la creó), la actualiza.
+function esAborto(err: { message?: string } | null): boolean {
+  const msg = err?.message?.toLowerCase() ?? '';
+  return msg.includes('aborted') || msg.includes('signal') || msg.includes('failed to fetch');
+}
+
+// Patrón UPDATE-first: muchos proyectos Supabase tienen un trigger que crea la fila
+// en `usuarios` automáticamente al hacer auth.signUp. Por eso intentamos primero
+// actualizar la fila existente. Si no existía, hacemos INSERT.
+// Reintenta hasta 3 veces ante el conocido AbortError de supabase-js.
 async function guardarUsuario(row: { id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null }): Promise<{ data: Usuario | null; error: DBError | null }> {
-  const { data: insertData, error: insertErr } = await supabase
-    .from('usuarios')
-    .insert(row)
-    .select()
-    .single();
+  const updates = { email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null };
 
-  if (!insertErr) return { data: insertData as Usuario, error: null };
+  for (let intento = 0; intento < 3; intento++) {
+    if (intento > 0) await new Promise(r => setTimeout(r, 250 * intento));
 
-  // Si la fila ya existía (trigger), actualízala con los datos correctos
-  if (insertErr.code === '23505') {
-    const { data: updateData, error: updateErr } = await supabase
+    // 1. UPDATE (si la fila ya existe gracias a un trigger)
+    const upd = await supabase
       .from('usuarios')
-      .update({ email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null })
+      .update(updates)
       .eq('id', row.id)
       .select()
-      .single();
-    if (updateErr) return { data: null, error: updateErr };
-    return { data: updateData as Usuario, error: null };
+      .maybeSingle();
+
+    if (upd.data) return { data: upd.data as Usuario, error: null };
+    if (upd.error && esAborto(upd.error)) continue;
+    if (upd.error) return { data: null, error: upd.error };
+
+    // 2. UPDATE no afectó filas → INSERT
+    const ins = await supabase
+      .from('usuarios')
+      .insert(row)
+      .select()
+      .maybeSingle();
+
+    if (ins.data) return { data: ins.data as Usuario, error: null };
+    if (ins.error && esAborto(ins.error)) continue;
+    // Si el insert falla con duplicado tras un update sin filas (raro), volvemos al UPDATE en la siguiente iteración
+    if (ins.error?.code === '23505') continue;
+    if (ins.error) return { data: null, error: ins.error };
   }
 
-  return { data: null, error: insertErr };
+  // Último recurso: leer la fila tal cual está en la BD. Si existe, devolvemos eso.
+  const { data: existente } = await supabase.from('usuarios').select('*').eq('id', row.id).maybeSingle();
+  if (existente) return { data: existente as Usuario, error: null };
+
+  return { data: null, error: { message: 'No se pudieron guardar los datos tras varios intentos.' } };
 }
 
 async function fetchUsuario(userId: string): Promise<Usuario | null> {
@@ -152,6 +175,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 
+    // Espera a que el cliente Supabase termine de actualizar su estado interno tras signUp.
+    // Sin esto, la siguiente request se aborta (bug conocido de supabase-js).
+    await new Promise(r => setTimeout(r, 200));
+
     const { data: usr, error: errUsr } = await guardarUsuario({
       id: data.user.id, email, nombre, rol: 'negocio',
     });
@@ -162,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('negocios')
       .insert({ usuario_id: data.user.id, nombre: nombreNegocio, slug })
       .select()
-      .single();
+      .maybeSingle();
     if (errNeg || !neg) return { error: errNeg ? traducirErrorBD(errNeg, 'negocio') : 'No se pudo crear el negocio.' };
 
     setSession(data.session);
@@ -176,6 +203,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
+
+    await new Promise(r => setTimeout(r, 200));
 
     const { data: usr, error: errUsr } = await guardarUsuario({
       id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null,
