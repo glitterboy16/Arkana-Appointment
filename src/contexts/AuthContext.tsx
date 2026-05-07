@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Usuario, type Negocio, type RolUsuario } from '@/lib/supabase';
 
@@ -31,14 +31,6 @@ interface AuthCtx {
 
 const AuthContext = createContext<AuthCtx | null>(null);
 
-async function fetchUserData(userId: string) {
-  const [{ data: usr }, { data: neg }] = await Promise.all([
-    supabase.from('usuarios').select('*').eq('id', userId).single(),
-    supabase.from('negocios').select('*').eq('usuario_id', userId).single(),
-  ]);
-  return { usuario: usr as Usuario | null, negocio: neg as Negocio | null };
-}
-
 function generarSlug(nombre: string): string {
   return nombre
     .toLowerCase()
@@ -50,7 +42,7 @@ function generarSlug(nombre: string): string {
     .concat('-', Math.random().toString(36).slice(2, 6));
 }
 
-interface DBError { code?: string; message: string; details?: string | null }
+interface DBError { code?: string; message: string }
 
 function traducirErrorBD(err: DBError, contexto: 'usuario' | 'negocio'): string {
   console.error(`[Supabase ${contexto}]`, err);
@@ -73,23 +65,42 @@ function traducirErrorBD(err: DBError, contexto: 'usuario' | 'negocio'): string 
   if (msg.includes('jwt') || msg.includes('not authenticated')) {
     return 'La sesión ha expirado. Recarga la página e intenta de nuevo.';
   }
-  if (msg.includes('aborted') || msg.includes('signal')) {
-    return 'La conexión se cortó. Vuelve a intentarlo.';
-  }
   return `No se pudieron guardar tus datos: ${err.message}`;
 }
 
-// Reintenta cuando el cliente de Supabase aborta la request por carrera con el cambio de sesión
-async function withRetry<T>(fn: () => Promise<{ data: T | null; error: DBError | null }>, maxIntentos = 3) {
-  let lastResult: { data: T | null; error: DBError | null } = { data: null, error: null };
-  for (let i = 0; i < maxIntentos; i++) {
-    lastResult = await fn();
-    const msg = lastResult.error?.message?.toLowerCase() ?? '';
-    const fueAbortado = msg.includes('aborted') || msg.includes('signal') || msg.includes('failed to fetch');
-    if (!lastResult.error || !fueAbortado) return lastResult;
-    await new Promise(r => setTimeout(r, 200 * (i + 1)));
+// Inserta o, si ya existe la fila (porque un trigger la creó), la actualiza.
+async function guardarUsuario(row: { id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null }): Promise<{ data: Usuario | null; error: DBError | null }> {
+  const { data: insertData, error: insertErr } = await supabase
+    .from('usuarios')
+    .insert(row)
+    .select()
+    .single();
+
+  if (!insertErr) return { data: insertData as Usuario, error: null };
+
+  // Si la fila ya existía (trigger), actualízala con los datos correctos
+  if (insertErr.code === '23505') {
+    const { data: updateData, error: updateErr } = await supabase
+      .from('usuarios')
+      .update({ email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null })
+      .eq('id', row.id)
+      .select()
+      .single();
+    if (updateErr) return { data: null, error: updateErr };
+    return { data: updateData as Usuario, error: null };
   }
-  return lastResult;
+
+  return { data: null, error: insertErr };
+}
+
+async function fetchUsuario(userId: string): Promise<Usuario | null> {
+  const { data } = await supabase.from('usuarios').select('*').eq('id', userId).maybeSingle();
+  return (data as Usuario | null) ?? null;
+}
+
+async function fetchNegocio(userId: string): Promise<Negocio | null> {
+  const { data } = await supabase.from('negocios').select('*').eq('usuario_id', userId).maybeSingle();
+  return (data as Negocio | null) ?? null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -97,174 +108,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loading, setLoading] = useState(true);
-  const isRegistering = useRef(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
       setSession(session);
       if (session?.user) {
-        const { usuario, negocio } = await fetchUserData(session.user.id);
-        setUsuario(usuario);
-        setNegocio(negocio);
+        const [usr, neg] = await Promise.all([fetchUsuario(session.user.id), fetchNegocio(session.user.id)]);
+        if (cancelled) return;
+        setUsuario(usr);
+        setNegocio(neg);
       }
       setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      if (!session) {
-        setUsuario(null);
-        setNegocio(null);
-        return;
-      }
-      // skip during signup — state is set directly after inserts complete
-      if (isRegistering.current) return;
-      if (session.user) {
-        const { usuario, negocio } = await fetchUserData(session.user.id);
-        setUsuario(usuario);
-        setNegocio(negocio);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const signIn = async (email: string, password: string, expectedRol: RolUsuario) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
+    if (!data.user || !data.session) return { error: 'No se pudo iniciar sesión.' };
 
-    const { data: usr } = await supabase
-      .from('usuarios')
-      .select('rol')
-      .eq('id', data.user.id)
-      .single();
-
+    const usr = await fetchUsuario(data.user.id);
     const rolReal = (usr?.rol ?? 'negocio') as RolUsuario;
 
     if (rolReal !== expectedRol) {
       await supabase.auth.signOut();
-      const real = rolReal === 'negocio' ? 'negocio' : 'cliente';
-      return { error: `Esta cuenta es de ${real}. Cambia el selector arriba para entrar.` };
+      return { error: `Esta cuenta es de ${rolReal}. Cambia el selector arriba para entrar.` };
     }
 
+    const neg = rolReal === 'negocio' ? await fetchNegocio(data.user.id) : null;
+    setSession(data.session);
+    setUsuario(usr);
+    setNegocio(neg);
     return { error: null, rol: rolReal };
   };
 
-  // Intenta upsert + reintenta + verifica si la fila se guardó (tolera abortos del cliente Supabase)
-  const upsertUsuario = async (row: Record<string, unknown>) => {
-    const upsertResult = await withRetry<Usuario>(async () => {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .upsert(row, { onConflict: 'id' })
-        .select()
-        .single();
-      return { data: data as Usuario | null, error };
-    });
-    if (upsertResult.data) return upsertResult;
-
-    // Si falló, comprobar si el dato sí se guardó (caso clásico de abort tras escritura exitosa)
-    const verificacion = await withRetry<Usuario>(async () => {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('id', row.id as string)
-        .maybeSingle();
-      return { data: data as Usuario | null, error };
-    });
-    if (verificacion.data) return { data: verificacion.data, error: null };
-    return upsertResult;
-  };
-
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
-    isRegistering.current = true;
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) { isRegistering.current = false; return { error: error.message }; }
-    if (!data.user) { isRegistering.current = false; return { error: 'No se pudo crear el usuario' }; }
+    if (error) return { error: error.message };
+    if (!data.user) return { error: 'No se pudo crear el usuario.' };
+    if (!data.session) return { error: null, needsConfirmation: true };
 
-    if (!data.session) {
-      isRegistering.current = false;
-      return { error: null, needsConfirmation: true };
-    }
-
-    const slug = generarSlug(nombreNegocio);
-
-    const { data: newUsr, error: errUsr } = await upsertUsuario({
+    const { data: usr, error: errUsr } = await guardarUsuario({
       id: data.user.id, email, nombre, rol: 'negocio',
     });
+    if (errUsr || !usr) return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario.' };
 
-    if (errUsr || !newUsr) {
-      isRegistering.current = false;
-      return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario' };
-    }
+    const slug = generarSlug(nombreNegocio);
+    const { data: neg, error: errNeg } = await supabase
+      .from('negocios')
+      .insert({ usuario_id: data.user.id, nombre: nombreNegocio, slug })
+      .select()
+      .single();
+    if (errNeg || !neg) return { error: errNeg ? traducirErrorBD(errNeg, 'negocio') : 'No se pudo crear el negocio.' };
 
-    const negResult = await withRetry<Negocio>(async () => {
-      const { data, error } = await supabase
-        .from('negocios')
-        .insert({ usuario_id: newUsr.id, nombre: nombreNegocio, slug })
-        .select()
-        .single();
-      return { data: data as Negocio | null, error };
-    });
-
-    if (negResult.error || !negResult.data) {
-      isRegistering.current = false;
-      return { error: negResult.error ? traducirErrorBD(negResult.error, 'negocio') : 'No se pudo crear el negocio' };
-    }
-
-    setUsuario(newUsr);
-    setNegocio(negResult.data);
-    isRegistering.current = false;
+    setSession(data.session);
+    setUsuario(usr);
+    setNegocio(neg as Negocio);
     return { error: null };
   };
 
   const signUpCliente = async ({ email, password, nombre, telefono }: SignUpClienteData) => {
-    isRegistering.current = true;
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) { isRegistering.current = false; return { error: error.message }; }
-    if (!data.user) { isRegistering.current = false; return { error: 'No se pudo crear el usuario' }; }
+    if (error) return { error: error.message };
+    if (!data.user) return { error: 'No se pudo crear el usuario.' };
+    if (!data.session) return { error: null, needsConfirmation: true };
 
-    if (!data.session) {
-      isRegistering.current = false;
-      return { error: null, needsConfirmation: true };
-    }
-
-    const { data: newUsr, error: errUsr } = await upsertUsuario({
+    const { data: usr, error: errUsr } = await guardarUsuario({
       id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null,
     });
+    if (errUsr || !usr) return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario.' };
 
-    if (errUsr || !newUsr) {
-      isRegistering.current = false;
-      return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario' };
-    }
-
-    setUsuario(newUsr);
+    setSession(data.session);
+    setUsuario(usr);
     setNegocio(null);
-    isRegistering.current = false;
     return { error: null };
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUsuario(null);
+    setNegocio(null);
   };
 
   const refreshNegocio = async () => {
     if (!session?.user) return;
-    const { data } = await supabase
-      .from('negocios')
-      .select('*')
-      .eq('usuario_id', session.user.id)
-      .single();
-    if (data) setNegocio(data as Negocio);
+    const neg = await fetchNegocio(session.user.id);
+    setNegocio(neg);
   };
 
   const refreshUsuario = async () => {
     if (!session?.user) return;
-    const { data } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', session.user.id)
-      .single();
-    if (data) setUsuario(data as Usuario);
+    const usr = await fetchUsuario(session.user.id);
+    setUsuario(usr);
   };
 
   return (
