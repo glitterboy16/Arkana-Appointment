@@ -142,12 +142,22 @@ async function guardarUsuario(
   return { data: null, error: ins.error ?? upd.error ?? { message: 'No se pudieron guardar los datos.' } };
 }
 
-async function fetchUsuario(userId: string): Promise<Usuario | null> {
+// Lecturas tras login/signup usan fetch directo (el cliente supabase-js queda
+// roto tras operaciones de auth y aborta peticiones silenciosamente).
+async function fetchUsuario(userId: string, accessToken?: string): Promise<Usuario | null> {
+  if (accessToken) {
+    const { data } = await postgrest<Usuario>(`usuarios?id=eq.${userId}&select=*`, { method: 'GET' }, accessToken);
+    return data;
+  }
   const { data } = await supabase.from('usuarios').select('*').eq('id', userId).maybeSingle();
   return (data as Usuario | null) ?? null;
 }
 
-async function fetchNegocio(userId: string): Promise<Negocio | null> {
+async function fetchNegocio(userId: string, accessToken?: string): Promise<Negocio | null> {
+  if (accessToken) {
+    const { data } = await postgrest<Negocio>(`negocios?usuario_id=eq.${userId}&select=*`, { method: 'GET' }, accessToken);
+    return data;
+  }
   const { data } = await supabase.from('negocios').select('*').eq('usuario_id', userId).maybeSingle();
   return (data as Negocio | null) ?? null;
 }
@@ -165,7 +175,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       setSession(session);
       if (session?.user) {
-        const [usr, neg] = await Promise.all([fetchUsuario(session.user.id), fetchNegocio(session.user.id)]);
+        const token = session.access_token;
+        const [usr, neg] = await Promise.all([
+          fetchUsuario(session.user.id, token),
+          fetchNegocio(session.user.id, token),
+        ]);
         if (cancelled) return;
         setUsuario(usr);
         setNegocio(neg);
@@ -181,13 +195,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) { console.error('[Arkana] signIn - error auth:', error); return { error: error.message }; }
     if (!data.user || !data.session) return { error: 'No se pudo iniciar sesión.' };
 
-    console.log('[Arkana] signIn - auth OK, fetching usuario para id:', data.user.id);
-    const usr = await fetchUsuario(data.user.id);
+    const token = data.session.access_token;
+    console.log('[Arkana] signIn - auth OK, fetching usuario (vía REST) para id:', data.user.id);
+    const usr = await fetchUsuario(data.user.id, token);
     console.log('[Arkana] signIn - usuario en BD:', usr);
 
     if (!usr) {
       await supabase.auth.signOut();
-      return { error: 'Tu cuenta existe pero no tiene perfil. Vuelve a registrarte o contacta soporte.' };
+      return { error: 'Tu cuenta existe pero no tiene perfil en la base de datos. Vuelve a registrarte.' };
     }
 
     const rolReal = usr.rol;
@@ -197,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: `Esta cuenta es de ${rolReal}. Cambia el selector arriba para entrar.` };
     }
 
-    const neg = rolReal === 'negocio' ? await fetchNegocio(data.user.id) : null;
+    const neg = rolReal === 'negocio' ? await fetchNegocio(data.user.id, token) : null;
     setSession(data.session);
     setUsuario(usr);
     setNegocio(neg);
@@ -261,13 +276,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshNegocio = async () => {
     if (!session?.user) return;
-    const neg = await fetchNegocio(session.user.id);
+    const neg = await fetchNegocio(session.user.id, session.access_token);
     setNegocio(neg);
   };
 
   const refreshUsuario = async () => {
     if (!session?.user) return;
-    const usr = await fetchUsuario(session.user.id);
+    const usr = await fetchUsuario(session.user.id, session.access_token);
     setUsuario(usr);
   };
 
