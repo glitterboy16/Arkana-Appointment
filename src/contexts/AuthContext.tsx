@@ -50,6 +50,32 @@ function generarSlug(nombre: string): string {
     .concat('-', Math.random().toString(36).slice(2, 6));
 }
 
+interface DBError { code?: string; message: string; details?: string | null }
+
+function traducirErrorBD(err: DBError, contexto: 'usuario' | 'negocio'): string {
+  console.error(`[Supabase ${contexto}]`, err);
+  const msg = err.message?.toLowerCase() ?? '';
+
+  if (err.code === '23505' || msg.includes('duplicate key')) {
+    return contexto === 'negocio'
+      ? 'Ya existe un negocio con ese nombre. Prueba con otro.'
+      : 'Ya tienes una cuenta con este email.';
+  }
+  if (err.code === '42501' || msg.includes('row-level security') || msg.includes('permission denied')) {
+    return 'Permisos insuficientes en la base de datos. Avisa al administrador.';
+  }
+  if (err.code === '23503' || msg.includes('foreign key')) {
+    return 'Error de integridad en los datos. Intenta de nuevo.';
+  }
+  if (err.code === '23502' || msg.includes('not-null')) {
+    return 'Falta un dato obligatorio. Revisa el formulario.';
+  }
+  if (msg.includes('jwt') || msg.includes('not authenticated')) {
+    return 'La sesión ha expirado. Recarga la página e intenta de nuevo.';
+  }
+  return `No se pudieron guardar tus datos: ${err.message}`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -121,13 +147,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const slug = generarSlug(nombreNegocio);
 
+    // upsert para tolerar triggers de Supabase que ya hayan creado la fila
     const { data: newUsr, error: errUsr } = await supabase
       .from('usuarios')
-      .insert({ id: data.user.id, email, nombre, rol: 'negocio' })
+      .upsert({ id: data.user.id, email, nombre, rol: 'negocio' }, { onConflict: 'id' })
       .select()
       .single();
 
-    if (errUsr) { isRegistering.current = false; return { error: 'Error guardando datos del usuario.' }; }
+    if (errUsr) {
+      isRegistering.current = false;
+      return { error: traducirErrorBD(errUsr, 'usuario') };
+    }
 
     const { data: newNeg, error: errNeg } = await supabase
       .from('negocios')
@@ -135,7 +165,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select()
       .single();
 
-    if (errNeg) { isRegistering.current = false; return { error: 'Error guardando datos del negocio.' }; }
+    if (errNeg) {
+      isRegistering.current = false;
+      return { error: traducirErrorBD(errNeg, 'negocio') };
+    }
 
     setUsuario(newUsr as Usuario);
     setNegocio(newNeg as Negocio);
@@ -156,13 +189,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: newUsr, error: errUsr } = await supabase
       .from('usuarios')
-      .insert({ id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null })
+      .upsert(
+        { id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null },
+        { onConflict: 'id' },
+      )
       .select()
       .single();
 
     if (errUsr) {
       isRegistering.current = false;
-      return { error: 'Error guardando datos. Comprueba que el email no está ya registrado.' };
+      return { error: traducirErrorBD(errUsr, 'usuario') };
     }
 
     setUsuario(newUsr as Usuario);
