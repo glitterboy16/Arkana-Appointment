@@ -68,66 +68,78 @@ function traducirErrorBD(err: DBError, contexto: 'usuario' | 'negocio'): string 
   return `No se pudieron guardar tus datos: ${err.message}`;
 }
 
-function esAborto(err: { message?: string } | null): boolean {
-  const msg = err?.message?.toLowerCase() ?? '';
-  return msg.includes('aborted') || msg.includes('signal') || msg.includes('failed to fetch');
+// Workaround: el cliente supabase-js entra en estado roto tras auth.signUp por un
+// AbortError interno (issue conocido). Para guardar el perfil en /usuarios usamos
+// fetch directo contra PostgREST, saltándonos el cliente roto.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+async function postgrest<T>(
+  path: string,
+  init: RequestInit,
+  accessToken: string,
+): Promise<{ data: T | null; error: DBError | null }> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      ...init,
+      headers: {
+        ...(init.headers ?? {}),
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+    });
+    const text = await res.text();
+    const body = text ? JSON.parse(text) : null;
+    if (!res.ok) {
+      return { data: null, error: { message: body?.message ?? res.statusText, code: body?.code } };
+    }
+    const data = Array.isArray(body) ? (body[0] ?? null) : body;
+    return { data: data as T | null, error: null };
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Error de red';
+    return { data: null, error: { message } };
+  }
 }
 
-async function guardarUsuario(row: { id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null }): Promise<{ data: Usuario | null; error: DBError | null }> {
+async function guardarUsuario(
+  row: { id: string; email: string; nombre: string; rol: RolUsuario; telefono?: string | null },
+  accessToken: string,
+): Promise<{ data: Usuario | null; error: DBError | null }> {
   const updates = { email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null };
-  console.log('[Arkana] guardarUsuario - empezando con:', { id: row.id, rol: row.rol });
+  console.log('[Arkana] guardarUsuario (fetch directo) - id:', row.id, 'rol:', row.rol);
 
-  for (let intento = 0; intento < 4; intento++) {
-    if (intento > 0) {
-      const espera = 500 * intento;
-      console.log(`[Arkana] guardarUsuario - reintento ${intento} tras ${espera}ms`);
-      await new Promise(r => setTimeout(r, espera));
-    }
+  // 1. UPDATE (por si un trigger ya creó la fila)
+  const upd = await postgrest<Usuario>(`usuarios?id=eq.${row.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  }, accessToken);
+  console.log('[Arkana] PATCH resultado:', { hayData: !!upd.data, error: upd.error });
+  if (upd.data) return upd;
 
-    // 1. UPDATE (si la fila ya existe gracias a un trigger)
-    console.log('[Arkana] guardarUsuario - probando UPDATE');
-    const upd = await supabase
-      .from('usuarios')
-      .update(updates)
-      .eq('id', row.id)
-      .select()
-      .maybeSingle();
-    console.log('[Arkana] guardarUsuario - UPDATE resultado:', { hayData: !!upd.data, error: upd.error });
+  // 2. INSERT
+  const ins = await postgrest<Usuario>('usuarios', {
+    method: 'POST',
+    body: JSON.stringify(row),
+  }, accessToken);
+  console.log('[Arkana] POST resultado:', { hayData: !!ins.data, error: ins.error });
+  if (ins.data) return ins;
 
-    if (upd.data) return { data: upd.data as Usuario, error: null };
-    if (upd.error && esAborto(upd.error)) continue;
-    if (upd.error) return { data: null, error: upd.error };
-
-    // 2. UPDATE no afectó filas → INSERT
-    console.log('[Arkana] guardarUsuario - probando INSERT');
-    const ins = await supabase
-      .from('usuarios')
-      .insert(row)
-      .select()
-      .maybeSingle();
-    console.log('[Arkana] guardarUsuario - INSERT resultado:', { hayData: !!ins.data, error: ins.error });
-
-    if (ins.data) return { data: ins.data as Usuario, error: null };
-    if (ins.error && esAborto(ins.error)) continue;
-    if (ins.error?.code === '23505') continue;
-    if (ins.error) return { data: null, error: ins.error };
+  // 3. Si insert falla por duplicado, reintenta UPDATE una vez más
+  if (ins.error?.code === '23505') {
+    const upd2 = await postgrest<Usuario>(`usuarios?id=eq.${row.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    }, accessToken);
+    if (upd2.data) return upd2;
   }
 
-  // Último recurso: leer la fila tal cual está en la BD
-  console.log('[Arkana] guardarUsuario - reintentos agotados, leyendo fila existente');
-  const { data: existente, error: errLeer } = await supabase.from('usuarios').select('*').eq('id', row.id).maybeSingle();
-  console.log('[Arkana] guardarUsuario - lectura final:', { hayData: !!existente, error: errLeer });
-  if (existente) {
-    // Si está pero con rol distinto al solicitado, intentamos un último UPDATE
-    if ((existente as Usuario).rol !== row.rol) {
-      console.log('[Arkana] guardarUsuario - rol distinto, último intento de UPDATE');
-      const fix = await supabase.from('usuarios').update(updates).eq('id', row.id).select().maybeSingle();
-      if (fix.data) return { data: fix.data as Usuario, error: null };
-    }
-    return { data: existente as Usuario, error: null };
-  }
+  // 4. Último recurso: leer lo que haya
+  const get = await postgrest<Usuario>(`usuarios?id=eq.${row.id}&select=*`, { method: 'GET' }, accessToken);
+  if (get.data) return get;
 
-  return { data: null, error: { message: 'No se pudieron guardar los datos tras varios intentos.' } };
+  return { data: null, error: ins.error ?? upd.error ?? { message: 'No se pudieron guardar los datos.' } };
 }
 
 async function fetchUsuario(userId: string): Promise<Usuario | null> {
@@ -199,26 +211,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 
-    // Espera a que el cliente Supabase termine de actualizar su estado interno tras signUp.
-    // Sin esto, la siguiente request se aborta (bug conocido de supabase-js).
-    await new Promise(r => setTimeout(r, 200));
+    const token = data.session.access_token;
 
-    const { data: usr, error: errUsr } = await guardarUsuario({
-      id: data.user.id, email, nombre, rol: 'negocio',
-    });
+    const { data: usr, error: errUsr } = await guardarUsuario(
+      { id: data.user.id, email, nombre, rol: 'negocio' },
+      token,
+    );
     if (errUsr || !usr) return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario.' };
 
     const slug = generarSlug(nombreNegocio);
-    const { data: neg, error: errNeg } = await supabase
-      .from('negocios')
-      .insert({ usuario_id: data.user.id, nombre: nombreNegocio, slug })
-      .select()
-      .maybeSingle();
-    if (errNeg || !neg) return { error: errNeg ? traducirErrorBD(errNeg, 'negocio') : 'No se pudo crear el negocio.' };
+    const neg = await postgrest<Negocio>('negocios', {
+      method: 'POST',
+      body: JSON.stringify({ usuario_id: data.user.id, nombre: nombreNegocio, slug }),
+    }, token);
+    if (neg.error || !neg.data) return { error: neg.error ? traducirErrorBD(neg.error, 'negocio') : 'No se pudo crear el negocio.' };
 
     setSession(data.session);
     setUsuario(usr);
-    setNegocio(neg as Negocio);
+    setNegocio(neg.data);
     return { error: null };
   };
 
@@ -228,11 +238,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 
-    await new Promise(r => setTimeout(r, 200));
+    const token = data.session.access_token;
 
-    const { data: usr, error: errUsr } = await guardarUsuario({
-      id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null,
-    });
+    const { data: usr, error: errUsr } = await guardarUsuario(
+      { id: data.user.id, email, nombre, rol: 'cliente', telefono: telefono || null },
+      token,
+    );
     if (errUsr || !usr) return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario.' };
 
     setSession(data.session);
