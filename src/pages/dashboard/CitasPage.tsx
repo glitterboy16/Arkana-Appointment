@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
@@ -110,6 +111,7 @@ const TABS: { id: FilterId; label: string }[] = [
 
 export default function CitasPage() {
   const { negocio } = useAuth();
+  const navigate = useNavigate();
   const [citas, setCitas] = useState<CitaConServicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterId>('all');
@@ -153,7 +155,12 @@ export default function CitasPage() {
           <div style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Mis citas
           </div>
-          <Btn variant="primary" size="sm">
+          <Btn
+            variant="primary"
+            size="sm"
+            onClick={() => negocio && navigate(`/n/${negocio.slug}?fromPanel=1`)}
+            disabled={!negocio}
+          >
             {ArkanaIcons.plus} Nueva cita
           </Btn>
         </div>

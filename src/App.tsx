@@ -25,6 +25,7 @@ export default function App() {
         <Route path="/panel" element={<AppLayout />}>
           <Route index element={<PanelPage />} />
           <Route path="citas" element={<CitasPage />} />
+          <Route path="notificaciones" element={<NotificacionesPage />} />
           <Route path="perfil" element={<PerfilNegocioPage />} />
           <Route path="configuracion" element={<ConfiguracionNegocioPage />} />
         </Route>

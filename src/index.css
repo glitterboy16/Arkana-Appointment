@@ -132,7 +132,7 @@
     will-change: transform, opacity;
 }
 
-/* SVG es azul oscuro; en dark mode lo invertimos a blanco, en light se ve nativo */
+/* En modo oscuro forzamos el logo a blanco puro; en claro se ve nativo. */
 :root .arkana-hero-logo { filter: brightness(0) invert(1); transition: filter 220ms ease; }
 :root[data-theme="light"] .arkana-hero-logo { filter: none; }
 
