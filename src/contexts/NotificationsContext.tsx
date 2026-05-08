@@ -37,8 +37,15 @@ const NotificationsContext = createContext<NotifCtx | null>(null);
 
 const STORAGE_KEY = 'arkana.notifs.v1';
 const LAST_CHECK_KEY = 'arkana.notifs.lastCheck.v1';
+const CITAS_SNAPSHOT_KEY = 'arkana.notifs.citasSnapshot.v1';
 const MAX_ITEMS = 30;
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 10_000;
+
+interface CitaSnapshot {
+  estado: string;
+  fecha: string;
+  hora_inicio: string;
+}
 
 function loadStored(): NotifItem[] {
   try {
@@ -211,10 +218,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => { void supabase.removeChannel(channel); };
   }, [session?.user, usuario, negocio?.id, push]);
 
-  // Polling de respaldo: si supabase realtime no está activado en la tabla
-  // 'citas', el negocio igual recibe las notifs revisando cada 30s las citas
-  // creadas desde la última verificación. La dedup por (citaId+kind) evita
-  // duplicados con realtime cuando ambos funcionan.
+  // Polling de respaldo para el NEGOCIO: detecta citas nuevas creadas por
+  // clientes incluso si realtime de Supabase está caído.
   useEffect(() => {
     if (!session?.user || !usuario || usuario.rol !== 'negocio' || !negocio?.id) return;
 
@@ -271,6 +276,111 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [session?.user, usuario, negocio?.id, push]);
+
+  // Polling de respaldo para el CLIENTE: si realtime falla, comparamos un
+  // snapshot de las citas del cliente con el estado actual cada 10s. Cualquier
+  // cambio de fecha/hora o estado dispara la notificacion correspondiente.
+  // La dedup por (citaId+kind) en push() evita duplicados con realtime.
+  useEffect(() => {
+    if (!session?.user || !usuario || usuario.rol !== 'cliente') return;
+
+    let cancelled = false;
+
+    // Snapshot inicial: leer lo que tengamos guardado en localStorage
+    const loadSnapshot = (): Record<string, CitaSnapshot> => {
+      try {
+        const raw = localStorage.getItem(CITAS_SNAPSHOT_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch { return {}; }
+    };
+    const saveSnapshot = (snap: Record<string, CitaSnapshot>) => {
+      try { localStorage.setItem(CITAS_SNAPSHOT_KEY, JSON.stringify(snap)); } catch { /* ignorar */ }
+    };
+
+    let snapshot = loadSnapshot();
+    const negocioNombreCache = new Map<string, string>();
+
+    const resolverNegocioNombre = async (negocioId: string): Promise<string> => {
+      const cached = negocioNombreCache.get(negocioId);
+      if (cached) return cached;
+      const { data } = await supabase
+        .from('negocios')
+        .select('nombre')
+        .eq('id', negocioId)
+        .maybeSingle();
+      const nombre = data?.nombre ?? 'El negocio';
+      negocioNombreCache.set(negocioId, nombre);
+      return nombre;
+    };
+
+    const pollOnce = async () => {
+      const { data, error } = await supabase
+        .from('citas')
+        .select('id, negocio_id, fecha, hora_inicio, estado')
+        .eq('cliente_id', usuario.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (cancelled || error || !data) return;
+
+      const nextSnapshot: Record<string, CitaSnapshot> = {};
+      for (const c of data as Array<Pick<Cita, 'id' | 'negocio_id' | 'fecha' | 'hora_inicio' | 'estado'>>) {
+        const actual: CitaSnapshot = { estado: c.estado, fecha: c.fecha, hora_inicio: c.hora_inicio };
+        nextSnapshot[c.id] = actual;
+
+        const previo = snapshot[c.id];
+        if (!previo) continue; // primera vez que vemos esta cita: no emitir
+
+        const cambioFecha = previo.fecha !== actual.fecha;
+        const cambioHora  = previo.hora_inicio !== actual.hora_inicio;
+        const cambioEstado = previo.estado !== actual.estado;
+        if (!cambioFecha && !cambioHora && !cambioEstado) continue;
+
+        const negocioNombre = await resolverNegocioNombre(c.negocio_id);
+
+        if (cambioFecha || cambioHora) {
+          push({
+            citaId: c.id,
+            kind: 'cita_reagendada',
+            titulo: `${negocioNombre} reagendó tu cita`,
+            detalle: `Nueva fecha: ${formatearFecha(actual.fecha, actual.hora_inicio)}`,
+          });
+          continue;
+        }
+        if (cambioEstado) {
+          if (actual.estado === 'confirmed') {
+            push({
+              citaId: c.id,
+              kind: 'cita_confirmada',
+              titulo: `${negocioNombre} confirmó tu cita`,
+              detalle: formatearFecha(actual.fecha, actual.hora_inicio),
+            });
+          } else if (actual.estado === 'cancelled') {
+            push({
+              citaId: c.id,
+              kind: 'cita_cancelada',
+              titulo: `${negocioNombre} canceló tu cita`,
+              detalle: `Estado anterior: ${nombreEstado(previo.estado as Cita['estado'])}`,
+            });
+          }
+        }
+      }
+
+      snapshot = nextSnapshot;
+      saveSnapshot(snapshot);
+    };
+
+    void pollOnce();
+    const interval = window.setInterval(() => { void pollOnce(); }, POLL_INTERVAL_MS);
+    const onVisible = () => { if (!document.hidden) void pollOnce(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [session?.user, usuario, push]);
 
   const unread = items.filter(n => !n.leida).length;
 
