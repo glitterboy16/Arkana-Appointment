@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import toast from 'react-hot-toast';
+import { BiCalendarEdit } from 'react-icons/bi';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Cita } from '@/lib/supabase';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
+import ConfirmModal from '@/components/app/ConfirmModal';
+import ReagendarModal from '@/components/app/ReagendarModal';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number; precio_centimos: number } | null;
@@ -30,27 +34,27 @@ function avatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
 }
 
-function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onStatusChange: (id: string, status: AppointmentStatus) => void }) {
-  const [saving, setSaving] = useState(false);
-
-  const handleConfirm = async () => {
-    setSaving(true);
-    await onStatusChange(cita.id, 'confirmed');
-    setSaving(false);
-  };
-
-  const handleCancel = async () => {
-    setSaving(true);
-    await onStatusChange(cita.id, 'cancelled');
-    setSaving(false);
-  };
-
+function AppointmentRow({
+  cita,
+  saving,
+  onConfirm,
+  onAskCancel,
+  onAskReagendar,
+}: {
+  cita: CitaConServicio;
+  saving: boolean;
+  onConfirm: (id: string) => void;
+  onAskCancel: (cita: CitaConServicio) => void;
+  onAskReagendar: (cita: CitaConServicio) => void;
+}) {
+  const cancelada = cita.estado === 'cancelled';
   return (
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
         borderBottom: '1px solid var(--app-border)', transition: 'background 150ms ease',
         flexWrap: 'wrap',
+        opacity: cancelada ? 0.55 : 1,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--app-surface-hover)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -74,29 +78,41 @@ function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onSta
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Badge status={cita.estado as AppointmentStatus} />
       </div>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        {saving && <Spinner size={12} />}
-        {cita.estado === 'new' && (
-          <button type="button" disabled={saving} onClick={handleConfirm} style={{
-            padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(34,197,94,0.4)',
-            background: 'rgba(34,197,94,0.10)', color: '#22C55E', fontSize: 11, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-            opacity: saving ? 0.5 : 1,
-          }}>
-            Confirmar
+      {!cancelada && (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          {saving && <Spinner size={12} />}
+          {(cita.estado === 'new' || cita.estado === 'pending') && (
+            <button type="button" disabled={saving} onClick={() => onConfirm(cita.id)} style={btnAction('#22C55E', saving)}>
+              Confirmar
+            </button>
+          )}
+          <button type="button" disabled={saving} onClick={() => onAskReagendar(cita)} style={btnAction('#648DFF', saving)}>
+            <BiCalendarEdit size={12} style={{ marginRight: 4 }} />
+            Reagendar
           </button>
-        )}
-        {(cita.estado === 'new' || cita.estado === 'pending') && (
-          <button type="button" disabled={saving} onClick={handleCancel} style={{
-            padding: '5px 10px', borderRadius: 6, border: '1px solid var(--app-border)',
-            background: 'transparent', color: 'var(--app-muted)', fontSize: 11, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-            opacity: saving ? 0.5 : 1,
-          }}>
+          <button type="button" disabled={saving} onClick={() => onAskCancel(cita)} style={btnAction('#EF4444', saving)}>
             Cancelar
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function btnAction(color: string, disabled: boolean): React.CSSProperties {
+  const rgb = color === '#22C55E' ? '34,197,94'
+    : color === '#EF4444'        ? '239,68,68'
+    : color === '#648DFF'        ? '100,141,255'
+    : '100,141,255';
+  return {
+    padding: '5px 10px', borderRadius: 6,
+    border: `1px solid rgba(${rgb},0.4)`,
+    background: `rgba(${rgb},0.10)`,
+    color, fontSize: 11, fontFamily: 'inherit',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    display: 'inline-flex', alignItems: 'center',
+    opacity: disabled ? 0.5 : 1,
+  };
 }
 
 type FilterId = 'all' | AppointmentStatus;
@@ -115,6 +131,9 @@ export default function CitasPage() {
   const [citas, setCitas] = useState<CitaConServicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterId>('all');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [citaACancelar, setCitaACancelar] = useState<CitaConServicio | null>(null);
+  const [citaAReagendar, setCitaAReagendar] = useState<CitaConServicio | null>(null);
 
   useEffect(() => {
     if (!negocio) { setLoading(false); return; }
@@ -135,11 +154,44 @@ export default function CitasPage() {
     load();
   }, [negocio]);
 
-  const handleStatusChange = async (id: string, status: AppointmentStatus) => {
-    const { error } = await supabase.from('citas').update({ estado: status }).eq('id', id);
-    if (!error) {
-      setCitas((prev) => prev.map((c) => c.id === id ? { ...c, estado: status } : c));
-    }
+  const handleConfirmar = async (id: string) => {
+    setSavingId(id);
+    const { error } = await supabase.from('citas').update({ estado: 'confirmed' }).eq('id', id);
+    setSavingId(null);
+    if (error) { toast.error('No se pudo confirmar la cita'); return; }
+    setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: 'confirmed' } : c));
+    toast.success('Cita confirmada');
+  };
+
+  const handleCancelarConfirmado = async () => {
+    if (!citaACancelar) return;
+    const id = citaACancelar.id;
+    setSavingId(id);
+    const { error } = await supabase.from('citas').update({ estado: 'cancelled' }).eq('id', id);
+    setSavingId(null);
+    setCitaACancelar(null);
+    if (error) { toast.error('No se pudo cancelar la cita'); return; }
+    setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: 'cancelled' } : c));
+    toast.success('Cita cancelada');
+  };
+
+  const handleReagendarConfirmado = async (fecha: string, hora: string) => {
+    if (!citaAReagendar) return;
+    const id = citaAReagendar.id;
+    setSavingId(id);
+    const horaConSec = hora.length === 5 ? `${hora}:00` : hora;
+    const { error } = await supabase
+      .from('citas')
+      .update({ fecha, hora_inicio: horaConSec })
+      .eq('id', id);
+    setSavingId(null);
+    setCitaAReagendar(null);
+    if (error) { toast.error('No se pudo reagendar la cita'); return; }
+    setCitas(prev => prev
+      .map(c => c.id === id ? { ...c, fecha, hora_inicio: horaConSec } : c)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.hora_inicio.localeCompare(b.hora_inicio))
+    );
+    toast.success('Cita reagendada');
   };
 
   const filtered = filter === 'all' ? citas : citas.filter((c) => c.estado === filter);
@@ -199,13 +251,44 @@ export default function CitasPage() {
                 borderRadius: 12, overflow: 'hidden',
               }}>
                 {list.map((c) => (
-                  <AppointmentRow key={c.id} cita={c} onStatusChange={handleStatusChange} />
+                  <AppointmentRow
+                    key={c.id}
+                    cita={c}
+                    saving={savingId === c.id}
+                    onConfirm={handleConfirmar}
+                    onAskCancel={setCitaACancelar}
+                    onAskReagendar={setCitaAReagendar}
+                  />
                 ))}
               </div>
             </div>
           ))
         )}
       </div>
+
+      <ConfirmModal
+        open={!!citaACancelar}
+        title="¿Cancelar esta cita?"
+        message={citaACancelar ? (
+          <>
+            Vas a cancelar la cita de <strong style={{ color: 'var(--app-text)' }}>{citaACancelar.cliente_nombre}</strong> del <strong style={{ color: 'var(--app-text)' }}>{format(parseISO(citaACancelar.fecha), "d 'de' MMMM", { locale: es })}</strong> a las <strong style={{ color: 'var(--app-text)' }}>{citaACancelar.hora_inicio.slice(0, 5)}</strong>. El cliente recibirá una notificación.
+          </>
+        ) : null}
+        confirmLabel="Sí, cancelar"
+        cancelLabel="Volver"
+        variant="danger"
+        loading={!!savingId && !!citaACancelar && savingId === citaACancelar.id}
+        onConfirm={handleCancelarConfirmado}
+        onCancel={() => { if (!savingId) setCitaACancelar(null); }}
+      />
+
+      <ReagendarModal
+        open={!!citaAReagendar}
+        citaInfo={citaAReagendar ? { cliente_nombre: citaAReagendar.cliente_nombre, fecha: citaAReagendar.fecha, hora_inicio: citaAReagendar.hora_inicio } : null}
+        loading={!!savingId && !!citaAReagendar && savingId === citaAReagendar.id}
+        onConfirm={handleReagendarConfirmado}
+        onCancel={() => { if (!savingId) setCitaAReagendar(null); }}
+      />
     </div>
   );
 }
