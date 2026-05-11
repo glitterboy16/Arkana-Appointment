@@ -196,13 +196,13 @@
     --app-footer-bg:     #050A30;
     --app-chip-bg:       #F3F4F6;
     --app-modal-bg:      #FFFFFF;
-    --app-input-bg:      #F2F3F5;
+    --app-input-bg:      #FFFFFF;
     --app-secondary-bg:  #F2F3F5;
     --app-secondary-text:#111827;
     --app-overlay:       rgba(9, 20, 42, 0.6);
-    --app-sidebar-bg:    #050A30;
-    --app-nav-active:    rgba(100, 141, 255, 0.15);
-    --app-nav-hover:     rgba(255, 255, 255, 0.07);
+    --app-sidebar-bg:    #FFFFFF;
+    --app-nav-active:    rgba(0, 74, 173, 0.10);
+    --app-nav-hover:     rgba(0, 0, 0, 0.04);
     --app-accent:        #648DFF;
     --app-primary:       #004AAD;
 }
@@ -217,12 +217,23 @@ body {
     background: var(--app-bg);
     color: var(--app-text);
     overflow-x: hidden;
-    transition: background-color 180ms ease, color 180ms ease;
+    transition: background-color 220ms ease, color 220ms ease;
 }
 
 * { box-sizing: border-box; }
 
 button, input, select, textarea { font: inherit; }
+
+/* Transición suave global en cambios de tema */
+:root, :root[data-theme="light"] {
+    color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surface-strong,
+.app-chip, .app-input, .app-sidebar, .app-navbar, .ark-input {
+    transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
 
 /* ── Utility classes ── */
 .app-shell         { background: var(--app-bg); color: var(--app-text); }

@@ -43,12 +43,12 @@ export default function ClienteSidebar() {
 
   return (
     <aside style={{
-      width: 220, height: '100%', background: '#050A30', borderRight: '1px solid rgba(255,255,255,0.08)',
+      width: 220, height: '100%', background: 'var(--app-sidebar-bg)', borderRight: '1px solid var(--app-border)',
       display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto', overflowX: 'hidden',
     }}>
       <div style={{
         padding: '18px 16px 14px', display: 'flex', alignItems: 'center', gap: 10,
-        borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0,
+        borderBottom: '1px solid var(--app-border)', flexShrink: 0,
       }}>
         <div style={{
           width: 30, height: 30, background: '#004AAD', borderRadius: 8,
@@ -57,14 +57,14 @@ export default function ClienteSidebar() {
           <LogoArkana size={22} onBrand />
         </div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA', letterSpacing: '-0.01em' }}>Arkana</div>
-          <div style={{ fontSize: 10, color: 'rgba(250,250,250,0.4)', marginTop: 1 }}>Appointments</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>
+          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Appointments</div>
         </div>
       </div>
 
       <div style={{
-        margin: '10px 10px 4px', background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8, padding: '8px 10px',
+        margin: '10px 10px 4px', background: 'var(--app-surface)',
+        border: '1px solid var(--app-border)', borderRadius: 8, padding: '8px 10px',
         display: 'flex', alignItems: 'center', gap: 8,
       }}>
         {usuario?.foto_url ? (
@@ -78,12 +78,12 @@ export default function ClienteSidebar() {
         )}
         <div style={{ overflow: 'hidden' }}>
           <div style={{
-            fontSize: 12, fontWeight: 600, color: '#FAFAFA', lineHeight: 1.3,
+            fontSize: 12, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {usuario?.nombre ?? '—'}
           </div>
-          <div style={{ fontSize: 10, color: 'rgba(250,250,250,0.40)', marginTop: 1 }}>Cliente</div>
+          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Cliente</div>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export default function ClienteSidebar() {
               {showSection && (
                 <div style={{
                   fontSize: 9, letterSpacing: '0.10em', textTransform: 'uppercase',
-                  color: 'rgba(250,250,250,0.30)', padding: '10px 16px 4px', fontFamily: 'monospace',
+                  color: 'var(--app-subtle)', padding: '10px 16px 4px', fontFamily: 'monospace',
                 }}>
                   {item.section}
                 </div>
@@ -110,14 +110,16 @@ export default function ClienteSidebar() {
                   margin: '1px 8px', borderRadius: 7, fontSize: 13,
                   cursor: clickable ? 'pointer' : 'default',
                   transition: 'all 150ms ease',
-                  color: active ? '#FAFAFA' : 'rgba(250,250,250,0.60)',
-                  background: active ? 'rgba(100,141,255,0.15)' : 'transparent',
+                  color: active ? 'var(--app-text)' : 'var(--app-muted)',
+                  background: active ? 'var(--app-nav-active)' : 'transparent',
                   fontWeight: active ? 600 : 400,
                   border: 'none',
                   width: 'calc(100% - 16px)',
                   textAlign: 'left',
                   fontFamily: 'inherit',
                 }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--app-nav-hover)'; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
               >
                 <span style={{ opacity: active ? 1 : 0.65, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                   {item.icon}

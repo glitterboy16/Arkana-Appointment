@@ -55,7 +55,7 @@ export default function BuscarNegociosPage() {
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
           Buscar negocios
         </h1>
-        <p style={{ color: 'rgba(250,250,250,0.55)', fontSize: 14, marginTop: 6 }}>
+        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Encuentra el negocio que buscas y reserva tu cita.
         </p>
       </div>
@@ -73,7 +73,7 @@ export default function BuscarNegociosPage() {
           style={{ ...inputStyle, minWidth: 180, cursor: 'pointer' }}
         >
           {categorias.map(c => (
-            <option key={c} value={c} style={{ background: '#050A30' }}>
+            <option key={c} value={c} style={{ background: 'var(--app-bg-elevated)', color: 'var(--app-text)' }}>
               {c === 'todas' ? 'Todas las categorías' : c}
             </option>
           ))}
@@ -81,11 +81,11 @@ export default function BuscarNegociosPage() {
       </div>
 
       {loading ? (
-        <div style={{ color: 'rgba(250,250,250,0.45)', fontSize: 14 }}>Cargando negocios…</div>
+        <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando negocios…</div>
       ) : filtrados.length === 0 ? (
         <div style={{
-          background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.10)',
-          borderRadius: 12, padding: 40, textAlign: 'center', color: 'rgba(250,250,250,0.55)',
+          background: 'var(--app-surface)', border: '1px dashed var(--app-border)',
+          borderRadius: 12, padding: 40, textAlign: 'center', color: 'var(--app-muted)',
         }}>
           {sinNegociosRegistrados
             ? 'Aún no hay negocios registrados en Arkana.'
@@ -98,14 +98,14 @@ export default function BuscarNegociosPage() {
               key={n.id}
               onClick={() => navigate(`/n/${n.slug}`)}
               style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+                background: 'var(--app-surface)', border: '1px solid var(--app-border)',
                 borderRadius: 12, padding: 18, cursor: 'pointer', textAlign: 'left',
-                fontFamily: 'inherit', color: '#FAFAFA',
+                fontFamily: 'inherit', color: 'var(--app-text)',
                 display: 'flex', flexDirection: 'column', gap: 10,
                 transition: 'all 150ms ease',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(100,141,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(100,141,255,0.35)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--app-surface)'; e.currentTarget.style.borderColor = 'var(--app-border)'; }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {n.logo_url ? (
@@ -114,7 +114,7 @@ export default function BuscarNegociosPage() {
                   <div style={{
                     width: 44, height: 44, borderRadius: 10, background: '#004AAD',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 16, fontWeight: 700,
+                    fontSize: 16, fontWeight: 700, color: '#FAFAFA',
                   }}>
                     {n.nombre.charAt(0).toUpperCase()}
                   </div>
@@ -133,7 +133,7 @@ export default function BuscarNegociosPage() {
               </div>
               {n.descripcion && (
                 <div style={{
-                  fontSize: 12, color: 'rgba(250,250,250,0.55)', lineHeight: 1.5,
+                  fontSize: 12, color: 'var(--app-muted)', lineHeight: 1.5,
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                 }}>
@@ -141,7 +141,7 @@ export default function BuscarNegociosPage() {
                 </div>
               )}
               {n.direccion && (
-                <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.40)' }}>
+                <div style={{ fontSize: 11, color: 'var(--app-subtle)' }}>
                   📍 {n.direccion}
                 </div>
               )}
@@ -154,7 +154,7 @@ export default function BuscarNegociosPage() {
 }
 
 const inputStyle: CSSProperties = {
-  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 8, padding: '10px 14px', color: '#FAFAFA', fontSize: 14,
+  background: 'var(--app-input-bg)', border: '1px solid var(--app-border)',
+  borderRadius: 8, padding: '10px 14px', color: 'var(--app-text)', fontSize: 14,
   fontFamily: 'inherit', outline: 'none',
 };

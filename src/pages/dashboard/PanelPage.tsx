@@ -20,7 +20,7 @@ interface MetricCardProps {
 function MetricCard({ icon, value, label, sub, color = '#648DFF' }: MetricCardProps) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
+      background: 'var(--app-surface)', border: '1px solid var(--app-border)',
       borderRadius: 12, padding: '18px 20px', flex: 1, minWidth: 140,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -31,11 +31,11 @@ function MetricCard({ icon, value, label, sub, color = '#648DFF' }: MetricCardPr
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: 32, fontWeight: 700, color: '#FAFAFA', lineHeight: 1, marginBottom: 4, fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+      <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--app-text)', lineHeight: 1, marginBottom: 4, fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
         {value}
       </div>
-      <div style={{ fontSize: 13, color: 'rgba(250,250,250,0.65)', marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)' }}>{sub}</div>
+      <div style={{ fontSize: 13, color: 'var(--app-muted)', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 11, color: 'var(--app-subtle)' }}>{sub}</div>
     </div>
   );
 }
@@ -44,20 +44,20 @@ function AppointmentRow({ cita }: { cita: CitaConServicio }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      borderBottom: '1px solid var(--app-border)',
     }}>
       <div style={{ width: 46, flexShrink: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: '#648DFF' }}>{cita.hora_inicio.slice(0, 5)}</div>
-        <div style={{ fontSize: 10, color: 'rgba(250,250,250,0.35)', marginTop: 1 }}>
+        <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>
           {cita.servicios ? `${cita.servicios.duracion_min}min` : '—'}
         </div>
       </div>
       <div style={{ width: 3, height: 34, borderRadius: 2, background: 'rgba(100,141,255,0.4)', flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#FAFAFA', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {cita.cliente_nombre}
         </div>
-        <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', marginTop: 1 }}>
+        <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 1 }}>
           {cita.servicios?.nombre ?? '—'}
         </div>
       </div>
@@ -169,41 +169,41 @@ export default function PanelPage() {
   const confirmadas = citasHoy.filter((c) => c.estado === 'confirmed').length;
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: '#080C3E' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+        padding: '16px 28px', borderBottom: '1px solid var(--app-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: '#050A30', flexShrink: 0,
+        background: 'var(--app-bg-elevated)', flexShrink: 0,
       }}>
         <div>
-          <div style={{ fontSize: 10, color: 'rgba(250,250,250,0.35)', marginBottom: 2 }}>
-            Arkana &rsaquo; <span style={{ color: 'rgba(250,250,250,0.60)' }}>Panel principal</span>
+          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginBottom: 2 }}>
+            Arkana &rsaquo; <span style={{ color: 'var(--app-muted)' }}>Panel principal</span>
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Panel principal
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ position: 'relative', color: 'rgba(250,250,250,0.60)', cursor: 'pointer' }}>
+          <div style={{ position: 'relative', color: 'var(--app-muted)', cursor: 'pointer' }}>
             {ArkanaIcons.bell}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <Avatar name={usuario?.nombre ?? 'U'} size={34} bg="#004AAD" />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#FAFAFA' }}>{usuario?.nombre ?? '—'}</div>
-              <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.40)' }}>{negocio?.nombre ?? '—'}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)' }}>{usuario?.nombre ?? '—'}</div>
+              <div style={{ fontSize: 11, color: 'var(--app-subtle)' }}>{negocio?.nombre ?? '—'}</div>
             </div>
           </div>
         </div>
       </div>
 
       {loadingData ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(250,250,250,0.35)', fontSize: 14 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--app-subtle)', fontSize: 14 }}>
           Cargando datos…
         </div>
       ) : (
         <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
-          <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.35)', marginBottom: -8 }}>{todayLabelCapitalized}</div>
+          <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginBottom: -8 }}>{todayLabelCapitalized}</div>
 
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
             <MetricCard icon={ArkanaIcons.calendar} value={citasHoy.length} label="Citas hoy" sub={`${confirmadas} confirmada${confirmadas !== 1 ? 's' : ''}`} />
@@ -213,13 +213,13 @@ export default function PanelPage() {
 
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
             <div style={{
-              flex: 1, minWidth: 320, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
+              flex: 1, minWidth: 320, background: 'var(--app-surface)', border: '1px solid var(--app-border)',
               borderRadius: 12, padding: '20px 22px',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#FAFAFA' }}>Actividad reciente</div>
-                  <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.40)', marginTop: 2 }}>Últimos 12 días</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)' }}>Actividad reciente</div>
+                  <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 2 }}>Últimos 12 días</div>
                 </div>
               </div>
               <div style={{ marginTop: 16 }}>
@@ -228,15 +228,15 @@ export default function PanelPage() {
             </div>
 
             <div style={{
-              width: 280, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
+              width: 280, background: 'var(--app-surface)', border: '1px solid var(--app-border)',
               borderRadius: 12, padding: '20px 22px', flexShrink: 0,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#FAFAFA' }}>Citas de hoy</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)' }}>Citas de hoy</div>
                 <span style={{ fontSize: 12, color: '#648DFF', fontWeight: 600 }}>{citasHoy.length} total</span>
               </div>
               {citasHoy.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(250,250,250,0.30)', fontSize: 13 }}>
+                <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--app-subtle)', fontSize: 13 }}>
                   No hay citas para hoy
                 </div>
               ) : (

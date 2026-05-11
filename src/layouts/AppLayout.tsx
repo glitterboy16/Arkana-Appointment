@@ -9,7 +9,7 @@ export default function AppLayout() {
     return (
       <div style={{
         height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#050A30', color: 'rgba(250,250,250,0.45)', fontSize: 14,
+        background: 'var(--app-bg)', color: 'var(--app-subtle)', fontSize: 14,
         fontFamily: "'SF Pro Display','Inter',sans-serif",
       }}>
         Cargando…
@@ -26,7 +26,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: '#050A30', color: '#FAFAFA' }}>
+    <div style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: 'var(--app-bg)', color: 'var(--app-text)' }}>
       <Sidebar />
       <Outlet />
     </div>
