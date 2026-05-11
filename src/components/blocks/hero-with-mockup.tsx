@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Mockup } from '@/components/ui/mockup';
 import { Glow } from '@/components/ui/glow';
+import arkanaLogo from '@/assets/Arkana Logo.svg';
 
 interface HeroWithMockupProps {
   title: string;
@@ -51,9 +52,18 @@ export function HeroWithMockup({
     >
       <div className="relative mx-auto max-w-[1280px] flex flex-col gap-12 lg:gap-24">
         <div className="relative z-10 flex flex-col items-center gap-6 pt-8 md:pt-16 text-center lg:gap-12">
+          <div className="arkana-hero-logo-wrap">
+            <img
+              src={arkanaLogo}
+              alt="Arkana"
+              className="arkana-hero-logo h-28 sm:h-32 md:h-40 lg:h-48 w-auto select-none"
+              draggable={false}
+            />
+          </div>
+
           <h1
             className={cn(
-              'inline-block animate-appear',
+              'inline-block animate-appear opacity-0 [animation-delay:600ms]',
               'bg-gradient-to-b from-foreground via-foreground/90 to-muted-foreground',
               'bg-clip-text text-transparent',
               'text-4xl font-bold sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl',
@@ -67,7 +77,7 @@ export function HeroWithMockup({
 
           <p
             className={cn(
-              'max-w-[550px] animate-appear opacity-0 [animation-delay:150ms]',
+              'max-w-[550px] animate-appear opacity-0 [animation-delay:800ms]',
               'text-base sm:text-lg md:text-xl',
               'text-muted-foreground',
               'font-medium',
@@ -76,7 +86,7 @@ export function HeroWithMockup({
             {description}
           </p>
 
-          <div className="relative z-10 flex flex-wrap justify-center gap-4 animate-appear opacity-0 [animation-delay:300ms]">
+          <div className="relative z-10 flex flex-wrap justify-center gap-4 animate-appear opacity-0 [animation-delay:1000ms]">
             <Button
               asChild
               size="lg"

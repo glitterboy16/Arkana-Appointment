@@ -1,5 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
+
+const navBtnStyle: CSSProperties = {
+  marginLeft: 'auto',
+  fontSize: 12,
+  fontWeight: 500,
+  color: 'rgba(250,250,250,0.65)',
+  textDecoration: 'none',
+  padding: '6px 12px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 8,
+  transition: 'all 150ms ease',
+};
+const navBtnHover = (e: MouseEvent<HTMLAnchorElement>) => {
+  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+  e.currentTarget.style.color = '#FAFAFA';
+};
+const navBtnLeave = (e: MouseEvent<HTMLAnchorElement>) => {
+  e.currentTarget.style.background = 'transparent';
+  e.currentTarget.style.color = 'rgba(250,250,250,0.65)';
+};
 import { format, addDays, getISODay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArkanaIcons, Btn, LogoArkana } from '@/components/app/Shared';
@@ -220,24 +240,25 @@ export default function ReservaPublicaPage() {
           <LogoArkana size={18} onBrand />
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
-        <Link
-          to="/"
-          style={{
-            marginLeft: 'auto',
-            fontSize: 12,
-            fontWeight: 500,
-            color: 'rgba(250,250,250,0.65)',
-            textDecoration: 'none',
-            padding: '6px 12px',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 8,
-            transition: 'all 150ms ease',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#FAFAFA'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(250,250,250,0.65)'; }}
-        >
-          ← Volver a inicio
-        </Link>
+        {usuario?.rol === 'cliente' ? (
+          <Link
+            to="/app/citas"
+            style={navBtnStyle}
+            onMouseEnter={navBtnHover}
+            onMouseLeave={navBtnLeave}
+          >
+            ← Mis citas
+          </Link>
+        ) : (
+          <Link
+            to="/"
+            style={navBtnStyle}
+            onMouseEnter={navBtnHover}
+            onMouseLeave={navBtnLeave}
+          >
+            ← Volver a inicio
+          </Link>
+        )}
       </div>
 
       <div style={{
