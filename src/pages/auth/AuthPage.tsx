@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logoIcon from '@/assets/logo-icon.svg';
+import logoIcon from '@/assets/Logo Arkana 1.svg';
 import { useAuth } from '@/contexts/AuthContext';
 
 type AuthMode = 'login' | 'register';
