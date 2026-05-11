@@ -7,6 +7,7 @@ import ClienteLayout from './layouts/ClienteLayout';
 import PanelPage from './pages/dashboard/PanelPage';
 import CitasPage from './pages/dashboard/CitasPage';
 import PerfilNegocioPage from './pages/dashboard/PerfilNegocioPage';
+import ConfiguracionNegocioPage from './pages/dashboard/ConfiguracionNegocioPage';
 import BuscarNegociosPage from './pages/cliente/BuscarNegociosPage';
 import MisCitasPage from './pages/cliente/MisCitasPage';
 import NotificacionesPage from './pages/cliente/NotificacionesPage';
@@ -25,6 +26,7 @@ export default function App() {
           <Route index element={<PanelPage />} />
           <Route path="citas" element={<CitasPage />} />
           <Route path="perfil" element={<PerfilNegocioPage />} />
+          <Route path="configuracion" element={<ConfiguracionNegocioPage />} />
         </Route>
         <Route path="/app" element={<ClienteLayout />}>
           <Route index element={<Navigate to="/app/buscar" replace />} />
