@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, type Negocio } from '@/lib/supabase';
 
+type NegocioConServicios = Negocio & { servicios: { nombre: string }[] };
+
 export default function BuscarNegociosPage() {
-  const [negocios, setNegocios] = useState<Negocio[]>([]);
+  const [negocios, setNegocios] = useState<NegocioConServicios[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [categoria, setCategoria] = useState<string>('todas');
@@ -14,10 +16,10 @@ export default function BuscarNegociosPage() {
     (async () => {
       const { data } = await supabase
         .from('negocios')
-        .select('*')
+        .select('*, servicios(nombre)')
         .order('created_at', { ascending: false });
       if (!cancelled) {
-        setNegocios((data ?? []) as Negocio[]);
+        setNegocios((data ?? []) as NegocioConServicios[]);
         setLoading(false);
       }
     })();
@@ -38,10 +40,14 @@ export default function BuscarNegociosPage() {
       return (
         n.nombre.toLowerCase().includes(q) ||
         (n.descripcion ?? '').toLowerCase().includes(q) ||
-        (n.direccion ?? '').toLowerCase().includes(q)
+        (n.categoria ?? '').toLowerCase().includes(q) ||
+        (n.direccion ?? '').toLowerCase().includes(q) ||
+        (n.servicios ?? []).some(s => s.nombre.toLowerCase().includes(q))
       );
     });
   }, [negocios, query, categoria]);
+
+  const sinNegociosRegistrados = !loading && negocios.length === 0;
 
   return (
     <div style={{ padding: '32px 32px 64px', maxWidth: 1100, margin: '0 auto' }}>
@@ -58,7 +64,7 @@ export default function BuscarNegociosPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por nombre, dirección…"
+          placeholder="Buscar por nombre, servicio o categoría…"
           style={{ ...inputStyle, flex: '1 1 260px' }}
         />
         <select
@@ -81,7 +87,9 @@ export default function BuscarNegociosPage() {
           background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.10)',
           borderRadius: 12, padding: 40, textAlign: 'center', color: 'rgba(250,250,250,0.55)',
         }}>
-          No se han encontrado negocios{query ? ` para "${query}"` : ''}.
+          {sinNegociosRegistrados
+            ? 'Aún no hay negocios registrados en Arkana.'
+            : `No se han encontrado negocios${query ? ` para "${query}"` : ''}.`}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
