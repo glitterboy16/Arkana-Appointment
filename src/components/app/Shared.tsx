@@ -1,6 +1,33 @@
 import type { CSSProperties, ReactNode, MouseEventHandler } from 'react';
+import logoOscuro from '@/assets/Logo Arkana 1.svg';
+import logoClaro from '@/assets/Logo Arkana 2.svg';
+import { useTheme } from '@/hooks/useTheme';
 
 export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled' | 'new';
+
+interface LogoArkanaProps {
+  size?: number;
+  style?: CSSProperties;
+  onBrand?: boolean;
+}
+
+export function LogoArkana({ size = 22, style, onBrand }: LogoArkanaProps) {
+  const { tema } = useTheme();
+  const src = tema === 'claro' ? logoClaro : logoOscuro;
+  return (
+    <img
+      src={src}
+      alt=""
+      style={{
+        width: size,
+        height: size,
+        objectFit: 'contain',
+        ...(onBrand ? { filter: 'brightness(0) invert(1)' } : null),
+        ...style,
+      }}
+    />
+  );
+}
 
 export const ArkanaIcons = {
   grid: (

@@ -47,25 +47,25 @@ function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onSta
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)', transition: 'background 150ms ease',
+        borderBottom: '1px solid var(--app-border)', transition: 'background 150ms ease',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--app-surface-hover)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
     >
       <div style={{ width: 52, flexShrink: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#648DFF' }}>{cita.hora_inicio.slice(0, 5)}</div>
-        <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginTop: 1 }}>
+        <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 1 }}>
           {cita.servicios ? `${cita.servicios.duracion_min}min` : '—'}
         </div>
       </div>
       <Avatar name={cita.cliente_nombre} size={34} bg={avatarColor(cita.cliente_nombre)} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#FAFAFA' }}>{cita.cliente_nombre}</div>
-        <div style={{ fontSize: 12, color: 'rgba(250,250,250,0.45)', marginTop: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)' }}>{cita.cliente_nombre}</div>
+        <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginTop: 1 }}>
           {cita.servicios?.nombre ?? '—'} · {cita.cliente_telefono}
         </div>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(250,250,250,0.70)', width: 60, textAlign: 'right' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-muted)', width: 60, textAlign: 'right' }}>
         {cita.servicios ? formatPrecio(cita.servicios.precio_centimos) : '—'}
       </div>
       <div style={{ width: 110, display: 'flex', justifyContent: 'flex-end' }}>
@@ -83,8 +83,8 @@ function AppointmentRow({ cita, onStatusChange }: { cita: CitaConServicio; onSta
         )}
         {(cita.estado === 'new' || cita.estado === 'pending') && (
           <button type="button" disabled={saving} onClick={handleCancel} style={{
-            padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)',
-            background: 'transparent', color: 'rgba(250,250,250,0.45)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+            padding: '5px 10px', borderRadius: 6, border: '1px solid var(--app-border)',
+            background: 'transparent', color: 'var(--app-muted)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
             opacity: saving ? 0.5 : 1,
           }}>
             Cancelar
@@ -144,10 +144,10 @@ export default function CitasPage() {
   }, {});
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: '#080C3E' }}>
-      <div style={{ padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#050A30', flexShrink: 0 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
+      <div style={{ padding: '16px 28px', borderBottom: '1px solid var(--app-border)', background: 'var(--app-bg-elevated)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Mis citas
           </div>
           <Btn variant="primary" size="sm">
@@ -160,7 +160,7 @@ export default function CitasPage() {
               padding: '6px 16px', borderRadius: 7, border: 'none', cursor: 'pointer',
               fontFamily: 'inherit', fontSize: 13, fontWeight: 600, transition: 'all 150ms ease',
               background: filter === t.id ? 'rgba(100,141,255,0.15)' : 'transparent',
-              color: filter === t.id ? '#648DFF' : 'rgba(250,250,250,0.45)',
+              color: filter === t.id ? '#648DFF' : 'var(--app-muted)',
             }}>{t.label}</button>
           ))}
         </div>
@@ -168,11 +168,11 @@ export default function CitasPage() {
 
       <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16, flex: 1, overflowY: 'auto' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(250,250,250,0.30)', fontSize: 14 }}>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--app-subtle)', fontSize: 14 }}>
             Cargando citas…
           </div>
         ) : Object.entries(groups).length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(250,250,250,0.30)' }}>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--app-subtle)' }}>
             <div style={{ fontSize: 14 }}>No hay citas en este filtro</div>
             <div style={{ fontSize: 12, marginTop: 8 }}>Las citas aparecerán aquí cuando los clientes reserven</div>
           </div>
@@ -180,13 +180,13 @@ export default function CitasPage() {
           Object.entries(groups).map(([fecha, list]) => (
             <div key={fecha}>
               <div style={{
-                fontSize: 12, fontWeight: 700, color: 'rgba(250,250,250,0.40)',
+                fontSize: 12, fontWeight: 700, color: 'var(--app-subtle)',
                 letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 4,
               }}>
                 {formatFechaGrupo(fecha)}
               </div>
               <div style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--app-surface)', border: '1px solid var(--app-border)',
                 borderRadius: 12, overflow: 'hidden',
               }}>
                 {list.map((c) => (

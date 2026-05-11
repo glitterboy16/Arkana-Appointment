@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logoIcon from '@/assets/logo-icon.svg';
+import { LogoArkana } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 
 type AuthMode = 'login' | 'register';
@@ -53,9 +53,9 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
     setLoading(true);
     try {
       if (mode === 'login') {
-        const { error, rol: rolUsuario } = await signIn(form.email, form.password);
+        const { error, rol: rolUsuario } = await signIn(form.email, form.password, rol);
         if (error) { setError(traducirError(error)); return; }
-        navigate(rolUsuario === 'negocio' ? '/panel' : '/');
+        navigate(rolUsuario === 'negocio' ? '/panel' : '/app/buscar');
       } else {
         if (!form.name.trim()) { setError('Introduce tu nombre'); return; }
         if (form.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
@@ -86,7 +86,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           });
           if (error) { setError(traducirError(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
-          navigate('/');
+          navigate('/app/buscar');
         }
       }
     } finally {
@@ -122,7 +122,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               width: 52, height: 52, borderRadius: 14, background: '#004AAD',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
             }}>
-              <img src={logoIcon} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'brightness(10)' }} />
+              <LogoArkana size={34} onBrand />
             </div>
           </Link>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>

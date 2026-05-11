@@ -10,13 +10,7 @@ if (!url || !anonKey) {
   );
 }
 
-export const supabase = createClient(url, anonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+export const supabase = createClient(url, anonKey);
 
 export type RolUsuario = 'negocio' | 'cliente' | 'admin';
 export type EstadoCita = 'new' | 'pending' | 'confirmed' | 'cancelled';
@@ -27,6 +21,7 @@ export interface Usuario {
   nombre: string;
   email: string;
   telefono: string | null;
+  foto_url: string | null;
   created_at: string;
 }
 
@@ -69,6 +64,7 @@ export interface Cita {
   id: string;
   negocio_id: string;
   servicio_id: string;
+  cliente_id: string | null;
   cliente_nombre: string;
   cliente_telefono: string;
   cliente_email: string | null;

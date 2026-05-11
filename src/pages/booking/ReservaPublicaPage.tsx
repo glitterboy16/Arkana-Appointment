@@ -1,10 +1,30 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react';
+import { useParams, Link } from 'react-router-dom';
+
+const navBtnStyle: CSSProperties = {
+  marginLeft: 'auto',
+  fontSize: 12,
+  fontWeight: 500,
+  color: 'rgba(250,250,250,0.65)',
+  textDecoration: 'none',
+  padding: '6px 12px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 8,
+  transition: 'all 150ms ease',
+};
+const navBtnHover = (e: MouseEvent<HTMLAnchorElement>) => {
+  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+  e.currentTarget.style.color = '#FAFAFA';
+};
+const navBtnLeave = (e: MouseEvent<HTMLAnchorElement>) => {
+  e.currentTarget.style.background = 'transparent';
+  e.currentTarget.style.color = 'rgba(250,250,250,0.65)';
+};
 import { format, addDays, getISODay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArkanaIcons, Btn } from '@/components/app/Shared';
+import { ArkanaIcons, Btn, LogoArkana } from '@/components/app/Shared';
 import { supabase, type Negocio, type Servicio, type Disponibilidad } from '@/lib/supabase';
-import logoIcon from '@/assets/logo-icon.svg';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DayOption {
   date: Date;
@@ -92,6 +112,17 @@ export default function ReservaPublicaPage() {
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { usuario } = useAuth();
+
+  useEffect(() => {
+    if (usuario && usuario.rol === 'cliente') {
+      setForm(f => ({
+        nombre: f.nombre || usuario.nombre,
+        telefono: f.telefono || usuario.telefono || '',
+        email: f.email || usuario.email,
+      }));
+    }
+  }, [usuario]);
 
   useEffect(() => {
     if (!slug) { setPageState('notfound'); return; }
@@ -156,6 +187,7 @@ export default function ReservaPublicaPage() {
     const { error } = await supabase.from('citas').insert({
       negocio_id: negocio.id,
       servicio_id: selectedServicio,
+      cliente_id: usuario?.rol === 'cliente' ? usuario.id : null,
       cliente_nombre: form.nombre.trim(),
       cliente_telefono: form.telefono.trim(),
       cliente_email: form.email.trim() || null,
@@ -205,10 +237,28 @@ export default function ReservaPublicaPage() {
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
       }}>
         <div style={{ width: 26, height: 26, background: '#004AAD', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src={logoIcon} alt="" style={{ width: 18, height: 18, objectFit: 'contain', filter: 'brightness(10)' }} />
+          <LogoArkana size={18} onBrand />
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
-        <span style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginLeft: 'auto' }}>Reserva gratuita · sin registro</span>
+        {usuario?.rol === 'cliente' ? (
+          <Link
+            to="/app/citas"
+            style={navBtnStyle}
+            onMouseEnter={navBtnHover}
+            onMouseLeave={navBtnLeave}
+          >
+            ← Mis citas
+          </Link>
+        ) : (
+          <Link
+            to="/"
+            style={navBtnStyle}
+            onMouseEnter={navBtnHover}
+            onMouseLeave={navBtnLeave}
+          >
+            ← Volver a inicio
+          </Link>
+        )}
       </div>
 
       <div style={{
@@ -221,7 +271,7 @@ export default function ReservaPublicaPage() {
               width: 60, height: 60, borderRadius: 16, background: '#004AAD',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
             }}>
-              <img src={logoIcon} alt="" style={{ width: 40, height: 40, objectFit: 'contain', filter: 'brightness(10)' }} />
+              <LogoArkana size={40} onBrand />
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
               {negocio!.nombre}

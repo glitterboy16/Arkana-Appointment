@@ -12,23 +12,17 @@ interface NavItem {
   action?: () => void;
 }
 
-export default function Sidebar() {
+export default function ClienteSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { negocio, signOut } = useAuth();
+  const { usuario, signOut } = useAuth();
 
   const NAV_ITEMS: NavItem[] = [
-    { id: 'dashboard',    icon: ArkanaIcons.grid,     label: 'Panel principal',    section: 'GESTIÓN', path: '/panel' },
-    { id: 'appointments', icon: ArkanaIcons.calendar, label: 'Mis citas',          path: '/panel/citas' },
-    { id: 'profile',      icon: ArkanaIcons.building, label: 'Perfil del negocio', path: '/panel/perfil' },
-    { id: 'stats',        icon: ArkanaIcons.chart,    label: 'Estadísticas' },
-    { id: 'qr',           icon: ArkanaIcons.qr,       label: 'Código QR' },
-    {
-      id: 'public', icon: ArkanaIcons.eye, label: 'Vista pública',
-      section: 'ACCESOS RÁPIDOS',
-      path: negocio ? `/n/${negocio.slug}` : undefined,
-    },
-    { id: 'settings', icon: ArkanaIcons.settings, label: 'Configuración', path: '/panel/configuracion' },
+    { id: 'buscar',         icon: ArkanaIcons.eye,      label: 'Buscar negocios', section: 'EXPLORAR', path: '/app/buscar' },
+    { id: 'citas',          icon: ArkanaIcons.calendar, label: 'Mis citas',       path: '/app/citas' },
+    { id: 'notificaciones', icon: ArkanaIcons.bell,     label: 'Notificaciones',  section: 'CUENTA', path: '/app/notificaciones' },
+    { id: 'perfil',         icon: ArkanaIcons.building, label: 'Mi perfil',       path: '/app/perfil' },
+    { id: 'configuracion',  icon: ArkanaIcons.settings, label: 'Configuración',   path: '/app/configuracion' },
     {
       id: 'logout', icon: ArkanaIcons.logout, label: 'Cerrar sesión',
       action: async () => { await signOut(); navigate('/'); },
@@ -37,8 +31,7 @@ export default function Sidebar() {
 
   const isActive = (item: NavItem) => {
     if (!item.path) return false;
-    if (item.path === '/panel') return location.pathname === '/panel';
-    return location.pathname.startsWith(item.path);
+    return location.pathname === item.path || location.pathname.startsWith(item.path + '/');
   };
 
   const handleClick = (item: NavItem) => {
@@ -72,14 +65,25 @@ export default function Sidebar() {
       <div style={{
         margin: '10px 10px 4px', background: 'var(--app-surface)',
         border: '1px solid var(--app-border)', borderRadius: 8, padding: '8px 10px',
-        display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <Avatar name={negocio?.nombre ?? 'Negocio'} size={26} bg="#648DFF" />
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3 }}>
-            {negocio?.nombre ?? '—'}
+        {usuario?.foto_url ? (
+          <img
+            src={usuario.foto_url}
+            alt=""
+            style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+          />
+        ) : (
+          <Avatar name={usuario?.nombre ?? 'Cliente'} size={26} bg="#648DFF" />
+        )}
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {usuario?.nombre ?? '—'}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Plan Gratuito</div>
+          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginTop: 1 }}>Cliente</div>
         </div>
       </div>
 
@@ -113,7 +117,6 @@ export default function Sidebar() {
                   width: 'calc(100% - 16px)',
                   textAlign: 'left',
                   fontFamily: 'inherit',
-                  opacity: clickable ? 1 : 0.5,
                 }}
                 onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--app-nav-hover)'; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
