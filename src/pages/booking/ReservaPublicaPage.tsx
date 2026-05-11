@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { format, addDays, getISODay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArkanaIcons, Btn, LogoArkana } from '@/components/app/Shared';
@@ -217,10 +217,27 @@ export default function ReservaPublicaPage() {
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
       }}>
         <div style={{ width: 26, height: 26, background: '#004AAD', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LogoArkana size={18} />
+          <LogoArkana size={18} onBrand />
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
-        <span style={{ fontSize: 11, color: 'rgba(250,250,250,0.35)', marginLeft: 'auto' }}>Reserva gratuita · sin registro</span>
+        <Link
+          to="/"
+          style={{
+            marginLeft: 'auto',
+            fontSize: 12,
+            fontWeight: 500,
+            color: 'rgba(250,250,250,0.65)',
+            textDecoration: 'none',
+            padding: '6px 12px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 8,
+            transition: 'all 150ms ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#FAFAFA'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(250,250,250,0.65)'; }}
+        >
+          ← Volver a inicio
+        </Link>
       </div>
 
       <div style={{
@@ -233,7 +250,7 @@ export default function ReservaPublicaPage() {
               width: 60, height: 60, borderRadius: 16, background: '#004AAD',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
             }}>
-              <LogoArkana size={40} />
+              <LogoArkana size={40} onBrand />
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
               {negocio!.nombre}
