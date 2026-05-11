@@ -45,21 +45,21 @@ export function HeroWithMockup({
     <section
       className={cn(
         'relative bg-background text-foreground',
-        'py-12 px-4 md:py-24 lg:py-32',
+        'pt-6 pb-6 px-4 md:pt-0 md:pb-12 lg:pt-0 lg:pb-16',
         'overflow-hidden',
         className,
       )}
     >
-      <div className="relative mx-auto max-w-[1280px] flex flex-col gap-12 lg:gap-24">
-        <div className="relative z-10 flex flex-col items-center gap-6 pt-8 md:pt-16 text-center lg:gap-12">
-          <div className="arkana-hero-logo-wrap">
-            <img
-              src={arkanaLogo}
-              alt="Arkana"
-              className="arkana-hero-logo h-44 sm:h-48 md:h-60 lg:h-72 w-auto select-none"
-              draggable={false}
-            />
-          </div>
+<div className="relative mx-auto max-w-[1280px] flex flex-col gap-8 lg:gap-16">
+  <div className="relative z-10 flex flex-col items-center gap-4 text-center lg:gap-6">
+    <div className="arkana-hero-logo-wrap overflow-visible -mb-2 md:-mb-4 lg:-mb-6 md:-mt-6 lg:-mt-10">
+      <img
+        src={arkanaLogo}
+        alt="Arkana"
+        className="arkana-hero-logo h-80 sm:h-96 md:h-[28rem] lg:h-[32rem] xl:h-[44rem] w-auto max-w-none select-none"
+        draggable={false}
+      />
+    </div>
 
           <h1
             className={cn(
