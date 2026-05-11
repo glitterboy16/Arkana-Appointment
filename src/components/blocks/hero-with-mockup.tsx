@@ -56,7 +56,7 @@ export function HeroWithMockup({
             <img
               src={arkanaLogo}
               alt="Arkana"
-              className="arkana-hero-logo h-28 sm:h-32 md:h-40 lg:h-48 w-auto select-none"
+              className="arkana-hero-logo h-44 sm:h-48 md:h-60 lg:h-72 w-auto select-none"
               draggable={false}
             />
           </div>
