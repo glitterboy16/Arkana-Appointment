@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logoIcon from '@/assets/Logo Arkana 1.svg';
+import { LogoArkana } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 
 type AuthMode = 'login' | 'register';
@@ -122,7 +122,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               width: 52, height: 52, borderRadius: 14, background: '#004AAD',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
             }}>
-              <img src={logoIcon} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'brightness(10)' }} />
+              <LogoArkana size={34} />
             </div>
           </Link>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
