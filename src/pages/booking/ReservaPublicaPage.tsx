@@ -233,10 +233,10 @@ export default function ReservaPublicaPage() {
         padding: '12px 20px', background: '#050A30', borderBottom: '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
       }}>
-        <div style={{ width: 26, height: 26, background: '#004AAD', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LogoArkana size={18} onBrand />
+        <div style={{ width: 36, height: 36, background: '#004AAD', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <LogoArkana size={26} onBrand />
         </div>
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
         {usuario?.rol === 'cliente' ? (
           <Link
             to="/app/citas"

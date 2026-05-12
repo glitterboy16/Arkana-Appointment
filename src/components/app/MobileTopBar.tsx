@@ -20,10 +20,10 @@ export default function MobileTopBar({ onMenu, title = 'Arkana', showBell = true
       </button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
         <div style={{
-          width: 32, height: 32, background: '#004AAD', borderRadius: 8,
+          width: 38, height: 38, background: '#004AAD', borderRadius: 9,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <LogoArkana size={22} onBrand />
+          <LogoArkana size={28} onBrand />
         </div>
         <div className="ark-mobile-topbar-brand" style={{
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
