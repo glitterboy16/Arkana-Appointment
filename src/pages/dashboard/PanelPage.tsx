@@ -5,6 +5,7 @@ import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/compo
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Cita } from '@/lib/supabase';
 import { InlineLoader } from '@/components/app/Spinner';
+import NotificationsBell from '@/components/app/NotificationsBell';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number } | null;
@@ -184,10 +185,8 @@ export default function PanelPage() {
             Panel principal
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ position: 'relative', color: 'var(--app-muted)', cursor: 'pointer' }}>
-            {ArkanaIcons.bell}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <NotificationsBell />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <Avatar name={usuario?.nombre ?? 'U'} size={34} bg="#004AAD" />
             <div className="ark-hide-mobile">
