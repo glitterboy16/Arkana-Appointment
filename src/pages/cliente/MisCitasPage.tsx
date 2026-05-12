@@ -27,6 +27,8 @@ export default function MisCitasPage() {
   const [citas, setCitas] = useState<CitaConDetalle[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<'todas' | 'proximas' | 'pasadas'>('proximas');
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   useEffect(() => {
     if (!usuario) return;
@@ -46,14 +48,37 @@ export default function MisCitasPage() {
     return () => { cancelled = true; };
   }, [usuario]);
 
+  const hoy = format(new Date(), 'yyyy-MM-dd');
+
   const filtradas = useMemo(() => {
-    const hoy = format(new Date(), 'yyyy-MM-dd');
     return citas.filter(c => {
       if (filtro === 'proximas') return c.fecha >= hoy && c.estado !== 'cancelled';
       if (filtro === 'pasadas')  return c.fecha < hoy || c.estado === 'cancelled';
       return true;
     });
-  }, [citas, filtro]);
+  }, [citas, filtro, hoy]);
+
+  const cancelarCita = async (cita: CitaConDetalle) => {
+    const negocio = cita.negocio?.nombre ?? 'el negocio';
+    const fechaTxt = format(parseISO(cita.fecha), "d 'de' MMMM", { locale: es });
+    const ok = window.confirm(`¿Cancelar tu cita en ${negocio} del ${fechaTxt} a las ${cita.hora_inicio.slice(0, 5)}?`);
+    if (!ok) return;
+
+    setMsg(null);
+    setCancelandoId(cita.id);
+    const { error } = await supabase
+      .from('citas')
+      .update({ estado: 'cancelled' })
+      .eq('id', cita.id);
+    setCancelandoId(null);
+
+    if (error) {
+      setMsg({ type: 'err', text: 'No se pudo cancelar la cita. Intenta de nuevo.' });
+      return;
+    }
+    setCitas(prev => prev.map(c => c.id === cita.id ? { ...c, estado: 'cancelled' } : c));
+    setMsg({ type: 'ok', text: 'Cita cancelada' });
+  };
 
   return (
     <div style={{ padding: '32px 32px 64px', maxWidth: 900, margin: '0 auto' }}>
@@ -82,6 +107,17 @@ export default function MisCitasPage() {
         ))}
       </div>
 
+      {msg && (
+        <div style={{
+          background: msg.type === 'ok' ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)',
+          border: `1px solid ${msg.type === 'ok' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
+          borderRadius: 8, padding: '10px 14px', fontSize: 13,
+          color: msg.type === 'ok' ? '#22C55E' : '#EF4444', marginBottom: 16,
+        }}>
+          {msg.text}
+        </div>
+      )}
+
       {loading ? (
         <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando…</div>
       ) : filtradas.length === 0 ? (
@@ -103,6 +139,9 @@ export default function MisCitasPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtradas.map(c => {
             const estado = ESTADO_LABEL[c.estado];
+            const esFutura = c.fecha >= hoy;
+            const cancelable = esFutura && c.estado !== 'cancelled';
+            const cancelando = cancelandoId === c.id;
             return (
               <div key={c.id} style={{
                 background: 'var(--app-surface)', border: '1px solid var(--app-border)',
@@ -134,6 +173,20 @@ export default function MisCitasPage() {
                 }}>
                   {estado.label}
                 </span>
+                {cancelable && (
+                  <button
+                    onClick={() => cancelarCita(c)}
+                    disabled={cancelando}
+                    style={{
+                      padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      fontFamily: 'inherit', cursor: cancelando ? 'not-allowed' : 'pointer',
+                      background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)',
+                      color: '#EF4444', opacity: cancelando ? 0.6 : 1, whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {cancelando ? 'Cancelando…' : 'Cancelar'}
+                  </button>
+                )}
               </div>
             );
           })}
