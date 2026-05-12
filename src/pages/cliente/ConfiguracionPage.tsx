@@ -15,9 +15,9 @@ export default function ConfiguracionPage() {
   };
 
   return (
-    <div style={{ padding: '32px 32px 64px', maxWidth: 640, margin: '0 auto' }}>
+    <div className="ark-page" style={{ maxWidth: 640, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Configuración</h1>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Configuración</h1>
         <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Preferencias de tu cuenta.
         </p>

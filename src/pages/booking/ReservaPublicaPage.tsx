@@ -25,6 +25,7 @@ import { es } from 'date-fns/locale';
 import { ArkanaIcons, Btn, LogoArkana } from '@/components/app/Shared';
 import { supabase, type Negocio, type Servicio, type Disponibilidad } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { FullScreenLoader } from '@/components/app/Spinner';
 
 interface DayOption {
   date: Date;
@@ -210,11 +211,7 @@ export default function ReservaPublicaPage() {
   const selectedDay = availableDays[selectedDayIdx];
 
   if (pageState === 'loading') {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050A30', color: 'rgba(250,250,250,0.45)', fontSize: 14 }}>
-        Cargando…
-      </div>
-    );
+    return <FullScreenLoader label="Cargando reserva…" />;
   }
 
   if (pageState === 'notfound') {

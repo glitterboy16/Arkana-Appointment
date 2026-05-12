@@ -17,10 +17,10 @@ export default function ConfiguracionNegocioPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px 28px', borderBottom: '1px solid var(--app-border)',
+        padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
         background: 'var(--app-bg-elevated)', flexShrink: 0,
       }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+        <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
           Configuración
         </div>
         <div style={{ fontSize: 12, color: 'var(--app-muted)', marginTop: 4 }}>
@@ -28,7 +28,7 @@ export default function ConfiguracionNegocioPage() {
         </div>
       </div>
 
-      <div style={{ padding: '24px 28px', maxWidth: 720 }}>
+      <div className="ark-page-fade" style={{ padding: '24px clamp(14px, 4vw, 28px)', maxWidth: 720, width: '100%' }}>
         <section style={cardStyle}>
           <h2 style={sectionTitleStyle}>Apariencia</h2>
           <p style={helperStyle}>Elige cómo quieres ver la aplicación.</p>
