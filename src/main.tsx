@@ -4,11 +4,14 @@ import { Toaster } from 'react-hot-toast';
 import './index.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationsProvider } from './contexts/NotificationsContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <NotificationsProvider>
+        <App />
+      </NotificationsProvider>
       <Toaster
         position="bottom-right"
         toastOptions={{
