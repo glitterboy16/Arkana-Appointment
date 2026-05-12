@@ -148,9 +148,9 @@ export default function CitasPage() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
-      <div style={{ padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)', background: 'var(--app-bg-elevated)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+      <div style={{ padding: '18px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)', background: 'var(--app-bg-elevated)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Mis citas
           </div>
           <Btn variant="primary" size="sm">
@@ -160,8 +160,8 @@ export default function CitasPage() {
         <div style={{ display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {TABS.map((t) => (
             <button key={t.id} type="button" onClick={() => setFilter(t.id)} style={{
-              padding: '6px 14px', borderRadius: 7, border: 'none', cursor: 'pointer',
-              fontFamily: 'inherit', fontSize: 13, fontWeight: 600, transition: 'all 150ms ease',
+              padding: '7px 15px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: 14, fontWeight: 600, transition: 'all 150ms ease',
               background: filter === t.id ? 'rgba(100,141,255,0.15)' : 'transparent',
               color: filter === t.id ? '#648DFF' : 'var(--app-muted)',
               whiteSpace: 'nowrap', flexShrink: 0,

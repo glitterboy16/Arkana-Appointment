@@ -99,10 +99,10 @@ export default function PerfilClientePage() {
   };
 
   return (
-    <div className="ark-page" style={{ maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mi perfil</h1>
-        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
+    <div className="ark-page" style={{ maxWidth: 680, margin: '0 auto' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mi perfil</h1>
+        <p style={{ color: 'var(--app-muted)', fontSize: 15, marginTop: 8 }}>
           Tus datos personales.
         </p>
       </div>
@@ -120,17 +120,19 @@ export default function PerfilClientePage() {
 
       <section style={cardStyle}>
         <h2 style={sectionTitleStyle}>Foto de perfil</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
           {usuario.foto_url ? (
             <img src={usuario.foto_url} alt="" style={{
-              width: 84, height: 84, borderRadius: '50%', objectFit: 'cover',
-              border: '2px solid rgba(100,141,255,0.40)',
+              width: 112, height: 112, borderRadius: '50%', objectFit: 'cover',
+              border: '3px solid rgba(100,141,255,0.45)', flexShrink: 0,
+              boxShadow: '0 6px 24px rgba(100,141,255,0.18)',
             }} />
           ) : (
             <div style={{
-              width: 84, height: 84, borderRadius: '50%', background: '#004AAD',
+              width: 112, height: 112, borderRadius: '50%', background: 'linear-gradient(135deg, #004AAD 0%, #648DFF 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 32, fontWeight: 700, color: '#FAFAFA',
+              fontSize: 44, fontWeight: 700, color: '#FAFAFA', flexShrink: 0,
+              boxShadow: '0 6px 24px rgba(100,141,255,0.18)',
             }}>
               {usuario.nombre.charAt(0).toUpperCase()}
             </div>
@@ -201,28 +203,28 @@ export default function PerfilClientePage() {
 
 const cardStyle: CSSProperties = {
   background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-  borderRadius: 12, padding: 20, marginBottom: 16,
+  borderRadius: 14, padding: 24, marginBottom: 18,
 };
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 14, fontWeight: 600, color: 'var(--app-text)', margin: 0,
+  fontSize: 16, fontWeight: 700, color: 'var(--app-text)', margin: 0, letterSpacing: '-0.01em',
 };
 const inputStyle: CSSProperties = {
   width: '100%', boxSizing: 'border-box', background: 'var(--app-input-bg)',
-  border: '1px solid var(--app-border)', borderRadius: 8, padding: '11px 14px',
-  color: 'var(--app-text)', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+  border: '1px solid var(--app-border)', borderRadius: 9, padding: '12px 15px',
+  color: 'var(--app-text)', fontSize: 15, fontFamily: 'inherit', outline: 'none',
 };
 const labelStyle: CSSProperties = {
-  fontSize: 12, color: 'var(--app-muted)', display: 'block', marginBottom: 5,
+  fontSize: 13, color: 'var(--app-muted)', display: 'block', marginBottom: 6, fontWeight: 500,
 };
 const btnPrimary = (disabled: boolean): CSSProperties => ({
-  padding: '10px 18px', borderRadius: 8, border: 'none',
+  padding: '11px 20px', borderRadius: 9, border: 'none',
   cursor: disabled ? 'not-allowed' : 'pointer',
-  background: '#004AAD', color: '#FAFAFA', fontSize: 13, fontWeight: 600,
+  background: '#004AAD', color: '#FAFAFA', fontSize: 14, fontWeight: 600,
   fontFamily: 'inherit', opacity: disabled ? 0.6 : 1,
 });
 const btnGhost: CSSProperties = {
-  padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+  padding: '9px 15px', borderRadius: 8, cursor: 'pointer',
   background: 'transparent', color: 'var(--app-muted)',
   border: '1px solid var(--app-border)',
-  fontSize: 12, fontFamily: 'inherit',
+  fontSize: 13, fontFamily: 'inherit',
 };

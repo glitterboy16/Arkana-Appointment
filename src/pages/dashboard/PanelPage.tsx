@@ -173,25 +173,25 @@ export default function PanelPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
+        padding: '18px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: 'var(--app-bg-elevated)', flexShrink: 0, gap: 12, flexWrap: 'wrap',
       }}>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginBottom: 3 }}>
             Arkana &rsaquo; <span style={{ color: 'var(--app-muted)' }}>Panel principal</span>
           </div>
-          <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+          <div style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Panel principal
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <NotificationsBell />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-            <Avatar name={usuario?.nombre ?? 'U'} size={34} bg="#004AAD" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer' }}>
+            <Avatar name={usuario?.nombre ?? 'U'} size={40} bg="#004AAD" />
             <div className="ark-hide-mobile">
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)' }}>{usuario?.nombre ?? '—'}</div>
-              <div style={{ fontSize: 11, color: 'var(--app-subtle)' }}>{negocio?.nombre ?? '—'}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)' }}>{usuario?.nombre ?? '—'}</div>
+              <div style={{ fontSize: 12, color: 'var(--app-subtle)' }}>{negocio?.nombre ?? '—'}</div>
             </div>
           </div>
         </div>
