@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { ArkanaIcons, Btn } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Servicio, type Disponibilidad } from '@/lib/supabase';
+import { InlineLoader, Spinner } from '@/components/app/Spinner';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 const HORAS_INICIO = ['06:00','07:00','08:00','09:00','10:00','11:00'];
@@ -276,8 +277,8 @@ export default function PerfilNegocioPage() {
 
   if (loading) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--app-bg)', color: 'var(--app-subtle)', fontSize: 14 }}>
-        Cargando…
+      <div style={{ flex: 1, display: 'flex', background: 'var(--app-bg)' }}>
+        <InlineLoader label="Cargando perfil del negocio…" minHeight="60vh" />
       </div>
     );
   }
@@ -285,18 +286,19 @@ export default function PerfilNegocioPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px 28px', borderBottom: '1px solid var(--app-border)',
-        background: 'var(--app-bg-elevated)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
+        background: 'var(--app-bg-elevated)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
       }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+        <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
           Perfil del negocio
         </div>
         <Btn variant="primary" size="sm" onClick={handleGuardar} disabled={saving}>
+          {saving && <Spinner size={12} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
           {saving ? 'Guardando…' : 'Guardar cambios'}
         </Btn>
       </div>
 
-      <div style={{ padding: '20px 28px', maxWidth: 720 }}>
+      <div className="ark-page-fade" style={{ padding: '20px clamp(14px, 4vw, 28px)', maxWidth: 720, width: '100%' }}>
 
         <ProfileSection title="Información general">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

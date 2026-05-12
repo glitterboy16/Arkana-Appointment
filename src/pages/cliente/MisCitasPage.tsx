@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase, type EstadoCita } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { InlineLoader, Spinner } from '@/components/app/Spinner';
 
 interface CitaConDetalle {
   id: string;
@@ -81,9 +82,9 @@ export default function MisCitasPage() {
   };
 
   return (
-    <div style={{ padding: '32px 32px 64px', maxWidth: 900, margin: '0 auto' }}>
+    <div className="ark-page" style={{ maxWidth: 900, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mis citas</h1>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mis citas</h1>
         <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Tus reservas en los negocios.
         </p>
@@ -119,7 +120,7 @@ export default function MisCitasPage() {
       )}
 
       {loading ? (
-        <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando…</div>
+        <InlineLoader label="Cargando tus citas…" minHeight={220} />
       ) : filtradas.length === 0 ? (
         <div style={{
           background: 'var(--app-surface)', border: '1px dashed var(--app-border)',
@@ -182,8 +183,10 @@ export default function MisCitasPage() {
                       fontFamily: 'inherit', cursor: cancelando ? 'not-allowed' : 'pointer',
                       background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)',
                       color: '#EF4444', opacity: cancelando ? 0.6 : 1, whiteSpace: 'nowrap',
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
                     }}
                   >
+                    {cancelando && <Spinner size={12} color="#EF4444" />}
                     {cancelando ? 'Cancelando…' : 'Cancelar'}
                   </button>
                 )}

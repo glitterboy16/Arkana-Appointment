@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, type Negocio } from '@/lib/supabase';
+import { InlineLoader, Skeleton } from '@/components/app/Spinner';
 
 type NegocioConServicios = Negocio & { servicios: { nombre: string }[] };
 
@@ -50,9 +51,9 @@ export default function BuscarNegociosPage() {
   const sinNegociosRegistrados = !loading && negocios.length === 0;
 
   return (
-    <div style={{ padding: '32px 32px 64px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="ark-page" style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
           Buscar negocios
         </h1>
         <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
@@ -65,12 +66,12 @@ export default function BuscarNegociosPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por nombre, servicio o categoría…"
-          style={{ ...inputStyle, flex: '1 1 260px' }}
+          style={{ ...inputStyle, flex: '1 1 260px', minWidth: 0 }}
         />
         <select
           value={categoria}
           onChange={(e) => setCategoria(e.target.value)}
-          style={{ ...inputStyle, minWidth: 180, cursor: 'pointer' }}
+          style={{ ...inputStyle, minWidth: 160, cursor: 'pointer', flex: '0 1 220px' }}
         >
           {categorias.map(c => (
             <option key={c} value={c} style={{ background: 'var(--app-bg-elevated)', color: 'var(--app-text)' }}>
@@ -81,7 +82,25 @@ export default function BuscarNegociosPage() {
       </div>
 
       {loading ? (
-        <div style={{ color: 'var(--app-subtle)', fontSize: 14 }}>Cargando negocios…</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={{
+              background: 'var(--app-surface)', border: '1px solid var(--app-border)',
+              borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Skeleton width={44} height={44} radius={10} />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width="70%" height={14} />
+                  <div style={{ marginTop: 6 }}><Skeleton width="40%" height={10} /></div>
+                </div>
+              </div>
+              <Skeleton height={10} />
+              <Skeleton width="60%" height={10} />
+            </div>
+          ))}
+          <div style={{ gridColumn: '1/-1' }}><InlineLoader label="Buscando negocios…" minHeight={40} /></div>
+        </div>
       ) : filtrados.length === 0 ? (
         <div style={{
           background: 'var(--app-surface)', border: '1px dashed var(--app-border)',

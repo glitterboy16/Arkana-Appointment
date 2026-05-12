@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { Spinner } from '@/components/app/Spinner';
 
 export default function PerfilClientePage() {
   const { usuario, refreshUsuario } = useAuth();
@@ -98,9 +99,9 @@ export default function PerfilClientePage() {
   };
 
   return (
-    <div style={{ padding: '32px 32px 64px', maxWidth: 640, margin: '0 auto' }}>
+    <div className="ark-page" style={{ maxWidth: 640, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mi perfil</h1>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mi perfil</h1>
         <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
           Tus datos personales.
         </p>
@@ -145,8 +146,9 @@ export default function PerfilClientePage() {
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              style={btnPrimary(uploading)}
+              style={{ ...btnPrimary(uploading), display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
+              {uploading && <Spinner size={14} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
               {uploading ? 'Subiendo…' : usuario.foto_url ? 'Cambiar foto' : 'Subir foto'}
             </button>
             {usuario.foto_url && (
@@ -183,7 +185,12 @@ export default function PerfilClientePage() {
               placeholder="612345678"
             />
           </div>
-          <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary(saving), marginTop: 4, alignSelf: 'flex-start' }}>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ ...btnPrimary(saving), marginTop: 4, alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+          >
+            {saving && <Spinner size={14} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
             {saving ? 'Guardando…' : 'Guardar cambios'}
           </button>
         </div>

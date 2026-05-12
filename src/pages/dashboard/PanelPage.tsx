@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Cita } from '@/lib/supabase';
+import { InlineLoader } from '@/components/app/Spinner';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number } | null;
@@ -171,15 +172,15 @@ export default function PanelPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px 28px', borderBottom: '1px solid var(--app-border)',
+        padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'var(--app-bg-elevated)', flexShrink: 0,
+        background: 'var(--app-bg-elevated)', flexShrink: 0, gap: 12, flexWrap: 'wrap',
       }}>
         <div>
           <div style={{ fontSize: 10, color: 'var(--app-subtle)', marginBottom: 2 }}>
             Arkana &rsaquo; <span style={{ color: 'var(--app-muted)' }}>Panel principal</span>
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+          <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Panel principal
           </div>
         </div>
@@ -189,7 +190,7 @@ export default function PanelPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <Avatar name={usuario?.nombre ?? 'U'} size={34} bg="#004AAD" />
-            <div>
+            <div className="ark-hide-mobile">
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)' }}>{usuario?.nombre ?? '—'}</div>
               <div style={{ fontSize: 11, color: 'var(--app-subtle)' }}>{negocio?.nombre ?? '—'}</div>
             </div>
@@ -198,11 +199,9 @@ export default function PanelPage() {
       </div>
 
       {loadingData ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--app-subtle)', fontSize: 14 }}>
-          Cargando datos…
-        </div>
+        <InlineLoader label="Cargando datos del panel…" minHeight={320} />
       ) : (
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
+        <div className="ark-page-fade" style={{ padding: 'clamp(16px, 3.5vw, 24px) clamp(14px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
           <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginBottom: -8 }}>{todayLabelCapitalized}</div>
 
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -213,8 +212,8 @@ export default function PanelPage() {
 
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
             <div style={{
-              flex: 1, minWidth: 320, background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-              borderRadius: 12, padding: '20px 22px',
+              flex: '1 1 320px', minWidth: 0, background: 'var(--app-surface)', border: '1px solid var(--app-border)',
+              borderRadius: 12, padding: 'clamp(16px, 4vw, 22px)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                 <div>
@@ -228,8 +227,8 @@ export default function PanelPage() {
             </div>
 
             <div style={{
-              width: 280, background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-              borderRadius: 12, padding: '20px 22px', flexShrink: 0,
+              flex: '1 1 280px', maxWidth: '100%', background: 'var(--app-surface)', border: '1px solid var(--app-border)',
+              borderRadius: 12, padding: 'clamp(16px, 4vw, 22px)', minWidth: 0,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)' }}>Citas de hoy</div>
