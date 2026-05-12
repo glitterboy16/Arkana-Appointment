@@ -59,12 +59,12 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         padding: '20px 18px 16px', display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '1px solid var(--app-border)', flexShrink: 0, justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 36, height: 36, background: '#004AAD', borderRadius: 9,
+            width: 44, height: 44, background: '#004AAD', borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <LogoArkana size={26} onBrand />
+            <LogoArkana size={32} onBrand />
           </div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>

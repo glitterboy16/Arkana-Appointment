@@ -1,4 +1,5 @@
-import { BiLogoGithub, BiLogoLinkedin, BiCalendarStar } from 'react-icons/bi';
+import { BiLogoGithub, BiLogoLinkedin } from 'react-icons/bi';
+import { LogoArkana } from '@/components/app/Shared';
 
 // TODO: reemplazar por la URL real de LinkedIn de Angel cuando la pase
 const LINKEDIN_URL = '#';
@@ -33,14 +34,14 @@ export function MinimalFooter() {
       <div className="mx-auto max-w-4xl border-white/10 md:border-x">
         <div className="grid max-w-4xl grid-cols-6 gap-6 p-4">
           <div className="col-span-6 flex flex-col gap-5 md:col-span-4">
-            <a href="/" className="flex w-max items-center gap-2 no-underline">
+            <a href="/" className="flex w-max items-center gap-2.5 no-underline">
               <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                className="flex h-10 w-10 items-center justify-center rounded-lg"
                 style={{ background: '#004AAD' }}
               >
-                <BiCalendarStar className="size-4 text-white" />
+                <LogoArkana size={28} onBrand />
               </span>
-              <span className="text-base font-semibold tracking-tight text-foreground">
+              <span className="text-lg font-semibold tracking-tight text-foreground">
                 Arkana
                 <span className="ml-1 font-light text-muted-foreground">Appointments</span>
               </span>
