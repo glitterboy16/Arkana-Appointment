@@ -54,11 +54,11 @@ export default function BuscarNegociosPage() {
 
   return (
     <div className="ark-page" style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
           Buscar negocios
         </h1>
-        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
+        <p style={{ color: 'var(--app-muted)', fontSize: 15, marginTop: 8 }}>
           Encuentra el negocio que buscas y reserva tu cita.
         </p>
       </div>
@@ -128,33 +128,33 @@ export default function BuscarNegociosPage() {
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(100,141,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(100,141,255,0.35)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--app-surface)'; e.currentTarget.style.borderColor = 'var(--app-border)'; }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 {n.logo_url ? (
-                  <img src={n.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} />
+                  <img src={n.logo_url} alt="" style={{ width: 52, height: 52, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
                 ) : (
                   <div style={{
-                    width: 44, height: 44, borderRadius: 10, background: '#004AAD',
+                    width: 52, height: 52, borderRadius: 12, background: '#004AAD',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 16, fontWeight: 700, color: '#FAFAFA',
+                    fontSize: 19, fontWeight: 700, color: '#FAFAFA', flexShrink: 0,
                   }}>
                     {n.nombre.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
                   <div style={{
-                    fontSize: 15, fontWeight: 600, lineHeight: 1.3,
+                    fontSize: 16, fontWeight: 600, lineHeight: 1.3,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>
                     {n.nombre}
                   </div>
                   {n.categoria && (
-                    <div style={{ fontSize: 11, color: '#648DFF', marginTop: 2 }}>{n.categoria}</div>
+                    <div style={{ fontSize: 12, color: '#648DFF', marginTop: 3, fontWeight: 500 }}>{n.categoria}</div>
                   )}
                 </div>
               </div>
               {n.descripcion && (
                 <div style={{
-                  fontSize: 12, color: 'var(--app-muted)', lineHeight: 1.5,
+                  fontSize: 13, color: 'var(--app-muted)', lineHeight: 1.5,
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                 }}>
@@ -162,7 +162,7 @@ export default function BuscarNegociosPage() {
                 </div>
               )}
               {n.direccion && (
-                <div style={{ fontSize: 11, color: 'var(--app-subtle)' }}>
+                <div style={{ fontSize: 12, color: 'var(--app-subtle)' }}>
                   📍 {n.direccion}
                 </div>
               )}
@@ -185,6 +185,6 @@ export default function BuscarNegociosPage() {
 
 const inputStyle: CSSProperties = {
   background: 'var(--app-input-bg)', border: '1px solid var(--app-border)',
-  borderRadius: 8, padding: '10px 14px', color: 'var(--app-text)', fontSize: 14,
+  borderRadius: 9, padding: '12px 15px', color: 'var(--app-text)', fontSize: 15,
   fontFamily: 'inherit', outline: 'none',
 };

@@ -84,10 +84,10 @@ export default function NotificacionesPage() {
   }, [usuario]);
 
   return (
-    <div className="ark-page" style={{ maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones</h1>
-        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
+    <div className="ark-page" style={{ maxWidth: 760, margin: '0 auto' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones</h1>
+        <p style={{ color: 'var(--app-muted)', fontSize: 15, marginTop: 8 }}>
           Actividad reciente de tus citas.
         </p>
       </div>
@@ -106,20 +106,20 @@ export default function NotificacionesPage() {
           {notis.map(n => (
             <div key={n.id} style={{
               background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-              borderRadius: 10, padding: 14,
-              display: 'flex', alignItems: 'flex-start', gap: 12,
+              borderRadius: 12, padding: 16,
+              display: 'flex', alignItems: 'flex-start', gap: 14,
             }}>
               <div style={{
-                width: 36, height: 36, borderRadius: '50%', background: n.bg,
+                width: 42, height: 42, borderRadius: '50%', background: n.bg,
                 color: n.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16, fontWeight: 700, flexShrink: 0,
+                fontSize: 18, fontWeight: 700, flexShrink: 0,
               }}>
                 {n.icono}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{n.titulo}</div>
-                <div style={{ fontSize: 12, color: 'var(--app-muted)' }}>{n.detalle}</div>
-                <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 4 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>{n.titulo}</div>
+                <div style={{ fontSize: 13, color: 'var(--app-muted)' }}>{n.detalle}</div>
+                <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginTop: 5 }}>
                   hace {formatDistanceToNow(n.fecha, { locale: es })}
                 </div>
               </div>

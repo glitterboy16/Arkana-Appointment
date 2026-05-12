@@ -82,10 +82,10 @@ export default function MisCitasPage() {
   };
 
   return (
-    <div className="ark-page" style={{ maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mis citas</h1>
-        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
+    <div className="ark-page" style={{ maxWidth: 940, margin: '0 auto' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Mis citas</h1>
+        <p style={{ color: 'var(--app-muted)', fontSize: 15, marginTop: 8 }}>
           Tus reservas en los negocios.
         </p>
       </div>
@@ -146,30 +146,30 @@ export default function MisCitasPage() {
             return (
               <div key={c.id} style={{
                 background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-                borderRadius: 12, padding: 16,
-                display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+                borderRadius: 14, padding: 18,
+                display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
               }}>
                 {c.negocio?.logo_url ? (
-                  <img src={c.negocio.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+                  <img src={c.negocio.logo_url} alt="" style={{ width: 54, height: 54, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
                 ) : (
                   <div style={{
-                    width: 48, height: 48, borderRadius: 10, background: '#004AAD',
+                    width: 54, height: 54, borderRadius: 12, background: '#004AAD',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 17, fontWeight: 700, flexShrink: 0, color: '#FAFAFA',
+                    fontSize: 20, fontWeight: 700, flexShrink: 0, color: '#FAFAFA',
                   }}>
                     {c.negocio?.nombre?.charAt(0).toUpperCase() ?? '?'}
                   </div>
                 )}
                 <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 3 }}>
                     {c.negocio?.nombre ?? 'Negocio eliminado'}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--app-muted)' }}>
+                  <div style={{ fontSize: 13, color: 'var(--app-muted)' }}>
                     {c.servicio?.nombre ?? 'Servicio'} · {format(parseISO(c.fecha), "d 'de' MMMM", { locale: es })} · {c.hora_inicio.slice(0, 5)}
                   </div>
                 </div>
                 <span style={{
-                  padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                  padding: '5px 11px', borderRadius: 7, fontSize: 12, fontWeight: 600,
                   color: estado.color, background: estado.bg, whiteSpace: 'nowrap',
                 }}>
                   {estado.label}

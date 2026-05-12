@@ -15,10 +15,10 @@ export default function ConfiguracionPage() {
   };
 
   return (
-    <div className="ark-page" style={{ maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 26px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Configuración</h1>
-        <p style={{ color: 'var(--app-muted)', fontSize: 14, marginTop: 6 }}>
+    <div className="ark-page" style={{ maxWidth: 680, margin: '0 auto' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Configuración</h1>
+        <p style={{ color: 'var(--app-muted)', fontSize: 15, marginTop: 8 }}>
           Preferencias de tu cuenta.
         </p>
       </div>
@@ -71,16 +71,16 @@ export default function ConfiguracionPage() {
 
 const cardStyle: CSSProperties = {
   background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-  borderRadius: 12, padding: 20, marginBottom: 16,
+  borderRadius: 14, padding: 24, marginBottom: 18,
 };
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 14, fontWeight: 600, color: 'var(--app-text)', margin: 0,
+  fontSize: 16, fontWeight: 700, color: 'var(--app-text)', margin: 0, letterSpacing: '-0.01em',
 };
 const helperStyle: CSSProperties = {
-  fontSize: 12, color: 'var(--app-muted)', marginTop: 4, marginBottom: 0,
+  fontSize: 13, color: 'var(--app-muted)', marginTop: 6, marginBottom: 0,
 };
 const btnDanger: CSSProperties = {
-  marginTop: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer',
+  marginTop: 16, padding: '11px 18px', borderRadius: 9, cursor: 'pointer',
   background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)',
-  color: '#EF4444', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+  color: '#EF4444', fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
 };

@@ -286,10 +286,10 @@ export default function PerfilNegocioPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--app-bg)' }}>
       <div style={{
-        padding: '16px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
+        padding: '18px clamp(14px, 4vw, 28px)', borderBottom: '1px solid var(--app-border)',
         background: 'var(--app-bg-elevated)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
       }}>
-        <div style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontWeight: 700, color: 'var(--app-text)', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+        <div style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
           Perfil del negocio
         </div>
         <Btn variant="primary" size="sm" onClick={handleGuardar} disabled={saving}>
