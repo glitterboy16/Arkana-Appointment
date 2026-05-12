@@ -539,8 +539,15 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
 }
 
 @keyframes ark-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Slide+fade para páginas/loaders que sí quieren el efecto, sin dejar
+   transform residual cuando hay descendientes con position: fixed. */
+@keyframes ark-fade-rise {
     from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: none; }
 }
 
 .ark-spinner {
@@ -562,7 +569,7 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
     background: var(--app-bg);
     color: var(--app-muted);
     font-size: 13px;
-    animation: ark-fade-in 240ms ease-out both;
+    animation: ark-fade-rise 240ms ease-out both;
 }
 
 .ark-inline-loader {
@@ -573,7 +580,7 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
     padding: 48px 16px;
     color: var(--app-muted);
     font-size: 13px;
-    animation: ark-fade-in 240ms ease-out both;
+    animation: ark-fade-rise 240ms ease-out both;
 }
 
 .ark-skeleton {
@@ -589,7 +596,7 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
 }
 
 .ark-page-fade {
-    animation: ark-fade-in 220ms ease-out both;
+    animation: ark-fade-rise 220ms ease-out both;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -680,7 +687,7 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
     padding: 32px 32px 64px;
     width: 100%;
     box-sizing: border-box;
-    animation: ark-fade-in 220ms ease-out both;
+    animation: ark-fade-rise 220ms ease-out both;
 }
 
 @media (max-width: 768px) {

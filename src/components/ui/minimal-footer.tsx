@@ -1,10 +1,8 @@
-import {
-  CalendarClock,
-  InstagramIcon,
-  LinkedinIcon,
-  TwitterIcon,
-  YoutubeIcon,
-} from 'lucide-react';
+import { BiLogoGithub, BiLogoLinkedin, BiCalendarStar } from 'react-icons/bi';
+
+// TODO: reemplazar por la URL real de LinkedIn de Angel cuando la pase
+const LINKEDIN_URL = '#';
+const GITHUB_URL = 'https://github.com/glitterboy16/Arkana-Appointment';
 
 export function MinimalFooter() {
   const year = new Date().getFullYear();
@@ -26,14 +24,12 @@ export function MinimalFooter() {
   ];
 
   const socialLinks = [
-    { icon: <InstagramIcon className="size-4" />, link: '#' },
-    { icon: <TwitterIcon className="size-4" />, link: '#' },
-    { icon: <LinkedinIcon className="size-4" />, link: '#' },
-    { icon: <YoutubeIcon className="size-4" />, link: '#' },
+    { icon: <BiLogoGithub className="size-4" />, link: GITHUB_URL, label: 'GitHub' },
+    { icon: <BiLogoLinkedin className="size-4" />, link: LINKEDIN_URL, label: 'LinkedIn' },
   ];
 
   return (
-    <footer className="relative">
+    <footer className="relative" style={{ fontFamily: "'SF Pro Display','SF Pro Text','Inter',sans-serif" }}>
       <div className="mx-auto max-w-4xl border-white/10 md:border-x">
         <div className="grid max-w-4xl grid-cols-6 gap-6 p-4">
           <div className="col-span-6 flex flex-col gap-5 md:col-span-4">
@@ -42,25 +38,28 @@ export function MinimalFooter() {
                 className="flex h-8 w-8 items-center justify-center rounded-lg"
                 style={{ background: '#004AAD' }}
               >
-                <CalendarClock className="size-4 text-white" />
+                <BiCalendarStar className="size-4 text-white" />
               </span>
               <span className="text-base font-semibold tracking-tight text-foreground">
                 Arkana
                 <span className="ml-1 font-light text-muted-foreground">Appointments</span>
               </span>
             </a>
-            <p className="max-w-sm font-mono text-sm text-balance text-muted-foreground">
+            <p
+              className="max-w-sm text-sm text-balance text-muted-foreground"
+              style={{ fontFamily: "'SF Pro Text','Inter',sans-serif" }}
+            >
               La plataforma de citas para negocios que reservan con un QR.
             </p>
             <div className="flex gap-2">
               {socialLinks.map((item, i) => (
                 <a
                   key={i}
-                  className="rounded-md border border-white/10 p-1.5 transition-colors hover:bg-accent"
+                  className="rounded-md border border-white/10 p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                   href={item.link}
-                  aria-label={`Red social ${i + 1}`}
+                  aria-label={item.label}
                 >
                   {item.icon}
                 </a>
@@ -98,7 +97,7 @@ export function MinimalFooter() {
         </div>
         <div className="border-t border-white/10" />
         <div className="flex max-w-4xl flex-col justify-between gap-2 pb-5 pt-4">
-          <p className="text-center font-thin text-muted-foreground">
+          <p className="text-center text-xs font-light text-muted-foreground">
             © {year} Arkana Appointments. Todos los derechos reservados.
           </p>
         </div>

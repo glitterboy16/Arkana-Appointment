@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { BiCheck, BiX, BiTime, BiCalendarPlus } from 'react-icons/bi';
 import { supabase, type EstadoCita } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineLoader } from '@/components/app/Spinner';
@@ -22,7 +23,7 @@ interface Notificacion {
   fecha: Date;
   color: string;
   bg: string;
-  icono: string;
+  icono: ReactNode;
 }
 
 function citaToNotificacion(c: CitaEvento): Notificacion {
@@ -31,28 +32,28 @@ function citaToNotificacion(c: CitaEvento): Notificacion {
   switch (c.estado) {
     case 'confirmed':
       return {
-        id: c.id, color: '#22C55E', bg: 'rgba(34,197,94,0.12)', icono: '✓',
+        id: c.id, color: '#22C55E', bg: 'rgba(34,197,94,0.12)', icono: <BiCheck size={22} />,
         titulo: `${negocio} confirmó tu cita`,
         detalle: `${c.servicio?.nombre ?? 'Servicio'} · ${fechaCita}`,
         fecha: new Date(c.created_at),
       };
     case 'cancelled':
       return {
-        id: c.id, color: '#EF4444', bg: 'rgba(239,68,68,0.12)', icono: '✕',
+        id: c.id, color: '#EF4444', bg: 'rgba(239,68,68,0.12)', icono: <BiX size={22} />,
         titulo: `${negocio} canceló tu cita`,
         detalle: `${c.servicio?.nombre ?? 'Servicio'} · ${fechaCita}`,
         fecha: new Date(c.created_at),
       };
     case 'pending':
       return {
-        id: c.id, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', icono: '⏱',
+        id: c.id, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', icono: <BiTime size={20} />,
         titulo: `Tu cita en ${negocio} está pendiente`,
         detalle: `${c.servicio?.nombre ?? 'Servicio'} · ${fechaCita}`,
         fecha: new Date(c.created_at),
       };
     default:
       return {
-        id: c.id, color: '#648DFF', bg: 'rgba(100,141,255,0.12)', icono: '•',
+        id: c.id, color: '#648DFF', bg: 'rgba(100,141,255,0.12)', icono: <BiCalendarPlus size={20} />,
         titulo: `Cita reservada en ${negocio}`,
         detalle: `${c.servicio?.nombre ?? 'Servicio'} · ${fechaCita}`,
         fecha: new Date(c.created_at),

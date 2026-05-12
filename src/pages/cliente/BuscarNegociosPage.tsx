@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BiMap } from 'react-icons/bi';
 import { supabase, type Negocio } from '@/lib/supabase';
 import { InlineLoader, Skeleton } from '@/components/app/Spinner';
 import NegocioModal from '@/components/app/NegocioModal';
@@ -162,8 +163,9 @@ export default function BuscarNegociosPage() {
                 </div>
               )}
               {n.direccion && (
-                <div style={{ fontSize: 12, color: 'var(--app-subtle)' }}>
-                  📍 {n.direccion}
+                <div style={{ fontSize: 12, color: 'var(--app-subtle)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <BiMap size={14} />
+                  <span>{n.direccion}</span>
                 </div>
               )}
             </button>
