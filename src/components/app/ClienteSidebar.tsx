@@ -53,12 +53,7 @@ export default function ClienteSidebar({ isOpen = false, onClose }: ClienteSideb
         borderBottom: '1px solid var(--app-border)', flexShrink: 0, justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 44, height: 44, background: '#004AAD', borderRadius: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>
-            <LogoArkana size={32} onBrand />
-          </div>
+          <LogoArkana size={44} />
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)', letterSpacing: '-0.01em' }}>Arkana</div>
             <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 1 }}>Appointments</div>

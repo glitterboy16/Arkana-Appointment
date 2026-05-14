@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale';
 import { supabase, type EstadoCita } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
+import ConfirmModal from '@/components/app/ConfirmModal';
 
 interface CitaConDetalle {
   id: string;
@@ -30,6 +31,7 @@ export default function MisCitasPage() {
   const [filtro, setFiltro] = useState<'todas' | 'proximas' | 'pasadas'>('proximas');
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [citaACancelar, setCitaACancelar] = useState<CitaConDetalle | null>(null);
 
   useEffect(() => {
     if (!usuario) return;
@@ -59,19 +61,19 @@ export default function MisCitasPage() {
     });
   }, [citas, filtro, hoy]);
 
-  const cancelarCita = async (cita: CitaConDetalle) => {
-    const negocio = cita.negocio?.nombre ?? 'el negocio';
-    const fechaTxt = format(parseISO(cita.fecha), "d 'de' MMMM", { locale: es });
-    const ok = window.confirm(`¿Cancelar tu cita en ${negocio} del ${fechaTxt} a las ${cita.hora_inicio.slice(0, 5)}?`);
-    if (!ok) return;
-
+  const confirmarCancelacion = async () => {
+    if (!citaACancelar) return;
+    const cita = citaACancelar;
     setMsg(null);
     setCancelandoId(cita.id);
+
     const { error } = await supabase
       .from('citas')
       .update({ estado: 'cancelled' })
       .eq('id', cita.id);
+
     setCancelandoId(null);
+    setCitaACancelar(null);
 
     if (error) {
       setMsg({ type: 'err', text: 'No se pudo cancelar la cita. Intenta de nuevo.' });
@@ -176,7 +178,7 @@ export default function MisCitasPage() {
                 </span>
                 {cancelable && (
                   <button
-                    onClick={() => cancelarCita(c)}
+                    onClick={() => setCitaACancelar(c)}
                     disabled={cancelando}
                     style={{
                       padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600,
@@ -195,6 +197,22 @@ export default function MisCitasPage() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        open={!!citaACancelar}
+        title="¿Cancelar esta cita?"
+        message={citaACancelar ? (
+          <>
+            Vas a cancelar tu cita en <strong style={{ color: 'var(--app-text)' }}>{citaACancelar.negocio?.nombre ?? 'el negocio'}</strong> del <strong style={{ color: 'var(--app-text)' }}>{format(parseISO(citaACancelar.fecha), "d 'de' MMMM", { locale: es })}</strong> a las <strong style={{ color: 'var(--app-text)' }}>{citaACancelar.hora_inicio.slice(0, 5)}</strong>. Esta acción no se puede deshacer.
+          </>
+        ) : null}
+        confirmLabel="Sí, cancelar"
+        cancelLabel="No, volver"
+        variant="danger"
+        loading={!!cancelandoId}
+        onConfirm={confirmarCancelacion}
+        onCancel={() => { if (!cancelandoId) setCitaACancelar(null); }}
+      />
     </div>
   );
 }

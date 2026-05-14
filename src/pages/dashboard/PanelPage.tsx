@@ -186,7 +186,7 @@ export default function PanelPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span className="ark-hide-mobile" style={{ display: 'inline-flex' }}>
+          <span className="ark-hide-mobile">
             <NotificationsBell />
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer' }}>

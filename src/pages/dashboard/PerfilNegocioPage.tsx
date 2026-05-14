@@ -1,21 +1,44 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import QRCode from 'react-qr-code';
 import toast from 'react-hot-toast';
-import { BiRightArrowAlt } from 'react-icons/bi';
+import { BiRightArrowAlt, BiPlus, BiTrash } from 'react-icons/bi';
 import { ArkanaIcons, Btn } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, type Servicio, type Disponibilidad } from '@/lib/supabase';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
+import TimePicker from '@/components/app/TimePicker';
+import BloqueosCalendar from '@/components/app/BloqueosCalendar';
+import GaleriaUploader from '@/components/app/GaleriaUploader';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-const HORAS_INICIO = ['06:00','07:00','08:00','09:00','10:00','11:00'];
-const HORAS_FIN = ['14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+
+interface TramoExcluido {
+  id?: string;       // id en BD si ya estaba guardado
+  hora_inicio: string;
+  hora_fin: string;
+}
 
 interface DiaState {
   activo: boolean;
   hora_inicio: string;
   hora_fin: string;
   id?: string;
+  tramos: TramoExcluido[];
+}
+
+interface BloqueoExcluidoRow {
+  id: string;
+  negocio_id: string;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+}
+
+interface ExcepcionFechaRow {
+  id: string;
+  negocio_id: string;
+  fecha: string;
+  motivo: string | null;
 }
 
 function ProfileSection({ title, children }: { title: string; children: ReactNode }) {
@@ -36,50 +59,111 @@ function ProfileSection({ title, children }: { title: string; children: ReactNod
 }
 
 function ScheduleRow({ dia, index, state, onChange }: { dia: string; index: number; state: DiaState; onChange: (i: number, s: Partial<DiaState>) => void }) {
+  const addTramo = () => {
+    onChange(index, {
+      tramos: [...state.tramos, { hora_inicio: '14:00', hora_fin: '15:00' }],
+    });
+  };
+  const updateTramo = (idx: number, patch: Partial<TramoExcluido>) => {
+    onChange(index, {
+      tramos: state.tramos.map((t, i) => i === idx ? { ...t, ...patch } : t),
+    });
+  };
+  const removeTramo = (idx: number) => {
+    onChange(index, {
+      tramos: state.tramos.filter((_, i) => i !== idx),
+    });
+  };
+
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0',
+      padding: '12px 0',
       borderBottom: '1px solid var(--app-border)',
     }}>
-      <div style={{ width: 90, fontSize: 13, color: state.activo ? 'var(--app-text)' : 'var(--app-subtle)' }}>{dia}</div>
-      <div
-        onClick={() => onChange(index, { activo: !state.activo })}
-        style={{
-          width: 36, height: 20, borderRadius: 10, cursor: 'pointer', transition: 'all 200ms ease',
-          background: state.activo ? '#648DFF' : 'var(--app-border)', position: 'relative', flexShrink: 0,
-        }}
-      >
-        <div style={{
-          width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute',
-          top: 2, left: state.activo ? 18 : 2, transition: 'left 200ms ease',
-        }} />
-      </div>
-      {state.activo ? (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <select
-            value={state.hora_inicio}
-            onChange={(e) => onChange(index, { hora_inicio: e.target.value })}
-            style={{
-              background: 'var(--app-input-bg)', border: '1px solid var(--app-border)',
-              borderRadius: 6, padding: '5px 8px', color: 'var(--app-text)', fontSize: 12, fontFamily: 'inherit', outline: 'none',
-            }}
-          >
-            {HORAS_INICIO.map((t) => <option key={t}>{t}</option>)}
-          </select>
-          <span style={{ color: 'var(--app-subtle)', display: 'inline-flex', alignItems: 'center' }}><BiRightArrowAlt size={16} /></span>
-          <select
-            value={state.hora_fin}
-            onChange={(e) => onChange(index, { hora_fin: e.target.value })}
-            style={{
-              background: 'var(--app-input-bg)', border: '1px solid var(--app-border)',
-              borderRadius: 6, padding: '5px 8px', color: 'var(--app-text)', fontSize: 12, fontFamily: 'inherit', outline: 'none',
-            }}
-          >
-            {HORAS_FIN.map((t) => <option key={t}>{t}</option>)}
-          </select>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ width: 90, fontSize: 13, color: state.activo ? 'var(--app-text)' : 'var(--app-subtle)' }}>{dia}</div>
+        <div
+          onClick={() => onChange(index, { activo: !state.activo })}
+          style={{
+            width: 36, height: 20, borderRadius: 10, cursor: 'pointer', transition: 'all 200ms ease',
+            background: state.activo ? '#648DFF' : 'var(--app-border)', position: 'relative', flexShrink: 0,
+          }}
+        >
+          <div style={{
+            width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute',
+            top: 2, left: state.activo ? 18 : 2, transition: 'left 200ms ease',
+          }} />
         </div>
-      ) : (
-        <span style={{ fontSize: 12, color: 'var(--app-subtle)' }}>Cerrado</span>
+        {state.activo ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <TimePicker
+              value={state.hora_inicio}
+              onChange={(v) => onChange(index, { hora_inicio: v })}
+              ariaLabel={`${dia} hora de apertura`}
+            />
+            <span style={{ color: 'var(--app-subtle)', display: 'inline-flex', alignItems: 'center' }}><BiRightArrowAlt size={16} /></span>
+            <TimePicker
+              value={state.hora_fin}
+              onChange={(v) => onChange(index, { hora_fin: v })}
+              ariaLabel={`${dia} hora de cierre`}
+            />
+            <button
+              type="button"
+              onClick={addTramo}
+              style={{
+                marginLeft: 'auto', padding: '4px 10px', borderRadius: 6,
+                border: '1px dashed var(--app-border)', background: 'transparent',
+                color: 'var(--app-muted)', fontSize: 11, fontFamily: 'inherit',
+                cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              <BiPlus size={12} /> Añadir pausa
+            </button>
+          </div>
+        ) : (
+          <span style={{ fontSize: 12, color: 'var(--app-subtle)' }}>Cerrado</span>
+        )}
+      </div>
+
+      {state.activo && state.tramos.length > 0 && (
+        <div style={{
+          marginTop: 10, marginLeft: 104, display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
+          {state.tramos.map((tramo, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+              padding: '6px 10px', borderRadius: 8,
+              background: 'rgba(245,158,11,0.08)',
+              border: '1px solid rgba(245,158,11,0.20)',
+            }}>
+              <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 700, letterSpacing: '0.05em' }}>PAUSA</span>
+              <TimePicker
+                value={tramo.hora_inicio}
+                onChange={(v) => updateTramo(i, { hora_inicio: v })}
+                ariaLabel="Inicio de pausa"
+              />
+              <span style={{ color: 'var(--app-subtle)' }}><BiRightArrowAlt size={14} /></span>
+              <TimePicker
+                value={tramo.hora_fin}
+                onChange={(v) => updateTramo(i, { hora_fin: v })}
+                ariaLabel="Fin de pausa"
+              />
+              <button
+                type="button"
+                onClick={() => removeTramo(i)}
+                aria-label="Quitar pausa"
+                style={{
+                  marginLeft: 'auto', width: 26, height: 26, borderRadius: 6,
+                  border: 'none', background: 'transparent',
+                  color: 'var(--app-muted)', cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <BiTrash size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -133,8 +217,9 @@ export default function PerfilNegocioPage() {
 
   const [info, setInfo] = useState({ nombre: '', categoria: '', descripcion: '', telefono: '', direccion: '' });
   const [horario, setHorario] = useState<DiaState[]>(
-    DIAS.map((_, i) => ({ activo: i < 5, hora_inicio: '09:00', hora_fin: '18:00' }))
+    DIAS.map((_, i) => ({ activo: i < 5, hora_inicio: '09:00', hora_fin: '18:00', tramos: [] }))
   );
+  const [fechasBloqueadas, setFechasBloqueadas] = useState<string[]>([]);
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -161,23 +246,40 @@ export default function PerfilNegocioPage() {
     });
 
     const load = async () => {
-      const [{ data: svcs }, { data: disp }] = await Promise.all([
+      const [
+        { data: svcs },
+        { data: disp },
+        { data: bloques },
+        { data: excepciones },
+      ] = await Promise.all([
         supabase.from('servicios').select('*').eq('negocio_id', negocio.id).eq('activo', true).order('created_at'),
         supabase.from('disponibilidad').select('*').eq('negocio_id', negocio.id),
+        supabase.from('disponibilidad_bloques_excluidos').select('*').eq('negocio_id', negocio.id),
+        supabase.from('disponibilidad_excepciones').select('*').eq('negocio_id', negocio.id),
       ]);
 
       setServicios((svcs as Servicio[]) ?? []);
 
+      const bloquesRows = (bloques as BloqueoExcluidoRow[] | null) ?? [];
       if (disp && disp.length > 0) {
-        // Si ya existen filas de disponibilidad, los días que NO tienen fila
-        // deben quedarse inactivos (no rellenar con el default Lun-Vie). Si no,
-        // al pulsar "Guardar" se insertarían días que el dueño nunca activó.
         setHorario(DIAS.map((_, i) => {
           const row = (disp as Disponibilidad[]).find((d) => d.dia_semana === i + 1);
-          if (row) return { activo: row.activo, hora_inicio: row.hora_inicio, hora_fin: row.hora_fin, id: row.id };
-          return { activo: false, hora_inicio: '09:00', hora_fin: '18:00' };
+          const tramosDia = bloquesRows
+            .filter(b => b.dia_semana === i + 1)
+            .map(b => ({ id: b.id, hora_inicio: b.hora_inicio, hora_fin: b.hora_fin }));
+          if (row) return { activo: row.activo, hora_inicio: row.hora_inicio, hora_fin: row.hora_fin, id: row.id, tramos: tramosDia };
+          return { activo: false, hora_inicio: '09:00', hora_fin: '18:00', tramos: tramosDia };
         }));
+      } else if (bloquesRows.length > 0) {
+        setHorario(prev => prev.map((h, i) => ({
+          ...h,
+          tramos: bloquesRows
+            .filter(b => b.dia_semana === i + 1)
+            .map(b => ({ id: b.id, hora_inicio: b.hora_inicio, hora_fin: b.hora_fin })),
+        })));
       }
+
+      setFechasBloqueadas(((excepciones as ExcepcionFechaRow[] | null) ?? []).map(e => e.fecha));
 
       setLoading(false);
     };
@@ -187,6 +289,27 @@ export default function PerfilNegocioPage() {
 
   const handleGuardar = async () => {
     if (!negocio) return;
+
+    // Validación: tramos de pausa deben caer dentro del horario y tener hora_fin > hora_inicio
+    for (let i = 0; i < DIAS.length; i++) {
+      const d = horario[i];
+      if (!d.activo) continue;
+      if (d.hora_fin <= d.hora_inicio) {
+        toast.error(`${DIAS[i]}: la hora de cierre debe ser posterior a la apertura`);
+        return;
+      }
+      for (const t of d.tramos) {
+        if (t.hora_fin <= t.hora_inicio) {
+          toast.error(`${DIAS[i]}: una pausa tiene hora de fin igual o anterior al inicio`);
+          return;
+        }
+        if (t.hora_inicio < d.hora_inicio || t.hora_fin > d.hora_fin) {
+          toast.error(`${DIAS[i]}: una pausa cae fuera del horario del día`);
+          return;
+        }
+      }
+    }
+
     setSaving(true);
     try {
       const { error: errNeg } = await supabase
@@ -202,6 +325,7 @@ export default function PerfilNegocioPage() {
 
       if (errNeg) { toast.error('Error guardando información'); return; }
 
+      // 1. Disponibilidad por día
       for (let i = 0; i < DIAS.length; i++) {
         const d = horario[i];
         const payload = {
@@ -221,11 +345,41 @@ export default function PerfilNegocioPage() {
         }
       }
 
+      // 2. Tramos excluidos: borramos todos y reinsertamos (más simple que diff)
+      await supabase.from('disponibilidad_bloques_excluidos').delete().eq('negocio_id', negocio.id);
+      const nuevosBloques = horario.flatMap((d, i) =>
+        d.activo
+          ? d.tramos.map(t => ({
+              negocio_id: negocio.id,
+              dia_semana: i + 1,
+              hora_inicio: t.hora_inicio,
+              hora_fin: t.hora_fin,
+            }))
+          : [],
+      );
+      if (nuevosBloques.length > 0) {
+        await supabase.from('disponibilidad_bloques_excluidos').insert(nuevosBloques);
+      }
+
+      // 3. Días bloqueados: mismo enfoque (delete + insert)
+      await supabase.from('disponibilidad_excepciones').delete().eq('negocio_id', negocio.id);
+      if (fechasBloqueadas.length > 0) {
+        await supabase.from('disponibilidad_excepciones').insert(
+          fechasBloqueadas.map(f => ({ negocio_id: negocio.id, fecha: f })),
+        );
+      }
+
       await refreshNegocio();
       toast.success('Cambios guardados');
     } finally {
       setSaving(false);
     }
+  };
+
+  const toggleFechaBloqueada = (fecha: string) => {
+    setFechasBloqueadas(prev =>
+      prev.includes(fecha) ? prev.filter(f => f !== fecha) : [...prev, fecha],
+    );
   };
 
   const openNewServicio = () => {
@@ -352,6 +506,9 @@ export default function PerfilNegocioPage() {
         </ProfileSection>
 
         <ProfileSection title="Horario de atención">
+          <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginBottom: 6, lineHeight: 1.5 }}>
+            Pulsa cualquier hora para elegir una distinta. Puedes añadir pausas dentro de cada día.
+          </div>
           {DIAS.map((dia, i) => (
             <ScheduleRow
               key={dia}
@@ -361,6 +518,20 @@ export default function PerfilNegocioPage() {
               onChange={(idx, partial) => setHorario((prev) => prev.map((h, j) => j === idx ? { ...h, ...partial } : h))}
             />
           ))}
+        </ProfileSection>
+
+        <ProfileSection title="Galería">
+          {negocio ? <GaleriaUploader negocioId={negocio.id} max={6} /> : null}
+        </ProfileSection>
+
+        <ProfileSection title="Días que no trabajas">
+          <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginBottom: 14, lineHeight: 1.5 }}>
+            Marca días puntuales (vacaciones, festivos…) en los que tu negocio estará cerrado. Los clientes no podrán reservar en esos días.
+          </div>
+          <BloqueosCalendar
+            fechasBloqueadas={fechasBloqueadas}
+            onToggle={toggleFechaBloqueada}
+          />
         </ProfileSection>
 
         <ProfileSection title="Servicios">
