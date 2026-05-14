@@ -70,7 +70,6 @@ export default function NotificationsBell({ iconColor }: NotificationsBellProps)
             borderRadius: 9999, background: '#EF4444', color: '#FAFAFA',
             fontSize: 10, fontWeight: 700, lineHeight: '16px', textAlign: 'center',
             boxShadow: '0 0 0 2px var(--app-bg-elevated)',
-            animation: 'ark-pulse 1.6s ease-in-out infinite',
           }}>
             {unread > 9 ? '9+' : unread}
           </span>

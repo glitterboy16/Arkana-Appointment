@@ -779,6 +779,27 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
     }
 }
 
+/* Modal compacto para confirmaciones (cancelar cita, etc.) */
+.ark-confirm-modal {
+    position: relative;
+    background: var(--app-bg-elevated);
+    color: var(--app-text);
+    width: 100%;
+    max-width: 420px;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: ark-modal-slide-up 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (min-width: 640px) {
+    .ark-confirm-modal {
+        border-radius: 16px;
+        animation: ark-modal-pop 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+}
+
 /* ══════════════════════════════════════════════════════════════
    Landing Dashboard3D — efecto 3D solo en desktop, planas en móvil
    ══════════════════════════════════════════════════════════════ */

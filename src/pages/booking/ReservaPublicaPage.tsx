@@ -33,30 +33,61 @@ interface DayOption {
   dispo: Disponibilidad;
 }
 
-function generateSlots(horaInicio: string, horaFin: string, duracionMin: number): string[] {
+interface TramoExcluidoDay {
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+}
+
+function hhmmToMin(h: string): number {
+  const [hh, mm] = h.split(':').map(Number);
+  return hh * 60 + mm;
+}
+
+function generateSlots(
+  horaInicio: string,
+  horaFin: string,
+  duracionMin: number,
+  tramosExcluidos: TramoExcluidoDay[] = [],
+): string[] {
   const slots: string[] = [];
   const [sh, sm] = horaInicio.split(':').map(Number);
   const [eh, em] = horaFin.split(':').map(Number);
   let current = sh * 60 + sm;
   const end = eh * 60 + em;
   while (current + duracionMin <= end) {
-    slots.push(
-      `${Math.floor(current / 60).toString().padStart(2, '0')}:${(current % 60).toString().padStart(2, '0')}`
-    );
+    const slotEnd = current + duracionMin;
+    // descartar si el slot pisa cualquier tramo excluido (pausa)
+    const choca = tramosExcluidos.some(t => {
+      const tIni = hhmmToMin(t.hora_inicio);
+      const tFin = hhmmToMin(t.hora_fin);
+      return current < tFin && slotEnd > tIni;
+    });
+    if (!choca) {
+      slots.push(
+        `${Math.floor(current / 60).toString().padStart(2, '0')}:${(current % 60).toString().padStart(2, '0')}`
+      );
+    }
     current += duracionMin;
   }
   return slots;
 }
 
-function getNextAvailableDays(disponibilidad: Disponibilidad[], count = 7): DayOption[] {
+function getNextAvailableDays(
+  disponibilidad: Disponibilidad[],
+  fechasBloqueadas: Set<string>,
+  count = 7,
+): DayOption[] {
   const days: DayOption[] = [];
   const today = new Date();
-  for (let i = 0; i < 30 && days.length < count; i++) {
+  for (let i = 0; i < 60 && days.length < count; i++) {
     const date = addDays(today, i);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    if (fechasBloqueadas.has(dateStr)) continue;
     const isoDay = getISODay(date);
     const dispo = disponibilidad.find((d) => d.dia_semana === isoDay && d.activo);
     if (dispo) {
-      days.push({ date, dateStr: format(date, 'yyyy-MM-dd'), dispo });
+      days.push({ date, dateStr, dispo });
     }
   }
   return days;
@@ -107,6 +138,8 @@ export default function ReservaPublicaPage() {
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [, setDisponibilidad] = useState<Disponibilidad[]>([]);
+  const [tramosExcluidos, setTramosExcluidos] = useState<TramoExcluidoDay[]>([]);
+  const [galeria, setGaleria] = useState<string[]>([]);
   const [availableDays, setAvailableDays] = useState<DayOption[]>([]);
 
   const [step, setStep] = useState(1);
@@ -142,17 +175,24 @@ export default function ReservaPublicaPage() {
       if (!neg) { setPageState('notfound'); return; }
       setNegocio(neg as Negocio);
 
-      const [{ data: svcs }, { data: disp }] = await Promise.all([
+      const [{ data: svcs }, { data: disp }, { data: bloques }, { data: excepciones }, { data: fotos }] = await Promise.all([
         supabase.from('servicios').select('*').eq('negocio_id', neg.id).eq('activo', true).order('created_at'),
         supabase.from('disponibilidad').select('*').eq('negocio_id', neg.id).eq('activo', true),
+        supabase.from('disponibilidad_bloques_excluidos').select('dia_semana, hora_inicio, hora_fin').eq('negocio_id', neg.id),
+        supabase.from('disponibilidad_excepciones').select('fecha').eq('negocio_id', neg.id),
+        supabase.from('negocio_fotos').select('foto_url').eq('negocio_id', neg.id).order('orden'),
       ]);
 
       const svcList = (svcs as Servicio[]) ?? [];
       const dispList = (disp as Disponibilidad[]) ?? [];
+      const tramos = (bloques as TramoExcluidoDay[] | null) ?? [];
+      const fechasBloqSet = new Set(((excepciones as { fecha: string }[] | null) ?? []).map(e => e.fecha));
 
       setServicios(svcList);
       setDisponibilidad(dispList);
-      setAvailableDays(getNextAvailableDays(dispList));
+      setTramosExcluidos(tramos);
+      setGaleria(((fotos as { foto_url: string }[] | null) ?? []).map(f => f.foto_url));
+      setAvailableDays(getNextAvailableDays(dispList, fechasBloqSet));
       setPageState('booking');
     };
     load();
@@ -166,7 +206,8 @@ export default function ReservaPublicaPage() {
     const day = availableDays[selectedDayIdx];
     if (!day) return;
 
-    const newSlots = generateSlots(day.dispo.hora_inicio, day.dispo.hora_fin, servicio.duracion_min);
+    const tramosDelDia = tramosExcluidos.filter(t => t.dia_semana === getISODay(day.date));
+    const newSlots = generateSlots(day.dispo.hora_inicio, day.dispo.hora_fin, servicio.duracion_min, tramosDelDia);
     setSlots(newSlots);
     setSelectedTime(null);
 
@@ -180,7 +221,7 @@ export default function ReservaPublicaPage() {
       .then(({ data }) => {
         setOccupiedSlots(new Set((data ?? []).map((c: { hora_inicio: string }) => c.hora_inicio.slice(0, 5))));
       });
-  }, [selectedServicio, selectedDayIdx, availableDays, servicios, negocio]);
+  }, [selectedServicio, selectedDayIdx, availableDays, servicios, negocio, tramosExcluidos]);
 
   const handleConfirmar = async () => {
     if (!negocio || !selectedServicio || !selectedTime || !availableDays[selectedDayIdx]) return;
@@ -285,9 +326,7 @@ export default function ReservaPublicaPage() {
         padding: '12px 20px', background: '#050A30', borderBottom: '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
       }}>
-        <div style={{ width: 36, height: 36, background: '#004AAD', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LogoArkana size={26} onBrand />
-        </div>
+        <LogoArkana size={36} />
         <span style={{ fontSize: 15, fontWeight: 700, color: '#FAFAFA' }}>Arkana Appointments</span>
         {usuario?.rol === 'cliente' ? (
           <Link
@@ -297,6 +336,15 @@ export default function ReservaPublicaPage() {
             onMouseLeave={navBtnLeave}
           >
             ← Mis citas
+          </Link>
+        ) : usuario?.rol === 'negocio' ? (
+          <Link
+            to="/panel"
+            style={navBtnStyle}
+            onMouseEnter={navBtnHover}
+            onMouseLeave={navBtnLeave}
+          >
+            ← Volver al panel
           </Link>
         ) : (
           <Link
@@ -316,11 +364,8 @@ export default function ReservaPublicaPage() {
       }}>
         <div style={{ width: '100%', maxWidth: 480 }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: 16, background: '#004AAD',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
-            }}>
-              <LogoArkana size={40} onBrand />
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <LogoArkana size={60} />
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
               {negocio!.nombre}
@@ -350,6 +395,26 @@ export default function ReservaPublicaPage() {
                   }} />
                   <span style={{ fontSize: 10, color: step >= i + 1 ? '#648DFF' : 'rgba(250,250,250,0.30)', fontWeight: 600 }}>{s}</span>
                 </div>
+              ))}
+            </div>
+          )}
+
+          {step === 1 && galeria.length > 0 && (
+            <div style={{
+              display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, marginBottom: 18,
+              scrollSnapType: 'x mandatory', scrollbarWidth: 'thin',
+            }}>
+              {galeria.map((url, i) => (
+                <img
+                  key={url + i}
+                  src={url}
+                  alt=""
+                  style={{
+                    width: 160, height: 110, objectFit: 'cover', borderRadius: 12,
+                    flexShrink: 0, scrollSnapAlign: 'start',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                />
               ))}
             </div>
           )}
@@ -548,13 +613,22 @@ export default function ReservaPublicaPage() {
               <div style={{ fontSize: 14, color: 'rgba(250,250,250,0.55)', lineHeight: 1.6 }}>
                 Tu reserva ha sido registrada.<br />Hasta pronto en <strong style={{ color: '#FAFAFA' }}>{negocio!.nombre}</strong>.
               </div>
-              <Btn
-                variant="ghost" size="md"
-                onClick={() => { setStep(1); setSelectedServicio(null); setSelectedTime(null); setForm({ nombre: '', telefono: '', email: '' }); }}
-                style={{ marginTop: 24, display: 'inline-flex' }}
-              >
-                Hacer otra reserva
-              </Btn>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+                <Btn
+                  variant="ghost" size="md"
+                  onClick={() => { setStep(1); setSelectedServicio(null); setSelectedTime(null); setForm({ nombre: '', telefono: '', email: '' }); }}
+                  style={{ display: 'inline-flex' }}
+                >
+                  Hacer otra reserva
+                </Btn>
+                {usuario?.rol === 'negocio' && (
+                  <Link to="/panel/citas" style={{ textDecoration: 'none' }}>
+                    <Btn variant="primary" size="md" style={{ display: 'inline-flex' }}>
+                      Volver al panel
+                    </Btn>
+                  </Link>
+                )}
+              </div>
             </div>
           )}
 

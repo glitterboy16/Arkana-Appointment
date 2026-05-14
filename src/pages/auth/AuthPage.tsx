@@ -118,13 +118,8 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
       <div style={{ width: '100%', maxWidth: 420, position: 'relative' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Link to="/" style={{ display: 'inline-block', textDecoration: 'none' }}>
-            <div style={{
-              width: 52, height: 52, borderRadius: 14, background: '#004AAD',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
-            }}>
-              <LogoArkana size={34} onBrand />
-            </div>
+          <Link to="/" style={{ display: 'inline-block', textDecoration: 'none', margin: '0 auto 14px' }}>
+            <LogoArkana size={56} />
           </Link>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Arkana Appointments
