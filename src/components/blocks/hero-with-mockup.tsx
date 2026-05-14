@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Mockup } from '@/components/ui/mockup';
 import { Glow } from '@/components/ui/glow';
-import arkanaLogo from '@/assets/Arkana Logo fix 2.svg';
+import arkanaLogo from '@/assets/Logo Arkana 2.svg';
 
 interface HeroWithMockupProps {
   title: string;

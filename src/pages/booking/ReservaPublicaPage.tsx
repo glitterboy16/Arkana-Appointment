@@ -337,6 +337,15 @@ export default function ReservaPublicaPage() {
           >
             ← Mis citas
           </Link>
+        ) : usuario?.rol === 'negocio' ? (
+          <Link
+            to="/panel"
+            style={navBtnStyle}
+            onMouseEnter={navBtnHover}
+            onMouseLeave={navBtnLeave}
+          >
+            ← Volver al panel
+          </Link>
         ) : (
           <Link
             to="/"
@@ -604,13 +613,22 @@ export default function ReservaPublicaPage() {
               <div style={{ fontSize: 14, color: 'rgba(250,250,250,0.55)', lineHeight: 1.6 }}>
                 Tu reserva ha sido registrada.<br />Hasta pronto en <strong style={{ color: '#FAFAFA' }}>{negocio!.nombre}</strong>.
               </div>
-              <Btn
-                variant="ghost" size="md"
-                onClick={() => { setStep(1); setSelectedServicio(null); setSelectedTime(null); setForm({ nombre: '', telefono: '', email: '' }); }}
-                style={{ marginTop: 24, display: 'inline-flex' }}
-              >
-                Hacer otra reserva
-              </Btn>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+                <Btn
+                  variant="ghost" size="md"
+                  onClick={() => { setStep(1); setSelectedServicio(null); setSelectedTime(null); setForm({ nombre: '', telefono: '', email: '' }); }}
+                  style={{ display: 'inline-flex' }}
+                >
+                  Hacer otra reserva
+                </Btn>
+                {usuario?.rol === 'negocio' && (
+                  <Link to="/panel/citas" style={{ textDecoration: 'none' }}>
+                    <Btn variant="primary" size="md" style={{ display: 'inline-flex' }}>
+                      Volver al panel
+                    </Btn>
+                  </Link>
+                )}
+              </div>
             </div>
           )}
 
