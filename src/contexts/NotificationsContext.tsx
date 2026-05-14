@@ -36,7 +36,9 @@ interface NotifCtx {
 const NotificationsContext = createContext<NotifCtx | null>(null);
 
 const STORAGE_KEY = 'arkana.notifs.v1';
+const LAST_CHECK_KEY = 'arkana.notifs.lastCheck.v1';
 const MAX_ITEMS = 30;
+const POLL_INTERVAL_MS = 30_000;
 
 function loadStored(): NotifItem[] {
   try {
@@ -54,39 +56,6 @@ function saveStored(items: NotifItem[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_ITEMS)));
   } catch {
     /* quota o privacy mode — ignoramos */
-  }
-}
-
-// Beep simple con Web Audio API (no requiere asset). El AudioContext queda
-// "suspended" hasta el primer gesto del usuario, así que la primera carga
-// puede ser silenciosa — eso es OK: el dropdown aún se enciende.
-let audioCtx: AudioContext | null = null;
-function playNotificationSound() {
-  try {
-    if (!audioCtx) {
-      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!Ctor) return;
-      audioCtx = new Ctor();
-    }
-    if (audioCtx.state === 'suspended') void audioCtx.resume();
-    const now = audioCtx.currentTime;
-    const tones = [880, 1175];
-    tones.forEach((freq, i) => {
-      const osc = audioCtx!.createOscillator();
-      const gain = audioCtx!.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      const start = now + i * 0.12;
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
-      osc.connect(gain);
-      gain.connect(audioCtx!.destination);
-      osc.start(start);
-      osc.stop(start + 0.32);
-    });
-  } catch {
-    /* sin audio — silenciosamente */
   }
 }
 
@@ -110,6 +79,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const push = useCallback((notif: Omit<NotifItem, 'id' | 'leida' | 'fecha'> & { fecha?: Date }) => {
     setItems(prev => {
+      // Dedup: no repetir la misma notif (mismo citaId + mismo kind) si ya existe.
+      // Realtime y polling pueden disparar el mismo evento — esto los unifica.
+      if (prev.some(p => p.citaId === notif.citaId && p.kind === notif.kind)) {
+        return prev;
+      }
       const next: NotifItem = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         leida: false,
@@ -120,7 +94,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       saveStored(updated);
       return updated;
     });
-    playNotificationSound();
   }, []);
 
   const markAllRead = useCallback(() => {
@@ -236,6 +209,67 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
+  }, [session?.user, usuario, negocio?.id, push]);
+
+  // Polling de respaldo: si supabase realtime no está activado en la tabla
+  // 'citas', el negocio igual recibe las notifs revisando cada 30s las citas
+  // creadas desde la última verificación. La dedup por (citaId+kind) evita
+  // duplicados con realtime cuando ambos funcionan.
+  useEffect(() => {
+    if (!session?.user || !usuario || usuario.rol !== 'negocio' || !negocio?.id) return;
+
+    let cancelled = false;
+    let lastCheck = localStorage.getItem(LAST_CHECK_KEY) ?? new Date().toISOString();
+
+    const pollOnce = async () => {
+      const since = lastCheck;
+      const { data, error } = await supabase
+        .from('citas')
+        .select('id, cliente_nombre, servicio_id, fecha, hora_inicio, created_at')
+        .eq('negocio_id', negocio.id)
+        .gt('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (cancelled || error || !data || data.length === 0) {
+        if (!cancelled && !error) {
+          lastCheck = new Date().toISOString();
+          localStorage.setItem(LAST_CHECK_KEY, lastCheck);
+        }
+        return;
+      }
+
+      for (const c of data as Array<Pick<Cita, 'id' | 'cliente_nombre' | 'servicio_id' | 'fecha' | 'hora_inicio'>>) {
+        let servicioNombre = 'una cita';
+        const { data: srv } = await supabase
+          .from('servicios')
+          .select('nombre')
+          .eq('id', c.servicio_id)
+          .maybeSingle();
+        if (srv?.nombre) servicioNombre = srv.nombre;
+
+        push({
+          citaId: c.id,
+          kind: 'cita_nueva',
+          titulo: `Nueva cita de ${c.cliente_nombre}`,
+          detalle: `${servicioNombre} · ${formatearFecha(c.fecha, c.hora_inicio)}`,
+        });
+      }
+
+      lastCheck = new Date().toISOString();
+      localStorage.setItem(LAST_CHECK_KEY, lastCheck);
+    };
+
+    void pollOnce();
+    const interval = window.setInterval(() => { void pollOnce(); }, POLL_INTERVAL_MS);
+    const onVisible = () => { if (!document.hidden) void pollOnce(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [session?.user, usuario, negocio?.id, push]);
 
   const unread = items.filter(n => !n.leida).length;

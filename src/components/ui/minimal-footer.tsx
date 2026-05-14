@@ -35,12 +35,7 @@ export function MinimalFooter() {
         <div className="grid max-w-4xl grid-cols-6 gap-6 p-4">
           <div className="col-span-6 flex flex-col gap-5 md:col-span-4">
             <a href="/" className="flex w-max items-center gap-2.5 no-underline">
-              <span
-                className="flex h-10 w-10 items-center justify-center rounded-lg"
-                style={{ background: '#004AAD' }}
-              >
-                <LogoArkana size={28} onBrand />
-              </span>
+              <LogoArkana size={44} />
               <span className="text-lg font-semibold tracking-tight text-foreground">
                 Arkana
                 <span className="ml-1 font-light text-muted-foreground">Appointments</span>
