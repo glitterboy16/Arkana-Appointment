@@ -9,6 +9,7 @@ import NotificationsBell from '@/components/app/NotificationsBell';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number } | null;
+  cliente?: { foto_url: string | null } | null;
 }
 
 interface MetricCardProps {
@@ -54,7 +55,15 @@ function AppointmentRow({ cita }: { cita: CitaConServicio }) {
           {cita.servicios ? `${cita.servicios.duracion_min}min` : '—'}
         </div>
       </div>
-      <div style={{ width: 3, height: 34, borderRadius: 2, background: 'rgba(100,141,255,0.4)', flexShrink: 0 }} />
+      {cita.cliente?.foto_url ? (
+        <img
+          src={cita.cliente.foto_url}
+          alt=""
+          style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        />
+      ) : (
+        <div style={{ width: 3, height: 34, borderRadius: 2, background: 'rgba(100,141,255,0.4)', flexShrink: 0 }} />
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {cita.cliente_nombre}
@@ -120,7 +129,7 @@ export default function PanelPage() {
       ] = await Promise.all([
         supabase
           .from('citas')
-          .select('*, servicios(nombre, duracion_min)')
+          .select('*, servicios(nombre, duracion_min), cliente:usuarios!cliente_id(foto_url)')
           .eq('negocio_id', negocio.id)
           .eq('fecha', today)
           .order('hora_inicio'),
@@ -144,7 +153,7 @@ export default function PanelPage() {
           .lte('fecha', today),
       ]);
 
-      setCitasHoy((hoy as CitaConServicio[]) ?? []);
+      setCitasHoy(((hoy ?? []) as unknown) as CitaConServicio[]);
       setCountSemana(semana ?? 0);
       setCountMes(mes ?? 0);
 

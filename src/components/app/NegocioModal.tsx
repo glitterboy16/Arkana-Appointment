@@ -16,9 +16,17 @@ function formatPrecio(centimos: number): string {
   return `${(centimos / 100).toFixed(centimos % 100 === 0 ? 0 : 2)}€`;
 }
 
+interface NegocioFoto {
+  id: string;
+  foto_url: string;
+  orden: number;
+}
+
 export default function NegocioModal({ negocio, onClose, onReservar }: NegocioModalProps) {
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [loadingServicios, setLoadingServicios] = useState(true);
+  const [fotos, setFotos] = useState<NegocioFoto[]>([]);
+  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
   const [punto, setPunto] = useState<GeoPoint | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'loading' | 'ready' | 'empty' | 'error'>('idle');
 
@@ -35,20 +43,31 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
     };
   }, [negocio, onClose]);
 
-  // Cargar servicios al abrir
+  // Cargar servicios y galería al abrir
   useEffect(() => {
-    if (!negocio) { setServicios([]); setLoadingServicios(true); return; }
+    if (!negocio) {
+      setServicios([]); setLoadingServicios(true); setFotos([]);
+      return;
+    }
     let cancelled = false;
     setLoadingServicios(true);
     (async () => {
-      const { data } = await supabase
-        .from('servicios')
-        .select('*')
-        .eq('negocio_id', negocio.id)
-        .eq('activo', true)
-        .order('created_at');
+      const [{ data: svcs }, { data: gFotos }] = await Promise.all([
+        supabase
+          .from('servicios')
+          .select('*')
+          .eq('negocio_id', negocio.id)
+          .eq('activo', true)
+          .order('created_at'),
+        supabase
+          .from('negocio_fotos')
+          .select('id, foto_url, orden')
+          .eq('negocio_id', negocio.id)
+          .order('orden'),
+      ]);
       if (!cancelled) {
-        setServicios((data as Servicio[]) ?? []);
+        setServicios((svcs as Servicio[]) ?? []);
+        setFotos((gFotos as NegocioFoto[]) ?? []);
         setLoadingServicios(false);
       }
     })();
@@ -160,6 +179,45 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
               <p style={{ fontSize: 14, color: 'var(--app-muted)', lineHeight: 1.55, margin: 0 }}>
                 {negocio.descripcion}
               </p>
+            </section>
+          )}
+
+          {/* GALERÍA */}
+          {fotos.length > 0 && (
+            <section style={sectionStyle}>
+              <div style={sectionTitleStyle}>Galería</div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+                gap: 8,
+              }}>
+                {fotos.map(f => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFotoAmpliada(f.foto_url)}
+                    style={{
+                      position: 'relative', aspectRatio: '1 / 1', borderRadius: 10,
+                      overflow: 'hidden', border: '1px solid var(--app-border)',
+                      background: 'var(--app-surface)', padding: 0, cursor: 'pointer',
+                    }}
+                    aria-label="Ampliar foto"
+                  >
+                    <img
+                      src={f.foto_url}
+                      alt=""
+                      loading="lazy"
+                      style={{
+                        position: 'absolute', inset: 0,
+                        width: '100%', height: '100%', objectFit: 'cover',
+                        transition: 'transform 200ms ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
+                    />
+                  </button>
+                ))}
+              </div>
             </section>
           )}
 
@@ -314,6 +372,42 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
           </button>
         </div>
       </div>
+
+      {fotoAmpliada && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setFotoAmpliada(null); }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20, cursor: 'zoom-out',
+            animation: 'ark-fade-in 180ms ease-out both',
+          }}
+          role="dialog"
+          aria-label="Foto ampliada"
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setFotoAmpliada(null); }}
+            aria-label="Cerrar"
+            style={{
+              position: 'absolute', top: 16, right: 16,
+              width: 40, height: 40, borderRadius: '50%', border: 'none',
+              background: 'rgba(255,255,255,0.12)', color: '#FAFAFA',
+              cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <BiX size={24} />
+          </button>
+          <img
+            src={fotoAmpliada}
+            alt=""
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>,
     document.body,
   );

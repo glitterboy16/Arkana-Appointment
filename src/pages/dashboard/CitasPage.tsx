@@ -13,6 +13,7 @@ import ReagendarModal from '@/components/app/ReagendarModal';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number; precio_centimos: number } | null;
+  cliente: { foto_url: string | null } | null;
 }
 
 function formatFechaGrupo(fecha: string): string {
@@ -65,7 +66,15 @@ function AppointmentRow({
           {cita.servicios ? `${cita.servicios.duracion_min}min` : '—'}
         </div>
       </div>
-      <Avatar name={cita.cliente_nombre} size={34} bg={avatarColor(cita.cliente_nombre)} />
+      {cita.cliente?.foto_url ? (
+        <img
+          src={cita.cliente.foto_url}
+          alt=""
+          style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        />
+      ) : (
+        <Avatar name={cita.cliente_nombre} size={34} bg={avatarColor(cita.cliente_nombre)} />
+      )}
       <div style={{ flex: '1 1 160px', minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cita.cliente_nombre}</div>
         <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -142,12 +151,12 @@ export default function CitasPage() {
       const today = format(new Date(), 'yyyy-MM-dd');
       const { data } = await supabase
         .from('citas')
-        .select('*, servicios(nombre, duracion_min, precio_centimos)')
+        .select('*, servicios(nombre, duracion_min, precio_centimos), cliente:usuarios!cliente_id(foto_url)')
         .eq('negocio_id', negocio.id)
         .gte('fecha', today)
         .order('fecha')
         .order('hora_inicio');
-      setCitas((data as CitaConServicio[]) ?? []);
+      setCitas(((data ?? []) as unknown) as CitaConServicio[]);
       setLoading(false);
     };
 

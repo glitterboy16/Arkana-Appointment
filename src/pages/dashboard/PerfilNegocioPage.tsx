@@ -9,6 +9,19 @@ import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import TimePicker from '@/components/app/TimePicker';
 import BloqueosCalendar from '@/components/app/BloqueosCalendar';
 import GaleriaUploader from '@/components/app/GaleriaUploader';
+import LogoNegocioUploader from '@/components/app/LogoNegocioUploader';
+import StyledSelect from '@/components/app/StyledSelect';
+
+const CATEGORIAS = [
+  { value: '', label: 'Sin categoría' },
+  { value: 'Clínica dental', label: 'Clínica dental' },
+  { value: 'Salón de belleza', label: 'Salón de belleza' },
+  { value: 'Spa / Bienestar', label: 'Spa / Bienestar' },
+  { value: 'Peluquería', label: 'Peluquería' },
+  { value: 'Fisioterapia', label: 'Fisioterapia' },
+  { value: 'Consultoría', label: 'Consultoría' },
+  { value: 'Otro', label: 'Otro' },
+];
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -456,7 +469,15 @@ export default function PerfilNegocioPage() {
         </Btn>
       </div>
 
-      <div className="ark-page-fade" style={{ padding: '20px clamp(14px, 4vw, 28px)', maxWidth: 720, width: '100%' }}>
+      <div className="ark-page-fade ark-perfil-grid" style={{ padding: '20px clamp(14px, 4vw, 28px)', width: '100%' }}>
+
+        <div className="ark-perfil-col-left">
+
+        <ProfileSection title="Foto del negocio">
+          {negocio ? (
+            <LogoNegocioUploader negocioId={negocio.id} logoUrl={negocio.logo_url} nombre={info.nombre || negocio.nombre} />
+          ) : null}
+        </ProfileSection>
 
         <ProfileSection title="Información general">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -467,20 +488,13 @@ export default function PerfilNegocioPage() {
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Categoría</label>
-                <select
-                  style={{ ...inputStyle, appearance: 'none' }}
+                <StyledSelect
                   value={info.categoria}
-                  onChange={(e) => setInfo({ ...info, categoria: e.target.value })}
-                >
-                  <option value="">Sin categoría</option>
-                  <option value="Clínica dental">Clínica dental</option>
-                  <option value="Salón de belleza">Salón de belleza</option>
-                  <option value="Spa / Bienestar">Spa / Bienestar</option>
-                  <option value="Peluquería">Peluquería</option>
-                  <option value="Fisioterapia">Fisioterapia</option>
-                  <option value="Consultoría">Consultoría</option>
-                  <option value="Otro">Otro</option>
-                </select>
+                  onChange={(v) => setInfo({ ...info, categoria: v })}
+                  options={CATEGORIAS}
+                  placeholder="Sin categoría"
+                  ariaLabel="Categoría del negocio"
+                />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -519,6 +533,10 @@ export default function PerfilNegocioPage() {
             />
           ))}
         </ProfileSection>
+
+        </div>{/* /col-left */}
+
+        <div className="ark-perfil-col-right">
 
         <ProfileSection title="Galería">
           {negocio ? <GaleriaUploader negocioId={negocio.id} max={6} /> : null}
@@ -630,6 +648,8 @@ export default function PerfilNegocioPage() {
             </div>
           </div>
         </ProfileSection>
+
+        </div>{/* /col-right */}
       </div>
     </div>
   );
