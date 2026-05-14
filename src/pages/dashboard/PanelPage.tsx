@@ -186,7 +186,9 @@ export default function PanelPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <NotificationsBell />
+          <span className="ark-hide-mobile" style={{ display: 'inline-flex' }}>
+            <NotificationsBell />
+          </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer' }}>
             <Avatar name={usuario?.nombre ?? 'U'} size={40} bg="#004AAD" />
             <div className="ark-hide-mobile">

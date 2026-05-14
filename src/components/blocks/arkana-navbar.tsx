@@ -167,12 +167,7 @@ export function ArkanaNavbar({
         <nav className="hidden items-center justify-between lg:flex">
           <div className="flex items-center gap-6">
             <Anchor href={logo.url} className="flex items-center gap-2.5 no-underline">
-              <span
-                className="flex h-10 w-10 items-center justify-center rounded-lg"
-                style={{ background: '#004AAD' }}
-              >
-                <LogoArkana size={28} onBrand />
-              </span>
+              <LogoArkana size={44} />
               <span className="text-lg font-semibold tracking-tight text-foreground">
                 {logo.title}
                 <span className="ml-1 font-light text-muted-foreground">Appointments</span>
@@ -207,12 +202,7 @@ export function ArkanaNavbar({
         <div className="block lg:hidden">
           <div className="flex items-center justify-between">
             <Anchor href={logo.url} className="flex items-center gap-2.5 no-underline">
-              <span
-                className="flex h-10 w-10 items-center justify-center rounded-lg"
-                style={{ background: '#004AAD' }}
-              >
-                <LogoArkana size={28} onBrand />
-              </span>
+              <LogoArkana size={44} />
               <span className="text-lg font-semibold tracking-tight text-foreground">
                 {logo.title}
               </span>
@@ -229,12 +219,7 @@ export function ArkanaNavbar({
                 <SheetHeader>
                   <SheetTitle>
                     <Anchor href={logo.url} className="flex items-center gap-2.5 no-underline">
-                      <span
-                        className="flex h-10 w-10 items-center justify-center rounded-lg"
-                        style={{ background: '#004AAD' }}
-                      >
-                        <LogoArkana size={28} onBrand />
-                      </span>
+                      <LogoArkana size={44} />
                       <span className="text-lg font-semibold tracking-tight text-foreground">
                         {logo.title} Appointments
                       </span>

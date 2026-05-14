@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 
 const navBtnStyle: CSSProperties = {
   marginLeft: 'auto',
@@ -97,6 +97,11 @@ type PageState = 'loading' | 'notfound' | 'booking' | 'done';
 
 export default function ReservaPublicaPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  // Cuando el negocio entra a su propia página pública desde el botón
+  // "Nueva cita" en Mis Citas, pasa ?fromPanel=1 para saltarse el bloqueo
+  // de auto-reserva y poder agendarse una cita interna (walk-in, etc).
+  const fromPanel = searchParams.get('fromPanel') === '1';
   const [pageState, setPageState] = useState<PageState>('loading');
 
   const [negocio, setNegocio] = useState<Negocio | null>(null);
@@ -220,6 +225,53 @@ export default function ReservaPublicaPage() {
         <div style={{ fontSize: 40 }}>404</div>
         <div style={{ fontSize: 16, color: '#FAFAFA' }}>Negocio no encontrado</div>
         <div style={{ fontSize: 13 }}>El enlace no es válido o el negocio no existe.</div>
+      </div>
+    );
+  }
+
+  // Bloqueo de auto-reserva: si el usuario es el dueño de este negocio y NO
+  // viene desde el botón "Nueva cita" del panel, no puede reservarse a sí
+  // mismo. Desde el panel (?fromPanel=1) sí está permitido para crear citas
+  // internas/walk-in.
+  const esDueno = !!(usuario && negocio && negocio.usuario_id === usuario.id);
+  if (esDueno && !fromPanel) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', background: '#050A30', color: '#FAFAFA', gap: 16, padding: '32px 20px', textAlign: 'center' }}>
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%', background: 'rgba(100,141,255,0.15)',
+          border: '1px solid rgba(100,141,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#648DFF', fontSize: 28,
+        }}>
+          {ArkanaIcons.eye}
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
+          Estás viendo tu propio negocio
+        </div>
+        <div style={{ fontSize: 14, color: 'rgba(250,250,250,0.65)', maxWidth: 420, lineHeight: 1.5 }}>
+          No puedes reservar una cita en tu propio negocio desde la vista pública.
+          Si necesitas crear una cita manual (walk-in), entra al panel y usa el botón
+          <strong style={{ color: '#FAFAFA' }}> Nueva cita</strong> en Mis Citas.
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link
+            to="/panel/citas"
+            style={{
+              padding: '10px 18px', borderRadius: 8, background: '#004AAD',
+              color: '#FAFAFA', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+            }}
+          >
+            Ir a Mis citas
+          </Link>
+          <Link
+            to="/"
+            style={{
+              padding: '10px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+              color: 'rgba(250,250,250,0.75)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
+            }}
+          >
+            Volver al inicio
+          </Link>
+        </div>
       </div>
     );
   }

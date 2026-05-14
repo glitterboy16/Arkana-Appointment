@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode, MouseEventHandler } from 'react';
-import logoOscuro from '@/assets/Logo Arkana 1.svg';
-import logoClaro from '@/assets/Logo Arkana 2.svg';
+import logoClaro from '@/assets/Logo Arkana 1.svg';
+import logoOscuro from '@/assets/Logo Arkana 2.svg';
 import { useTheme } from '@/hooks/useTheme';
 
 export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled' | 'new';
@@ -8,6 +8,7 @@ export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled' | 'new';
 interface LogoArkanaProps {
   size?: number;
   style?: CSSProperties;
+  /** Cuando el logo va sobre el tile azul de marca, se fuerza a blanco. */
   onBrand?: boolean;
 }
 
@@ -22,6 +23,7 @@ export function LogoArkana({ size = 22, style, onBrand }: LogoArkanaProps) {
         width: size,
         height: size,
         objectFit: 'contain',
+        flexShrink: 0,
         ...(onBrand ? { filter: 'brightness(0) invert(1)' } : null),
         ...style,
       }}

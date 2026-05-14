@@ -25,6 +25,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const NAV_ITEMS: NavItem[] = [
     { id: 'dashboard',    icon: ArkanaIcons.grid,     label: 'Panel principal',    section: 'GESTIÓN', path: '/panel' },
     { id: 'appointments', icon: ArkanaIcons.calendar, label: 'Mis citas',          path: '/panel/citas' },
+    { id: 'notifications',icon: ArkanaIcons.bell,     label: 'Notificaciones',     path: '/panel/notificaciones' },
     { id: 'profile',      icon: ArkanaIcons.building, label: 'Perfil del negocio', path: '/panel/perfil' },
     { id: 'stats',        icon: ArkanaIcons.chart,    label: 'Estadísticas' },
     { id: 'qr',           icon: ArkanaIcons.qr,       label: 'Código QR' },

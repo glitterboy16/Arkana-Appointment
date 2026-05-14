@@ -169,10 +169,13 @@ export default function PerfilNegocioPage() {
       setServicios((svcs as Servicio[]) ?? []);
 
       if (disp && disp.length > 0) {
+        // Si ya existen filas de disponibilidad, los días que NO tienen fila
+        // deben quedarse inactivos (no rellenar con el default Lun-Vie). Si no,
+        // al pulsar "Guardar" se insertarían días que el dueño nunca activó.
         setHorario(DIAS.map((_, i) => {
           const row = (disp as Disponibilidad[]).find((d) => d.dia_semana === i + 1);
           if (row) return { activo: row.activo, hora_inicio: row.hora_inicio, hora_fin: row.hora_fin, id: row.id };
-          return { activo: i < 5, hora_inicio: '09:00', hora_fin: '18:00' };
+          return { activo: false, hora_inicio: '09:00', hora_fin: '18:00' };
         }));
       }
 
