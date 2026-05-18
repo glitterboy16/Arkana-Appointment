@@ -7,6 +7,7 @@ import ClienteLayout from './layouts/ClienteLayout';
 import AdminLayout from './layouts/AdminLayout';
 import AdminPanelPage from './pages/admin/AdminPanelPage';
 import AdminUsuariosPage from './pages/admin/AdminUsuariosPage';
+import RootRedirect from './components/app/RootRedirect';
 import PanelPage from './pages/dashboard/PanelPage';
 import CitasPage from './pages/dashboard/CitasPage';
 import PerfilNegocioPage from './pages/dashboard/PerfilNegocioPage';
@@ -48,7 +49,7 @@ export default function App() {
           <Route index element={<AdminPanelPage />} />
           <Route path="usuarios" element={<AdminUsuariosPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<RootRedirect />} />
       </Routes>
     </BrowserRouter>
   );

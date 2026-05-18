@@ -304,13 +304,13 @@ export default function ReservaPublicaPage() {
             Ir a Mis citas
           </Link>
           <Link
-            to="/"
+            to="/panel"
             style={{
               padding: '10px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
               color: 'rgba(250,250,250,0.75)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
             }}
           >
-            Volver al inicio
+            Volver al panel
           </Link>
         </div>
       </div>

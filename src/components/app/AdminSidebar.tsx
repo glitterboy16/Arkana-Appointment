@@ -1,7 +1,8 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArkanaIcons, Avatar, LogoArkana } from './Shared';
 import { useAuth } from '@/contexts/AuthContext';
+import ConfirmModal from './ConfirmModal';
 
 interface NavItem {
   id: string;
@@ -21,13 +22,23 @@ export default function AdminSidebar({ isOpen = false, onClose }: AdminSidebarPr
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, signOut } = useAuth();
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const doLogout = async () => {
+    setLoggingOut(true);
+    await signOut();
+    setLoggingOut(false);
+    setConfirmLogout(false);
+    navigate('/');
+  };
 
   const NAV_ITEMS: NavItem[] = [
     { id: 'dashboard', icon: ArkanaIcons.grid,     label: 'Dashboard', section: 'ADMIN',  path: '/admin' },
     { id: 'usuarios',  icon: ArkanaIcons.building, label: 'Usuarios',  path: '/admin/usuarios' },
     {
       id: 'logout', icon: ArkanaIcons.logout, label: 'Cerrar sesión',
-      action: async () => { await signOut(); navigate('/'); },
+      action: () => setConfirmLogout(true),
     },
   ];
 
@@ -133,6 +144,18 @@ export default function AdminSidebar({ isOpen = false, onClose }: AdminSidebarPr
           );
         })}
       </nav>
+
+      <ConfirmModal
+        open={confirmLogout}
+        title="¿Cerrar sesión?"
+        message="¿Seguro que quieres salir del panel de administración?"
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        variant="danger"
+        loading={loggingOut}
+        onConfirm={doLogout}
+        onCancel={() => { if (!loggingOut) setConfirmLogout(false); }}
+      />
     </aside>
   );
 }

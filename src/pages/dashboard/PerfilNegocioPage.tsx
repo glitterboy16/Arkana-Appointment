@@ -345,12 +345,24 @@ export default function PerfilNegocioPage() {
         .update({ ...baseUpdate, lat: ubicacion?.lat ?? null, lng: ubicacion?.lng ?? null })
         .eq('id', negocio.id)).error;
 
-      if (errNeg && (errNeg.code === '42703' || /column .* does not exist/i.test(errNeg.message))) {
+      // Detección amplia de "columna no existe":
+      // - 42703: error de Postgres directo (CREATE/ALTER fail-fast)
+      // - PGRST204: PostgREST no encuentra la columna en su schema cache
+      // - regex: por si Supabase cambia formato
+      const colMissing =
+        errNeg && (
+          errNeg.code === '42703' ||
+          errNeg.code === 'PGRST204' ||
+          /column .* does not exist/i.test(errNeg.message) ||
+          /could not find the .* column/i.test(errNeg.message)
+        );
+
+      if (colMissing) {
         // Reintento sin lat/lng. Avisamos al final para que Angel corra la migración.
         const retry = await supabase.from('negocios').update(baseUpdate).eq('id', negocio.id);
         errNeg = retry.error;
         if (!errNeg) {
-          toast('Ubicación no guardada: ejecuta la migración 007 en Supabase.', { icon: '⚠️' });
+          toast('Ubicación no guardada: ejecuta la migración 007 en Supabase.', { icon: '⚠️', duration: 6000 });
         }
       }
 

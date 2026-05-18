@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -11,6 +10,7 @@ import { supabase, type Cita } from '@/lib/supabase';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import ConfirmModal from '@/components/app/ConfirmModal';
 import ReagendarModal from '@/components/app/ReagendarModal';
+import NuevaCitaModal from '@/components/app/NuevaCitaModal';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number; precio_centimos: number } | null;
@@ -138,31 +138,32 @@ const TABS: { id: FilterId; label: string }[] = [
 export default function CitasPage() {
   const { negocio } = useAuth();
   const { silenceNext } = useNotifications();
-  const navigate = useNavigate();
   const [citas, setCitas] = useState<CitaConServicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterId>('all');
   const [savingId, setSavingId] = useState<string | null>(null);
   const [citaACancelar, setCitaACancelar] = useState<CitaConServicio | null>(null);
   const [citaAReagendar, setCitaAReagendar] = useState<CitaConServicio | null>(null);
+  const [nuevaCitaOpen, setNuevaCitaOpen] = useState(false);
+
+  const loadCitas = async () => {
+    if (!negocio) { setLoading(false); return; }
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const { data } = await supabase
+      .from('citas')
+      .select('*, servicios(nombre, duracion_min, precio_centimos), cliente:usuarios!cliente_id(foto_url)')
+      .eq('negocio_id', negocio.id)
+      .gte('fecha', today)
+      .order('fecha')
+      .order('hora_inicio');
+    setCitas(((data ?? []) as unknown) as CitaConServicio[]);
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!negocio) { setLoading(false); return; }
-
-    const load = async () => {
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const { data } = await supabase
-        .from('citas')
-        .select('*, servicios(nombre, duracion_min, precio_centimos), cliente:usuarios!cliente_id(foto_url)')
-        .eq('negocio_id', negocio.id)
-        .gte('fecha', today)
-        .order('fecha')
-        .order('hora_inicio');
-      setCitas(((data ?? []) as unknown) as CitaConServicio[]);
-      setLoading(false);
-    };
-
-    load();
+    void loadCitas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [negocio]);
 
   const handleConfirmar = async (id: string) => {
@@ -227,7 +228,7 @@ export default function CitasPage() {
           <Btn
             variant="primary"
             size="sm"
-            onClick={() => negocio && navigate(`/n/${negocio.slug}?fromPanel=1`)}
+            onClick={() => setNuevaCitaOpen(true)}
             disabled={!negocio}
           >
             {ArkanaIcons.plus} Nueva cita
@@ -306,6 +307,14 @@ export default function CitasPage() {
         onConfirm={handleReagendarConfirmado}
         onCancel={() => { if (!savingId) setCitaAReagendar(null); }}
       />
+
+      {nuevaCitaOpen && negocio && (
+        <NuevaCitaModal
+          negocio={negocio}
+          onClose={() => setNuevaCitaOpen(false)}
+          onCreated={() => { void loadCitas(); }}
+        />
+      )}
     </div>
   );
 }

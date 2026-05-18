@@ -25,6 +25,18 @@ interface CreateState {
   nombre: string;
   rol: RolUsuario;
   telefono: string;
+  nombreNegocio: string; // solo si rol === 'negocio'
+}
+
+function generarSlug(nombre: string): string {
+  return nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .concat('-', Math.random().toString(36).slice(2, 6));
 }
 
 const ROL_BADGE: Record<RolUsuario, { bg: string; color: string; label: string }> = {
@@ -164,7 +176,7 @@ export default function AdminUsuariosPage() {
 
   // ---------- CREAR ----------
   const startCreate = () => {
-    setCreating({ email: '', password: '', nombre: '', rol: 'cliente', telefono: '' });
+    setCreating({ email: '', password: '', nombre: '', rol: 'cliente', telefono: '', nombreNegocio: '' });
   };
 
   const submitCreate = async () => {
@@ -175,6 +187,10 @@ export default function AdminUsuariosPage() {
     }
     if (creating.password.length < 6) {
       toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    if (creating.rol === 'negocio' && !creating.nombreNegocio.trim()) {
+      toast.error('Introduce el nombre del negocio');
       return;
     }
 
@@ -211,14 +227,32 @@ export default function AdminUsuariosPage() {
       eliminado: false,
     });
 
-    setSavingId(null);
-
     if (errProfile) {
+      setSavingId(null);
       await logError('admin.usuarios.create.profile', errProfile, { usuario_id: data.user.id });
       toast.error(`Usuario creado en auth pero falló el perfil: ${errProfile.message}`);
       return;
     }
 
+    // Si el rol es 'negocio', creamos también la fila en `negocios` con su slug.
+    // Sin esto, el usuario podría loguearse pero su panel quedaría capado (sin perfil).
+    if (creating.rol === 'negocio') {
+      const slug = generarSlug(creating.nombreNegocio);
+      const { error: errNeg } = await supabase.from('negocios').insert({
+        usuario_id: data.user.id,
+        nombre: creating.nombreNegocio.trim(),
+        slug,
+      });
+
+      if (errNeg) {
+        setSavingId(null);
+        await logError('admin.usuarios.create.negocio', errNeg, { usuario_id: data.user.id });
+        toast.error(`Usuario creado pero falló el negocio: ${errNeg.message}`);
+        return;
+      }
+    }
+
+    setSavingId(null);
     setCreating(null);
     toast.success(`Usuario ${creating.email} creado`);
     void load();
@@ -405,6 +439,11 @@ export default function AdminUsuariosPage() {
               ariaLabel="Rol"
             />
           </Field>
+          {creating.rol === 'negocio' && (
+            <Field label="Nombre del negocio">
+              <input style={input} value={creating.nombreNegocio} onChange={(e) => setCreating({ ...creating, nombreNegocio: e.target.value })} placeholder="Ej. Clínica Dental Sonrisa" />
+            </Field>
+          )}
           <Field label="Teléfono (opcional)">
             <input style={input} value={creating.telefono} onChange={(e) => setCreating({ ...creating, telefono: e.target.value })} placeholder="612345678" />
           </Field>

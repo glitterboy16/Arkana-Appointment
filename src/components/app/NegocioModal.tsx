@@ -3,11 +3,8 @@ import { createPortal } from 'react-dom';
 import { BiPhone, BiMap, BiSolidStar, BiX } from 'react-icons/bi';
 import { Spinner, Skeleton } from './Spinner';
 import { supabase, type Negocio, type Servicio } from '@/lib/supabase';
-import { geocode, osmEmbedUrl, type GeoPoint } from '@/lib/geocode';
-
-function googleMapsUrl(p: GeoPoint): string {
-  return `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`;
-}
+import { geocode, type GeoPoint } from '@/lib/geocode';
+import MapViewer from './MapViewer';
 
 interface NegocioModalProps {
   negocio: Negocio | null;
@@ -328,41 +325,12 @@ export default function NegocioModal({ negocio, onClose, onReservar }: NegocioMo
               </div>
             )}
             {geoState === 'ready' && punto && (
-              <div style={{
-                borderRadius: 12, overflow: 'hidden', border: '1px solid var(--app-border)',
-                background: 'var(--app-surface)', position: 'relative',
-              }}>
-                <iframe
-                  title={`Mapa de ${negocio.nombre}`}
-                  src={osmEmbedUrl(punto)}
-                  style={{ width: '100%', height: 240, border: 0, display: 'block' }}
-                  loading="lazy"
-                />
-                {/* Overlay para abrir Google Maps al pulsar el mapa */}
-                <a
-                  href={googleMapsUrl(punto)}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  aria-label="Abrir en Google Maps"
-                  style={{
-                    position: 'absolute', inset: 0,
-                    background: 'transparent',
-                    cursor: 'pointer',
-                  }}
-                />
-                <a
-                  href={googleMapsUrl(punto)}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  style={{
-                    display: 'block', textAlign: 'center', fontSize: 12, padding: '10px 12px',
-                    color: '#648DFF', textDecoration: 'none', borderTop: '1px solid var(--app-border)',
-                    fontWeight: 600,
-                  }}
-                >
-                  Abrir en Google Maps ↗
-                </a>
-              </div>
+              <MapViewer
+                lat={punto.lat}
+                lng={punto.lon}
+                titulo={negocio.nombre}
+                height={240}
+              />
             )}
           </section>
         </div>

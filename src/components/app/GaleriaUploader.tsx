@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import toast from 'react-hot-toast';
 import { BiCamera, BiTrash, BiX } from 'react-icons/bi';
 import { supabase } from '@/lib/supabase';
+import { logError } from '@/lib/errorLogger';
 import { Spinner } from './Spinner';
 
 interface NegocioFoto {
@@ -75,7 +76,11 @@ export default function GaleriaUploader({ negocioId, max = 6 }: GaleriaUploaderP
         .upload(path, file, { cacheControl: '3600', upsert: false });
 
       if (upErr) {
-        toast.error('No se pudo subir la foto');
+        await logError('galeria.upload', upErr, { negocioId });
+        const hint = /bucket.*not.*found/i.test(upErr.message)
+          ? ' (ejecuta la migración 010 en Supabase para crear el bucket)'
+          : '';
+        toast.error(`No se pudo subir: ${upErr.message}${hint}`);
         return;
       }
 
@@ -89,7 +94,8 @@ export default function GaleriaUploader({ negocioId, max = 6 }: GaleriaUploaderP
         .select('id, foto_url, orden');
 
       if (insErr || !insertedRows || insertedRows.length === 0) {
-        toast.error('Foto subida pero no se pudo registrar');
+        await logError('galeria.persist', insErr, { negocioId });
+        toast.error(`Foto subida pero no se pudo registrar: ${insErr?.message ?? 'sin filas'}`);
         return;
       }
 

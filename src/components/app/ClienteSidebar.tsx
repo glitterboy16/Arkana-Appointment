@@ -1,7 +1,8 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArkanaIcons, Avatar, LogoArkana } from './Shared';
 import { useAuth } from '@/contexts/AuthContext';
+import ConfirmModal from './ConfirmModal';
 
 interface NavItem {
   id: string;
@@ -21,6 +22,16 @@ export default function ClienteSidebar({ isOpen = false, onClose }: ClienteSideb
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, signOut } = useAuth();
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const doLogout = async () => {
+    setLoggingOut(true);
+    await signOut();
+    setLoggingOut(false);
+    setConfirmLogout(false);
+    navigate('/');
+  };
 
   const NAV_ITEMS: NavItem[] = [
     { id: 'buscar',         icon: ArkanaIcons.eye,      label: 'Buscar negocios', section: 'EXPLORAR', path: '/app/buscar' },
@@ -30,7 +41,7 @@ export default function ClienteSidebar({ isOpen = false, onClose }: ClienteSideb
     { id: 'configuracion',  icon: ArkanaIcons.settings, label: 'Configuración',   path: '/app/configuracion' },
     {
       id: 'logout', icon: ArkanaIcons.logout, label: 'Cerrar sesión',
-      action: async () => { await signOut(); navigate('/'); },
+      action: () => setConfirmLogout(true),
     },
   ];
 
@@ -143,6 +154,18 @@ export default function ClienteSidebar({ isOpen = false, onClose }: ClienteSideb
           );
         })}
       </nav>
+
+      <ConfirmModal
+        open={confirmLogout}
+        title="¿Cerrar sesión?"
+        message="¿Seguro que quieres cerrar sesión? Tendrás que iniciar sesión otra vez para volver a tu cuenta."
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        variant="danger"
+        loading={loggingOut}
+        onConfirm={doLogout}
+        onCancel={() => { if (!loggingOut) setConfirmLogout(false); }}
+      />
     </aside>
   );
 }
