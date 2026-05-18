@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
-import ClienteSidebar from '@/components/app/ClienteSidebar';
+import AdminSidebar from '@/components/app/AdminSidebar';
 import MobileTopBar from '@/components/app/MobileTopBar';
 import { FullScreenLoader } from '@/components/app/Spinner';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function ClienteLayout() {
+export default function AdminLayout() {
   const { session, usuario, loading } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,18 +21,18 @@ export default function ClienteLayout() {
 
   if (loading) return <FullScreenLoader />;
   if (!session) return <Navigate to="/iniciarSesion" replace />;
-  if (usuario && usuario.rol === 'admin')   return <Navigate to="/admin" replace />;
-  if (usuario && usuario.rol !== 'cliente') return <Navigate to="/panel" replace />;
+  if (usuario && usuario.rol === 'cliente') return <Navigate to="/app/buscar" replace />;
+  if (usuario && usuario.rol === 'negocio') return <Navigate to="/panel" replace />;
 
   return (
     <div className="ark-app-shell">
-      <ClienteSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div
         className={`ark-mobile-overlay ark-only-mobile${sidebarOpen ? ' open' : ''}`}
         onClick={() => setSidebarOpen(false)}
       />
       <main className="ark-main">
-        <MobileTopBar onMenu={() => setSidebarOpen(true)} title={usuario?.nombre ?? 'Mi cuenta'} />
+        <MobileTopBar onMenu={() => setSidebarOpen(true)} title="Admin Arkana" />
         <Outlet />
       </main>
     </div>

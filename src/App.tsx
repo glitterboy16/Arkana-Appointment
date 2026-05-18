@@ -4,6 +4,9 @@ import AuthPage from './pages/auth/AuthPage';
 import ReservaPublicaPage from './pages/booking/ReservaPublicaPage';
 import AppLayout from './layouts/AppLayout';
 import ClienteLayout from './layouts/ClienteLayout';
+import AdminLayout from './layouts/AdminLayout';
+import AdminPanelPage from './pages/admin/AdminPanelPage';
+import AdminUsuariosPage from './pages/admin/AdminUsuariosPage';
 import PanelPage from './pages/dashboard/PanelPage';
 import CitasPage from './pages/dashboard/CitasPage';
 import PerfilNegocioPage from './pages/dashboard/PerfilNegocioPage';
@@ -40,6 +43,10 @@ export default function App() {
           <Route path="notificaciones" element={<NotificacionesPage />} />
           <Route path="perfil" element={<PerfilClientePage />} />
           <Route path="configuracion" element={<ConfiguracionPage />} />
+        </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminPanelPage />} />
+          <Route path="usuarios" element={<AdminUsuariosPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Usuario, type Negocio, type RolUsuario } from '@/lib/supabase';
+import { logError } from '@/lib/errorLogger';
 
 /**
  * Borra TODAS las keys de notifs (cualquier versión) del navegador.
@@ -229,7 +230,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string, expectedRol: RolUsuario) => {
     console.log('[Arkana] signIn - inicio para email:', email, 'esperado:', expectedRol);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { console.error('[Arkana] signIn - error auth:', error); return { error: error.message }; }
+    if (error) {
+      console.error('[Arkana] signIn - error auth:', error);
+      await logError('auth.signin', error, { email });
+      return { error: error.message };
+    }
     if (!data.user || !data.session) return { error: 'No se pudo iniciar sesión.' };
 
     const token = data.session.access_token;
@@ -244,7 +249,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const rolReal = usr.rol;
 
-    if (rolReal !== expectedRol) {
+    // El admin es "invisible" en la UI: entra con cualquier selector (negocio o cliente).
+    // Para los demás roles, exigimos que coincida con el selector escogido.
+    if (rolReal !== 'admin' && rolReal !== expectedRol) {
       await supabase.auth.signOut();
       return { error: `Esta cuenta es de ${rolReal}. Cambia el selector arriba para entrar.` };
     }
@@ -259,7 +266,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error: error.message };
+    if (error) {
+      await logError('auth.signup.negocio', error, { email });
+      return { error: error.message };
+    }
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 
@@ -286,7 +296,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpCliente = async ({ email, password, nombre, telefono }: SignUpClienteData) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error: error.message };
+    if (error) {
+      await logError('auth.signup.cliente', error, { email });
+      return { error: error.message };
+    }
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 

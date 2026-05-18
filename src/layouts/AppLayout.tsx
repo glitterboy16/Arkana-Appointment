@@ -22,6 +22,7 @@ export default function AppLayout() {
   if (loading) return <FullScreenLoader />;
   if (!session) return <Navigate to="/iniciarSesion" replace />;
   if (usuario && usuario.rol === 'cliente') return <Navigate to="/app/buscar" replace />;
+  if (usuario && usuario.rol === 'admin')   return <Navigate to="/admin" replace />;
 
   return (
     <div className="ark-app-shell">

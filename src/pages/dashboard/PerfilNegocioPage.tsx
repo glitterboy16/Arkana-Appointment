@@ -11,6 +11,7 @@ import GaleriaUploader from '@/components/app/GaleriaUploader';
 import LogoNegocioUploader from '@/components/app/LogoNegocioUploader';
 import StyledSelect from '@/components/app/StyledSelect';
 import MapPicker from '@/components/app/MapPicker';
+import { logError } from '@/lib/errorLogger';
 
 const CATEGORIAS = [
   { value: '', label: 'Sin categoría' },
@@ -355,6 +356,7 @@ export default function PerfilNegocioPage() {
 
       if (errNeg) {
         console.error('[Arkana] error guardando negocio:', errNeg);
+        await logError('perfil.negocio.save', errNeg, { negocio_id: negocio.id });
         toast.error(`Error guardando: ${errNeg.message}`);
         return;
       }

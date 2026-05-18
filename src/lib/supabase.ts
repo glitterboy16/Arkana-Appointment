@@ -22,6 +22,18 @@ export interface Usuario {
   email: string;
   telefono: string | null;
   foto_url: string | null;
+  eliminado?: boolean;
+  eliminado_at?: string | null;
+  created_at: string;
+}
+
+export interface ErrorLog {
+  id: string;
+  contexto: string;
+  mensaje: string;
+  detalle: Record<string, unknown> | null;
+  usuario_id: string | null;
+  url: string | null;
   created_at: string;
 }
 
