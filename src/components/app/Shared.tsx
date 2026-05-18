@@ -3,7 +3,7 @@ import logoClaro from '@/assets/Logo Arkana 1.svg';
 import logoOscuro from '@/assets/Logo Arkana 2.svg';
 import { useTheme } from '@/hooks/useTheme';
 
-export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled' | 'new';
+export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled' | 'new' | 'completed';
 
 interface LogoArkanaProps {
   size?: number;
@@ -140,6 +140,7 @@ export function Badge({ status }: BadgeProps) {
     pending:   { label: 'Pendiente',  bg: 'rgba(245,158,11,0.12)', color: '#F59E0B', dot: '#F59E0B' },
     cancelled: { label: 'Cancelada',  bg: 'rgba(239,68,68,0.12)',  color: '#EF4444', dot: '#EF4444' },
     new:       { label: 'Nueva',      bg: 'rgba(100,141,255,0.12)', color: '#648DFF', dot: '#648DFF' },
+    completed: { label: 'Completada', bg: 'rgba(168,85,247,0.12)', color: '#A855F7', dot: '#A855F7' },
   };
   const s = map[status];
   return (

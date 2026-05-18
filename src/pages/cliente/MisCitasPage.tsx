@@ -23,6 +23,7 @@ const ESTADO_LABEL: Record<EstadoCita, { label: string; color: string; bg: strin
   pending:   { label: 'Pendiente',            color: '#F59E0B', bg: 'rgba(245,158,11,0.15)'  },
   confirmed: { label: 'Confirmada',           color: '#22C55E', bg: 'rgba(34,197,94,0.15)'   },
   cancelled: { label: 'Cancelada',            color: '#EF4444', bg: 'rgba(239,68,68,0.15)'   },
+  completed: { label: 'Completada',           color: '#A855F7', bg: 'rgba(168,85,247,0.15)'  },
 };
 
 export default function MisCitasPage() {

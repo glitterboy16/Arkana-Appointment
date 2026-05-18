@@ -12,8 +12,8 @@ export function MinimalFooter() {
     { title: 'Sobre nosotros', href: '#' },
     { title: 'Trabaja con nosotros', href: '#' },
     { title: 'Marca y prensa', href: '#' },
-    { title: 'Privacidad', href: '#' },
-    { title: 'Términos', href: '#' },
+    { title: 'Privacidad', href: '/privacidad' },
+    { title: 'Términos', href: '/terminos' },
   ];
 
   const resources = [

@@ -13,7 +13,7 @@ if (!url || !anonKey) {
 export const supabase = createClient(url, anonKey);
 
 export type RolUsuario = 'negocio' | 'cliente' | 'admin';
-export type EstadoCita = 'new' | 'pending' | 'confirmed' | 'cancelled';
+export type EstadoCita = 'new' | 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
 export interface Usuario {
   id: string;

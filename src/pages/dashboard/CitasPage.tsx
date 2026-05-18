@@ -40,23 +40,27 @@ function AppointmentRow({
   cita,
   saving,
   onConfirm,
+  onComplete,
   onAskCancel,
   onAskReagendar,
 }: {
   cita: CitaConServicio;
   saving: boolean;
   onConfirm: (id: string) => void;
+  onComplete: (id: string) => void;
   onAskCancel: (cita: CitaConServicio) => void;
   onAskReagendar: (cita: CitaConServicio) => void;
 }) {
   const cancelada = cita.estado === 'cancelled';
+  const completada = cita.estado === 'completed';
+  const cerrada = cancelada || completada;
   return (
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
         borderBottom: '1px solid var(--app-border)', transition: 'background 150ms ease',
         flexWrap: 'wrap',
-        opacity: cancelada ? 0.55 : 1,
+        opacity: cerrada ? 0.55 : 1,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--app-surface-hover)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -88,12 +92,17 @@ function AppointmentRow({
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Badge status={cita.estado as AppointmentStatus} />
       </div>
-      {!cancelada && (
+      {!cerrada && (
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
           {saving && <Spinner size={12} />}
           {(cita.estado === 'new' || cita.estado === 'pending') && (
             <button type="button" disabled={saving} onClick={() => onConfirm(cita.id)} style={btnAction('#22C55E', saving)}>
               Confirmar
+            </button>
+          )}
+          {cita.estado === 'confirmed' && (
+            <button type="button" disabled={saving} onClick={() => onComplete(cita.id)} style={btnAction('#A855F7', saving)}>
+              Marcar completada
             </button>
           )}
           <button type="button" disabled={saving} onClick={() => onAskReagendar(cita)} style={btnAction('#648DFF', saving)}>
@@ -113,6 +122,7 @@ function btnAction(color: string, disabled: boolean): React.CSSProperties {
   const rgb = color === '#22C55E' ? '34,197,94'
     : color === '#EF4444'        ? '239,68,68'
     : color === '#648DFF'        ? '100,141,255'
+    : color === '#A855F7'        ? '168,85,247'
     : '100,141,255';
   return {
     padding: '5px 10px', borderRadius: 6,
@@ -132,6 +142,7 @@ const TABS: { id: FilterId; label: string }[] = [
   { id: 'confirmed', label: 'Confirmadas' },
   { id: 'pending', label: 'Pendientes' },
   { id: 'new', label: 'Nuevas' },
+  { id: 'completed', label: 'Completadas' },
   { id: 'cancelled', label: 'Canceladas' },
 ];
 
@@ -176,6 +187,15 @@ export default function CitasPage() {
     if (error) { toast.error('No se pudo confirmar la cita'); return; }
     setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: 'confirmed' } : c));
     toast.success('Cita confirmada');
+  };
+
+  const handleCompletar = async (id: string) => {
+    setSavingId(id);
+    const { error } = await supabase.from('citas').update({ estado: 'completed' }).eq('id', id);
+    setSavingId(null);
+    if (error) { toast.error('No se pudo marcar como completada'); return; }
+    setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: 'completed' } : c));
+    toast.success('Cita completada');
   };
 
   const handleCancelarConfirmado = async () => {
@@ -274,6 +294,7 @@ export default function CitasPage() {
                     cita={c}
                     saving={savingId === c.id}
                     onConfirm={handleConfirmar}
+                    onComplete={handleCompletar}
                     onAskCancel={setCitaACancelar}
                     onAskReagendar={setCitaAReagendar}
                   />
