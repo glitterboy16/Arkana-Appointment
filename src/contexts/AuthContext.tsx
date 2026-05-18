@@ -2,6 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Usuario, type Negocio, type RolUsuario } from '@/lib/supabase';
 
+/**
+ * Borra TODAS las keys de notifs (cualquier versión) del navegador.
+ * Inline aquí para evitar dependencia circular con NotificationsContext.
+ */
+function clearAllNotifStorage() {
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('arkana.notifs.')) toRemove.push(k);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+  } catch { /* ignorar */ }
+}
+
 export interface SignUpNegocioData {
   email: string;
   password: string;
@@ -291,6 +306,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Limpiar todas las keys de notificaciones para evitar arrastre entre sesiones
+    // cuando el mismo navegador alterna entre cuentas o roles.
+    clearAllNotifStorage();
     setSession(null);
     setUsuario(null);
     setNegocio(null);

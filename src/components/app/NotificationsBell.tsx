@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { BiBell, BiCheck, BiX, BiRefresh, BiCalendarPlus } from 'react-icons/bi';
 import { useNotifications, type NotifKind } from '@/contexts/NotificationsContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const KIND_STYLE: Record<NotifKind, { color: string; bg: string; icono: ReactNode }> = {
   cita_nueva:       { color: '#648DFF', bg: 'rgba(100,141,255,0.15)', icono: <BiCalendarPlus size={18} /> },
@@ -17,8 +19,17 @@ interface NotificationsBellProps {
 
 export default function NotificationsBell({ iconColor }: NotificationsBellProps) {
   const { items, unread, markAllRead, clear } = useNotifications();
+  const { usuario } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const citasPath = usuario?.rol === 'cliente' ? '/app/citas' : '/panel/citas';
+
+  const handleItemClick = () => {
+    setOpen(false);
+    navigate(citasPath);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -126,12 +137,21 @@ export default function NotificationsBell({ iconColor }: NotificationsBellProps)
               items.map(n => {
                 const s = KIND_STYLE[n.kind];
                 return (
-                  <div key={n.id} style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    padding: '11px 14px', borderBottom: '1px solid var(--app-border)',
-                    background: n.leida ? 'transparent' : 'rgba(100,141,255,0.06)',
-                    transition: 'background 150ms ease',
-                  }}>
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={handleItemClick}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '11px 14px', borderBottom: '1px solid var(--app-border)',
+                      background: n.leida ? 'transparent' : 'rgba(100,141,255,0.06)',
+                      transition: 'background 150ms ease',
+                      width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--app-nav-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = n.leida ? 'transparent' : 'rgba(100,141,255,0.06)'; }}
+                  >
                     <div style={{
                       width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                       background: s.bg, color: s.color, fontWeight: 700, fontSize: 14,
@@ -162,7 +182,7 @@ export default function NotificationsBell({ iconColor }: NotificationsBellProps)
                         marginTop: 6, flexShrink: 0,
                       }} />
                     )}
-                  </div>
+                  </button>
                 );
               })
             )}

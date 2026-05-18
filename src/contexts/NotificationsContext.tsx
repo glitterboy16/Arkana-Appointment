@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { supabase, type Cita, type EstadoCita } from '@/lib/supabase';
+import { supabase, type Cita, type EstadoCita, type RolUsuario } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type NotifKind =
@@ -31,15 +31,67 @@ interface NotifCtx {
   unread: number;
   markAllRead: () => void;
   clear: () => void;
+  /**
+   * Silencia la próxima notificación que coincida con (citaId, kind) dentro de
+   * los próximos 60 segundos. La usamos cuando el usuario realiza una acción
+   * (cancelar / reagendar) él mismo, para no auto-notificarse.
+   */
+  silenceNext: (citaId: string, kind: NotifKind) => void;
 }
 
 const NotificationsContext = createContext<NotifCtx | null>(null);
 
-const STORAGE_KEY = 'arkana.notifs.v1';
-const LAST_CHECK_KEY = 'arkana.notifs.lastCheck.v1';
-const CITAS_SNAPSHOT_KEY = 'arkana.notifs.citasSnapshot.v1';
 const MAX_ITEMS = 30;
 const POLL_INTERVAL_MS = 10_000;
+
+// Claves de localStorage namespaced por (usuario, rol). El namespace por rol es
+// necesario porque un mismo auth.users.id puede haber actuado primero como
+// cliente y luego cambiar de rol; sin esto, el negocio veía notifs viejas con
+// plantilla de cliente ("angelias confirmó tu cita") guardadas cuando rol era
+// 'cliente'. Bumpeamos a v3 para invalidar las v2.
+const storageKey = (uid: string, rol: RolUsuario) => `arkana.notifs.v3.${uid}.${rol}`;
+const lastCheckKey = (uid: string, rol: RolUsuario) => `arkana.notifs.lastCheck.v3.${uid}.${rol}`;
+const snapshotKey = (uid: string, rol: RolUsuario) => `arkana.notifs.citasSnapshot.v3.${uid}.${rol}`;
+
+/**
+ * Una sola vez por carga de app, eliminamos cualquier key antigua de notifs
+ * (v1, v2, sin versión) para que no aparezcan en la UI tras el upgrade.
+ * Se ejecuta de forma idempotente: si ya se hizo, no hace nada.
+ */
+const LEGACY_CLEANUP_FLAG = 'arkana.notifs.legacyCleaned.v3';
+function cleanupLegacyNotifKeys() {
+  try {
+    if (localStorage.getItem(LEGACY_CLEANUP_FLAG)) return;
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      // Borramos cualquier key que empiece por "arkana.notifs." y NO sea v3
+      if (k.startsWith('arkana.notifs.') && !k.startsWith('arkana.notifs.v3') && k !== LEGACY_CLEANUP_FLAG) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(LEGACY_CLEANUP_FLAG, '1');
+  } catch {
+    /* quota o privacy mode — ignoramos */
+  }
+}
+
+/**
+ * Borra TODAS las keys de notifs (cualquier versión) del usuario actual.
+ * Se invoca desde signOut para evitar arrastre entre sesiones.
+ */
+export function clearAllNotifStorage() {
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('arkana.notifs.')) toRemove.push(k);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+  } catch { /* ignorar */ }
+}
 
 interface CitaSnapshot {
   estado: string;
@@ -47,9 +99,10 @@ interface CitaSnapshot {
   hora_inicio: string;
 }
 
-function loadStored(): NotifItem[] {
+function loadStored(uid: string | undefined, rol: RolUsuario | undefined): NotifItem[] {
+  if (!uid || !rol) return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(uid, rol));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Array<Omit<NotifItem, 'fecha'> & { fecha: string }>;
     return parsed.map(n => ({ ...n, fecha: new Date(n.fecha) }));
@@ -58,9 +111,10 @@ function loadStored(): NotifItem[] {
   }
 }
 
-function saveStored(items: NotifItem[]) {
+function saveStored(uid: string | undefined, rol: RolUsuario | undefined, items: NotifItem[]) {
+  if (!uid || !rol) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_ITEMS)));
+    localStorage.setItem(storageKey(uid, rol), JSON.stringify(items.slice(0, MAX_ITEMS)));
   } catch {
     /* quota o privacy mode — ignoramos */
   }
@@ -81,10 +135,38 @@ function formatearFecha(fecha: string, hora: string): string {
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { session, usuario, negocio } = useAuth();
-  const [items, setItems] = useState<NotifItem[]>(() => loadStored());
+  const uid = usuario?.id;
+  const rol = usuario?.rol;
+  const [items, setItems] = useState<NotifItem[]>([]);
   const prevCitasRef = useRef<Map<string, Cita>>(new Map());
+  // Map de `${citaId}-${kind}` → expiry timestamp para silencio temporal.
+  const silenceRef = useRef<Map<string, number>>(new Map());
+
+  // Limpieza única de keys legacy (v1/v2/sin versión) al montar.
+  useEffect(() => { cleanupLegacyNotifKeys(); }, []);
+
+  // Cargar/limpiar al cambiar de usuario o de rol. Si rol cambia para el mismo
+  // uid (caso testing), las notifs del rol anterior no contaminan al actual.
+  useEffect(() => {
+    setItems(loadStored(uid, rol));
+    prevCitasRef.current = new Map();
+    silenceRef.current = new Map();
+  }, [uid, rol]);
+
+  const silenceNext = useCallback((citaId: string, kind: NotifKind) => {
+    silenceRef.current.set(`${citaId}-${kind}`, Date.now() + 60_000);
+  }, []);
 
   const push = useCallback((notif: Omit<NotifItem, 'id' | 'leida' | 'fecha'> & { fecha?: Date }) => {
+    // ¿Estamos silenciando este (cita, kind)? Si sí, descartar y limpiar.
+    const sKey = `${notif.citaId}-${notif.kind}`;
+    const silencedUntil = silenceRef.current.get(sKey);
+    if (silencedUntil && silencedUntil > Date.now()) {
+      silenceRef.current.delete(sKey);
+      return;
+    }
+    if (silencedUntil) silenceRef.current.delete(sKey); // expirado, limpiar
+
     setItems(prev => {
       // Dedup: no repetir la misma notif (mismo citaId + mismo kind) si ya existe.
       // Realtime y polling pueden disparar el mismo evento — esto los unifica.
@@ -98,24 +180,24 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         ...notif,
       };
       const updated = [next, ...prev].slice(0, MAX_ITEMS);
-      saveStored(updated);
+      saveStored(uid, rol, updated);
       return updated;
     });
-  }, []);
+  }, [uid, rol]);
 
   const markAllRead = useCallback(() => {
     setItems(prev => {
       if (prev.every(n => n.leida)) return prev;
       const updated = prev.map(n => ({ ...n, leida: true }));
-      saveStored(updated);
+      saveStored(uid, rol, updated);
       return updated;
     });
-  }, []);
+  }, [uid, rol]);
 
   const clear = useCallback(() => {
     setItems([]);
-    saveStored([]);
-  }, []);
+    saveStored(uid, rol, []);
+  }, [uid, rol]);
 
   useEffect(() => {
     if (!session?.user || !usuario) return;
@@ -168,46 +250,61 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
           if (!vieja) return;
 
-          // Solo los clientes son notificados de cambios. El negocio que cambia
-          // el estado no debe recibir notificación de su propia acción.
-          if (usuario.rol !== 'cliente') return;
-
-          // Recuperar nombre del negocio para enriquecer el mensaje
-          let negocioNombre = 'El negocio';
-          const { data: neg } = await supabase
-            .from('negocios')
-            .select('nombre')
-            .eq('id', nueva.negocio_id)
-            .maybeSingle();
-          if (neg?.nombre) negocioNombre = neg.nombre;
-
           const cambioFecha = vieja.fecha !== nueva.fecha;
           const cambioHora = vieja.hora_inicio !== nueva.hora_inicio;
           const cambioEstado = vieja.estado !== nueva.estado;
+          if (!cambioFecha && !cambioHora && !cambioEstado) return;
 
-          if (cambioFecha || cambioHora) {
-            push({
-              citaId: nueva.id,
-              kind: 'cita_reagendada',
-              titulo: `${negocioNombre} reagendó tu cita`,
-              detalle: `Nueva fecha: ${formatearFecha(nueva.fecha, nueva.hora_inicio)}`,
-            });
-            return;
-          }
-          if (cambioEstado) {
-            if (nueva.estado === 'confirmed') {
+          if (usuario.rol === 'cliente') {
+            // El cliente es notificado de los cambios hechos por el negocio.
+            // Si fue él mismo quien canceló, su contexto silencia esa notif
+            // (ver silenceNext en MisCitasPage).
+            let negocioNombre = 'El negocio';
+            const { data: neg } = await supabase
+              .from('negocios')
+              .select('nombre')
+              .eq('id', nueva.negocio_id)
+              .maybeSingle();
+            if (neg?.nombre) negocioNombre = neg.nombre;
+
+            if (cambioFecha || cambioHora) {
               push({
                 citaId: nueva.id,
-                kind: 'cita_confirmada',
-                titulo: `${negocioNombre} confirmó tu cita`,
-                detalle: `${formatearFecha(nueva.fecha, nueva.hora_inicio)}`,
+                kind: 'cita_reagendada',
+                titulo: `${negocioNombre} reagendó tu cita`,
+                detalle: `Nueva fecha: ${formatearFecha(nueva.fecha, nueva.hora_inicio)}`,
               });
-            } else if (nueva.estado === 'cancelled') {
+              return;
+            }
+            if (cambioEstado) {
+              if (nueva.estado === 'confirmed') {
+                push({
+                  citaId: nueva.id,
+                  kind: 'cita_confirmada',
+                  titulo: `${negocioNombre} confirmó tu cita`,
+                  detalle: `${formatearFecha(nueva.fecha, nueva.hora_inicio)}`,
+                });
+              } else if (nueva.estado === 'cancelled') {
+                push({
+                  citaId: nueva.id,
+                  kind: 'cita_cancelada',
+                  titulo: `${negocioNombre} canceló tu cita`,
+                  detalle: `Estado anterior: ${nombreEstado(vieja.estado)}`,
+                });
+              }
+            }
+            return;
+          }
+
+          if (usuario.rol === 'negocio') {
+            // El negocio se notifica cuando el CLIENTE cancela. Si fue el negocio
+            // quien canceló, su propio contexto silencia la notif (ver CitasPage).
+            if (cambioEstado && nueva.estado === 'cancelled' && vieja.estado !== 'cancelled') {
               push({
                 citaId: nueva.id,
                 kind: 'cita_cancelada',
-                titulo: `${negocioNombre} canceló tu cita`,
-                detalle: `Estado anterior: ${nombreEstado(vieja.estado)}`,
+                titulo: `${nueva.cliente_nombre} canceló su cita`,
+                detalle: `${formatearFecha(nueva.fecha, nueva.hora_inicio)}`,
               });
             }
           }
@@ -224,7 +321,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (!session?.user || !usuario || usuario.rol !== 'negocio' || !negocio?.id) return;
 
     let cancelled = false;
-    let lastCheck = localStorage.getItem(LAST_CHECK_KEY) ?? new Date().toISOString();
+    const lastCheckLk = lastCheckKey(usuario.id, usuario.rol);
+    let lastCheck = localStorage.getItem(lastCheckLk) ?? new Date().toISOString();
 
     const pollOnce = async () => {
       const since = lastCheck;
@@ -239,7 +337,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       if (cancelled || error || !data || data.length === 0) {
         if (!cancelled && !error) {
           lastCheck = new Date().toISOString();
-          localStorage.setItem(LAST_CHECK_KEY, lastCheck);
+          localStorage.setItem(lastCheckLk, lastCheck);
         }
         return;
       }
@@ -262,7 +360,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       }
 
       lastCheck = new Date().toISOString();
-      localStorage.setItem(LAST_CHECK_KEY, lastCheck);
+      localStorage.setItem(lastCheckLk, lastCheck);
     };
 
     void pollOnce();
@@ -286,15 +384,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
 
+    const snapLk = snapshotKey(usuario.id, usuario.rol);
     // Snapshot inicial: leer lo que tengamos guardado en localStorage
     const loadSnapshot = (): Record<string, CitaSnapshot> => {
       try {
-        const raw = localStorage.getItem(CITAS_SNAPSHOT_KEY);
+        const raw = localStorage.getItem(snapLk);
         return raw ? JSON.parse(raw) : {};
       } catch { return {}; }
     };
     const saveSnapshot = (snap: Record<string, CitaSnapshot>) => {
-      try { localStorage.setItem(CITAS_SNAPSHOT_KEY, JSON.stringify(snap)); } catch { /* ignorar */ }
+      try { localStorage.setItem(snapLk, JSON.stringify(snap)); } catch { /* ignorar */ }
     };
 
     let snapshot = loadSnapshot();
@@ -385,7 +484,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const unread = items.filter(n => !n.leida).length;
 
   return (
-    <NotificationsContext.Provider value={{ items, unread, markAllRead, clear }}>
+    <NotificationsContext.Provider value={{ items, unread, markAllRead, clear, silenceNext }}>
       {children}
     </NotificationsContext.Provider>
   );

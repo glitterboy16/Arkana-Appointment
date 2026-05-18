@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { BiCalendarEdit } from 'react-icons/bi';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 import { supabase, type Cita } from '@/lib/supabase';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import ConfirmModal from '@/components/app/ConfirmModal';
@@ -13,6 +14,7 @@ import ReagendarModal from '@/components/app/ReagendarModal';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number; precio_centimos: number } | null;
+  cliente: { foto_url: string | null } | null;
 }
 
 function formatFechaGrupo(fecha: string): string {
@@ -65,7 +67,15 @@ function AppointmentRow({
           {cita.servicios ? `${cita.servicios.duracion_min}min` : '—'}
         </div>
       </div>
-      <Avatar name={cita.cliente_nombre} size={34} bg={avatarColor(cita.cliente_nombre)} />
+      {cita.cliente?.foto_url ? (
+        <img
+          src={cita.cliente.foto_url}
+          alt=""
+          style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        />
+      ) : (
+        <Avatar name={cita.cliente_nombre} size={34} bg={avatarColor(cita.cliente_nombre)} />
+      )}
       <div style={{ flex: '1 1 160px', minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cita.cliente_nombre}</div>
         <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -127,6 +137,7 @@ const TABS: { id: FilterId; label: string }[] = [
 
 export default function CitasPage() {
   const { negocio } = useAuth();
+  const { silenceNext } = useNotifications();
   const navigate = useNavigate();
   const [citas, setCitas] = useState<CitaConServicio[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,12 +153,12 @@ export default function CitasPage() {
       const today = format(new Date(), 'yyyy-MM-dd');
       const { data } = await supabase
         .from('citas')
-        .select('*, servicios(nombre, duracion_min, precio_centimos)')
+        .select('*, servicios(nombre, duracion_min, precio_centimos), cliente:usuarios!cliente_id(foto_url)')
         .eq('negocio_id', negocio.id)
         .gte('fecha', today)
         .order('fecha')
         .order('hora_inicio');
-      setCitas((data as CitaConServicio[]) ?? []);
+      setCitas(((data ?? []) as unknown) as CitaConServicio[]);
       setLoading(false);
     };
 
@@ -156,6 +167,9 @@ export default function CitasPage() {
 
   const handleConfirmar = async (id: string) => {
     setSavingId(id);
+    // Si el negocio activa también el rol cliente o realtime rebota, evitamos
+    // que el negocio reciba su propia notificación.
+    silenceNext(id, 'cita_confirmada');
     const { error } = await supabase.from('citas').update({ estado: 'confirmed' }).eq('id', id);
     setSavingId(null);
     if (error) { toast.error('No se pudo confirmar la cita'); return; }
@@ -167,6 +181,8 @@ export default function CitasPage() {
     if (!citaACancelar) return;
     const id = citaACancelar.id;
     setSavingId(id);
+    // Es el negocio quien cancela: no nos auto-notifiquemos.
+    silenceNext(id, 'cita_cancelada');
     const { error } = await supabase.from('citas').update({ estado: 'cancelled' }).eq('id', id);
     setSavingId(null);
     setCitaACancelar(null);
@@ -179,6 +195,7 @@ export default function CitasPage() {
     if (!citaAReagendar) return;
     const id = citaAReagendar.id;
     setSavingId(id);
+    silenceNext(id, 'cita_reagendada');
     const horaConSec = hora.length === 5 ? `${hora}:00` : hora;
     const { error } = await supabase
       .from('citas')

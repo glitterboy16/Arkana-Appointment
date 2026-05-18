@@ -1,5 +1,4 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import QRCode from 'react-qr-code';
 import toast from 'react-hot-toast';
 import { BiRightArrowAlt, BiPlus, BiTrash } from 'react-icons/bi';
 import { ArkanaIcons, Btn } from '@/components/app/Shared';
@@ -9,6 +8,20 @@ import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import TimePicker from '@/components/app/TimePicker';
 import BloqueosCalendar from '@/components/app/BloqueosCalendar';
 import GaleriaUploader from '@/components/app/GaleriaUploader';
+import LogoNegocioUploader from '@/components/app/LogoNegocioUploader';
+import StyledSelect from '@/components/app/StyledSelect';
+import MapPicker from '@/components/app/MapPicker';
+
+const CATEGORIAS = [
+  { value: '', label: 'Sin categoría' },
+  { value: 'Clínica dental', label: 'Clínica dental' },
+  { value: 'Salón de belleza', label: 'Salón de belleza' },
+  { value: 'Spa / Bienestar', label: 'Spa / Bienestar' },
+  { value: 'Peluquería', label: 'Peluquería' },
+  { value: 'Fisioterapia', label: 'Fisioterapia' },
+  { value: 'Consultoría', label: 'Consultoría' },
+  { value: 'Otro', label: 'Otro' },
+];
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -216,6 +229,7 @@ export default function PerfilNegocioPage() {
   const { negocio, refreshNegocio } = useAuth();
 
   const [info, setInfo] = useState({ nombre: '', categoria: '', descripcion: '', telefono: '', direccion: '' });
+  const [ubicacion, setUbicacion] = useState<{ lat: number; lng: number } | null>(null);
   const [horario, setHorario] = useState<DiaState[]>(
     DIAS.map((_, i) => ({ activo: i < 5, hora_inicio: '09:00', hora_fin: '18:00', tramos: [] }))
   );
@@ -244,6 +258,9 @@ export default function PerfilNegocioPage() {
       telefono: negocio.telefono ?? '',
       direccion: negocio.direccion ?? '',
     });
+    setUbicacion(
+      negocio.lat != null && negocio.lng != null ? { lat: negocio.lat, lng: negocio.lng } : null
+    );
 
     const load = async () => {
       const [
@@ -312,20 +329,38 @@ export default function PerfilNegocioPage() {
 
     setSaving(true);
     try {
-      const { error: errNeg } = await supabase
+      const baseUpdate = {
+        nombre: info.nombre,
+        categoria: info.categoria || null,
+        descripcion: info.descripcion || null,
+        telefono: info.telefono || null,
+        direccion: info.direccion || null,
+      };
+
+      // Primer intento con lat/lng. Si las columnas no existen (migración 007
+      // sin correr), reintentamos sin ellas para no bloquear el guardado.
+      let errNeg = (await supabase
         .from('negocios')
-        .update({
-          nombre: info.nombre,
-          categoria: info.categoria || null,
-          descripcion: info.descripcion || null,
-          telefono: info.telefono || null,
-          direccion: info.direccion || null,
-        })
-        .eq('id', negocio.id);
+        .update({ ...baseUpdate, lat: ubicacion?.lat ?? null, lng: ubicacion?.lng ?? null })
+        .eq('id', negocio.id)).error;
 
-      if (errNeg) { toast.error('Error guardando información'); return; }
+      if (errNeg && (errNeg.code === '42703' || /column .* does not exist/i.test(errNeg.message))) {
+        // Reintento sin lat/lng. Avisamos al final para que Angel corra la migración.
+        const retry = await supabase.from('negocios').update(baseUpdate).eq('id', negocio.id);
+        errNeg = retry.error;
+        if (!errNeg) {
+          toast('Ubicación no guardada: ejecuta la migración 007 en Supabase.', { icon: '⚠️' });
+        }
+      }
 
-      // 1. Disponibilidad por día
+      if (errNeg) {
+        console.error('[Arkana] error guardando negocio:', errNeg);
+        toast.error(`Error guardando: ${errNeg.message}`);
+        return;
+      }
+
+      // 1. Disponibilidad por día. Cada error sube un toast y aborta para que
+      // el usuario sepa qué pasó en vez de ver "guardado" sin que se guardara.
       for (let i = 0; i < DIAS.length; i++) {
         const d = horario[i];
         const payload = {
@@ -336,9 +371,19 @@ export default function PerfilNegocioPage() {
           hora_fin: d.hora_fin,
         };
         if (d.id) {
-          await supabase.from('disponibilidad').update(payload).eq('id', d.id);
+          const { error } = await supabase.from('disponibilidad').update(payload).eq('id', d.id);
+          if (error) {
+            console.error('[Arkana] error guardando disponibilidad:', error);
+            toast.error(`Error en horario de ${DIAS[i]}: ${error.message}`);
+            return;
+          }
         } else {
-          const { data: inserted } = await supabase.from('disponibilidad').insert(payload).select().single();
+          const { data: inserted, error } = await supabase.from('disponibilidad').insert(payload).select().single();
+          if (error) {
+            console.error('[Arkana] error insertando disponibilidad:', error);
+            toast.error(`Error en horario de ${DIAS[i]}: ${error.message}`);
+            return;
+          }
           if (inserted) {
             setHorario((prev) => prev.map((h, idx) => idx === i ? { ...h, id: (inserted as Disponibilidad).id } : h));
           }
@@ -346,7 +391,12 @@ export default function PerfilNegocioPage() {
       }
 
       // 2. Tramos excluidos: borramos todos y reinsertamos (más simple que diff)
-      await supabase.from('disponibilidad_bloques_excluidos').delete().eq('negocio_id', negocio.id);
+      const delBloques = await supabase.from('disponibilidad_bloques_excluidos').delete().eq('negocio_id', negocio.id);
+      if (delBloques.error) {
+        console.error('[Arkana] error borrando bloques:', delBloques.error);
+        toast.error(`Error guardando pausas: ${delBloques.error.message}`);
+        return;
+      }
       const nuevosBloques = horario.flatMap((d, i) =>
         d.activo
           ? d.tramos.map(t => ({
@@ -358,15 +408,30 @@ export default function PerfilNegocioPage() {
           : [],
       );
       if (nuevosBloques.length > 0) {
-        await supabase.from('disponibilidad_bloques_excluidos').insert(nuevosBloques);
+        const insBloques = await supabase.from('disponibilidad_bloques_excluidos').insert(nuevosBloques);
+        if (insBloques.error) {
+          console.error('[Arkana] error insertando bloques:', insBloques.error);
+          toast.error(`Error guardando pausas: ${insBloques.error.message}`);
+          return;
+        }
       }
 
       // 3. Días bloqueados: mismo enfoque (delete + insert)
-      await supabase.from('disponibilidad_excepciones').delete().eq('negocio_id', negocio.id);
+      const delExc = await supabase.from('disponibilidad_excepciones').delete().eq('negocio_id', negocio.id);
+      if (delExc.error) {
+        console.error('[Arkana] error borrando excepciones:', delExc.error);
+        toast.error(`Error guardando días bloqueados: ${delExc.error.message}`);
+        return;
+      }
       if (fechasBloqueadas.length > 0) {
-        await supabase.from('disponibilidad_excepciones').insert(
+        const insExc = await supabase.from('disponibilidad_excepciones').insert(
           fechasBloqueadas.map(f => ({ negocio_id: negocio.id, fecha: f })),
         );
+        if (insExc.error) {
+          console.error('[Arkana] error insertando excepciones:', insExc.error);
+          toast.error(`Error guardando días bloqueados: ${insExc.error.message}`);
+          return;
+        }
       }
 
       await refreshNegocio();
@@ -456,7 +521,15 @@ export default function PerfilNegocioPage() {
         </Btn>
       </div>
 
-      <div className="ark-page-fade" style={{ padding: '20px clamp(14px, 4vw, 28px)', maxWidth: 720, width: '100%' }}>
+      <div className="ark-page-fade ark-perfil-grid" style={{ padding: '20px clamp(14px, 4vw, 28px)', width: '100%' }}>
+
+        <div className="ark-perfil-col-left">
+
+        <ProfileSection title="Foto del negocio">
+          {negocio ? (
+            <LogoNegocioUploader negocioId={negocio.id} logoUrl={negocio.logo_url} nombre={info.nombre || negocio.nombre} />
+          ) : null}
+        </ProfileSection>
 
         <ProfileSection title="Información general">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -467,20 +540,13 @@ export default function PerfilNegocioPage() {
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <label style={{ fontSize: 11, color: 'var(--app-muted)', display: 'block', marginBottom: 4 }}>Categoría</label>
-                <select
-                  style={{ ...inputStyle, appearance: 'none' }}
+                <StyledSelect
                   value={info.categoria}
-                  onChange={(e) => setInfo({ ...info, categoria: e.target.value })}
-                >
-                  <option value="">Sin categoría</option>
-                  <option value="Clínica dental">Clínica dental</option>
-                  <option value="Salón de belleza">Salón de belleza</option>
-                  <option value="Spa / Bienestar">Spa / Bienestar</option>
-                  <option value="Peluquería">Peluquería</option>
-                  <option value="Fisioterapia">Fisioterapia</option>
-                  <option value="Consultoría">Consultoría</option>
-                  <option value="Otro">Otro</option>
-                </select>
+                  onChange={(v) => setInfo({ ...info, categoria: v })}
+                  options={CATEGORIAS}
+                  placeholder="Sin categoría"
+                  ariaLabel="Categoría del negocio"
+                />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -505,6 +571,17 @@ export default function PerfilNegocioPage() {
           </div>
         </ProfileSection>
 
+        <ProfileSection title="Ubicación en el mapa">
+          <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginBottom: 12, lineHeight: 1.5 }}>
+            Busca tu dirección o pulsa el mapa para colocar el pin exacto. Esta es la ubicación que verán tus clientes.
+          </div>
+          <MapPicker
+            value={ubicacion}
+            onChange={setUbicacion}
+            direccionInicial={info.direccion}
+          />
+        </ProfileSection>
+
         <ProfileSection title="Horario de atención">
           <div style={{ fontSize: 12, color: 'var(--app-subtle)', marginBottom: 6, lineHeight: 1.5 }}>
             Pulsa cualquier hora para elegir una distinta. Puedes añadir pausas dentro de cada día.
@@ -519,6 +596,10 @@ export default function PerfilNegocioPage() {
             />
           ))}
         </ProfileSection>
+
+        </div>{/* /col-left */}
+
+        <div className="ark-perfil-col-right">
 
         <ProfileSection title="Galería">
           {negocio ? <GaleriaUploader negocioId={negocio.id} max={6} /> : null}
@@ -604,32 +685,20 @@ export default function PerfilNegocioPage() {
         </ProfileSection>
 
         <ProfileSection title="Código QR">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-            <div style={{
-              width: 96, height: 96, background: '#FAFAFA', borderRadius: 12, padding: 8,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              {qrUrl && <QRCode value={qrUrl} size={80} bgColor="#FAFAFA" fgColor="#050A30" />}
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)', marginBottom: 6 }}>Tu QR único</div>
-              <div style={{ fontSize: 12, color: 'var(--app-muted)', lineHeight: 1.5, marginBottom: 6 }}>
-                {qrUrl}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--app-subtle)', lineHeight: 1.5, marginBottom: 12 }}>
-                Comparte este código para que tus clientes reserven directamente sin registrarse.
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Btn variant="primary" size="sm" onClick={() => navigator.clipboard.writeText(qrUrl).then(() => toast.success('Enlace copiado'))}>
-                  Copiar enlace
-                </Btn>
-                <Btn variant="ghost" size="sm" onClick={() => window.open(qrUrl, '_blank')}>
-                  Abrir página
-                </Btn>
-              </div>
-            </div>
+          <div style={{ fontSize: 12, color: 'var(--app-muted)', lineHeight: 1.5, marginBottom: 12 }}>
+            Tu QR único está en la sección <strong>Código QR</strong> del menú lateral. Allí puedes descargarlo como PNG o exportarlo en PDF para imprimirlo.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Btn variant="primary" size="sm" onClick={() => window.location.assign('/panel/qr')}>
+              Ir al QR
+            </Btn>
+            <Btn variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(qrUrl).then(() => toast.success('Enlace copiado'))}>
+              Copiar enlace de reserva
+            </Btn>
           </div>
         </ProfileSection>
+
+        </div>{/* /col-right */}
       </div>
     </div>
   );

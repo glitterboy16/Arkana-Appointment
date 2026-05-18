@@ -7,6 +7,8 @@ import ClienteLayout from './layouts/ClienteLayout';
 import PanelPage from './pages/dashboard/PanelPage';
 import CitasPage from './pages/dashboard/CitasPage';
 import PerfilNegocioPage from './pages/dashboard/PerfilNegocioPage';
+import EstadisticasPage from './pages/dashboard/EstadisticasPage';
+import QrPage from './pages/dashboard/QrPage';
 import ConfiguracionNegocioPage from './pages/dashboard/ConfiguracionNegocioPage';
 import BuscarNegociosPage from './pages/cliente/BuscarNegociosPage';
 import MisCitasPage from './pages/cliente/MisCitasPage';
@@ -27,6 +29,8 @@ export default function App() {
           <Route path="citas" element={<CitasPage />} />
           <Route path="notificaciones" element={<NotificacionesPage />} />
           <Route path="perfil" element={<PerfilNegocioPage />} />
+          <Route path="estadisticas" element={<EstadisticasPage />} />
+          <Route path="qr" element={<QrPage />} />
           <Route path="configuracion" element={<ConfiguracionNegocioPage />} />
         </Route>
         <Route path="/app" element={<ClienteLayout />}>

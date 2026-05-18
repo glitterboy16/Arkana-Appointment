@@ -35,6 +35,8 @@ export interface Negocio {
   direccion: string | null;
   telefono: string | null;
   logo_url: string | null;
+  lat: number | null;
+  lng: number | null;
   rating: number;
   resenas: number;
   created_at: string;

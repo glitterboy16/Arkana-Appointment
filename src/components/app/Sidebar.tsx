@@ -27,8 +27,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     { id: 'appointments', icon: ArkanaIcons.calendar, label: 'Mis citas',          path: '/panel/citas' },
     { id: 'notifications',icon: ArkanaIcons.bell,     label: 'Notificaciones',     path: '/panel/notificaciones' },
     { id: 'profile',      icon: ArkanaIcons.building, label: 'Perfil del negocio', path: '/panel/perfil' },
-    { id: 'stats',        icon: ArkanaIcons.chart,    label: 'Estadísticas' },
-    { id: 'qr',           icon: ArkanaIcons.qr,       label: 'Código QR' },
+    { id: 'stats',        icon: ArkanaIcons.chart,    label: 'Estadísticas',       path: '/panel/estadisticas' },
+    { id: 'qr',           icon: ArkanaIcons.qr,       label: 'Código QR',          path: '/panel/qr' },
     {
       id: 'public', icon: ArkanaIcons.eye, label: 'Vista pública',
       section: 'ACCESOS RÁPIDOS',
@@ -88,7 +88,15 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         border: '1px solid var(--app-border)', borderRadius: 10, padding: '10px 12px',
         display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
       }}>
-        <Avatar name={negocio?.nombre ?? 'Negocio'} size={34} bg="#648DFF" />
+        {negocio?.logo_url ? (
+          <img
+            src={negocio.logo_url}
+            alt=""
+            style={{ width: 34, height: 34, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }}
+          />
+        ) : (
+          <Avatar name={negocio?.nombre ?? 'Negocio'} size={34} bg="#648DFF" />
+        )}
         <div style={{ overflow: 'hidden', minWidth: 0 }}>
           <div style={{
             fontSize: 13.5, fontWeight: 600, color: 'var(--app-text)', lineHeight: 1.3,

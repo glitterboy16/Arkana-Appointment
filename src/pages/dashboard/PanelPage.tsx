@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +10,7 @@ import NotificationsBell from '@/components/app/NotificationsBell';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number } | null;
+  cliente?: { foto_url: string | null } | null;
 }
 
 interface MetricCardProps {
@@ -54,7 +56,15 @@ function AppointmentRow({ cita }: { cita: CitaConServicio }) {
           {cita.servicios ? `${cita.servicios.duracion_min}min` : '—'}
         </div>
       </div>
-      <div style={{ width: 3, height: 34, borderRadius: 2, background: 'rgba(100,141,255,0.4)', flexShrink: 0 }} />
+      {cita.cliente?.foto_url ? (
+        <img
+          src={cita.cliente.foto_url}
+          alt=""
+          style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        />
+      ) : (
+        <div style={{ width: 3, height: 34, borderRadius: 2, background: 'rgba(100,141,255,0.4)', flexShrink: 0 }} />
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--app-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {cita.cliente_nombre}
@@ -68,38 +78,12 @@ function AppointmentRow({ cita }: { cita: CitaConServicio }) {
   );
 }
 
-function MiniChart({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  const min = 0;
-  const w = 320;
-  const h = 80;
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((v - min) / (max - min)) * h * 0.8 - h * 0.1;
-    return `${x},${y}`;
-  }).join(' ');
-  const area = `M0,${h} L${pts.split(' ').join(' L')} L${w},${h} Z`;
-
-  return (
-    <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#648DFF" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#648DFF" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#chartGrad)" />
-      <polyline points={pts} fill="none" stroke="#648DFF" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function PanelPage() {
   const { negocio, usuario } = useAuth();
+  const navigate = useNavigate();
   const [citasHoy, setCitasHoy] = useState<CitaConServicio[]>([]);
   const [countSemana, setCountSemana] = useState(0);
   const [countMes, setCountMes] = useState(0);
-  const [chartData, setChartData] = useState<number[]>(Array(12).fill(0));
   const [loadingData, setLoadingData] = useState(true);
 
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -116,11 +100,10 @@ export default function PanelPage() {
         { data: hoy },
         { count: semana },
         { count: mes },
-        { data: ultimas },
       ] = await Promise.all([
         supabase
           .from('citas')
-          .select('*, servicios(nombre, duracion_min)')
+          .select('*, servicios(nombre, duracion_min), cliente:usuarios!cliente_id(foto_url)')
           .eq('negocio_id', negocio.id)
           .eq('fecha', today)
           .order('hora_inicio'),
@@ -136,28 +119,11 @@ export default function PanelPage() {
           .eq('negocio_id', negocio.id)
           .gte('fecha', monthStart)
           .lte('fecha', monthEnd),
-        supabase
-          .from('citas')
-          .select('fecha')
-          .eq('negocio_id', negocio.id)
-          .gte('fecha', format(subDays(new Date(), 11), 'yyyy-MM-dd'))
-          .lte('fecha', today),
       ]);
 
-      setCitasHoy((hoy as CitaConServicio[]) ?? []);
+      setCitasHoy(((hoy ?? []) as unknown) as CitaConServicio[]);
       setCountSemana(semana ?? 0);
       setCountMes(mes ?? 0);
-
-      if (ultimas) {
-        const counts: Record<string, number> = {};
-        ultimas.forEach((c) => { counts[c.fecha] = (counts[c.fecha] ?? 0) + 1; });
-        const last12: number[] = [];
-        for (let i = 11; i >= 0; i--) {
-          const d = format(subDays(new Date(), i), 'yyyy-MM-dd');
-          last12.push(counts[d] ?? 0);
-        }
-        setChartData(last12);
-      }
 
       setLoadingData(false);
     };
@@ -211,44 +177,34 @@ export default function PanelPage() {
             <MetricCard icon={ArkanaIcons.chart} value={countMes} label="Citas este mes" sub={format(new Date(), 'MMMM yyyy', { locale: es })} color="#F59E0B" />
           </div>
 
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            <div style={{
-              flex: '1 1 320px', minWidth: 0, background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-              borderRadius: 12, padding: 'clamp(16px, 4vw, 22px)',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)' }}>Actividad reciente</div>
-                  <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 2 }}>Últimos 12 días</div>
-                </div>
-              </div>
-              <div style={{ marginTop: 16 }}>
-                <MiniChart data={chartData} />
-              </div>
-            </div>
-
-            <div style={{
-              flex: '1 1 280px', maxWidth: '100%', background: 'var(--app-surface)', border: '1px solid var(--app-border)',
-              borderRadius: 12, padding: 'clamp(16px, 4vw, 22px)', minWidth: 0,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{
+            background: 'var(--app-surface)', border: '1px solid var(--app-border)',
+            borderRadius: 12, padding: 'clamp(16px, 4vw, 22px)', maxWidth: 720,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+              <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--app-text)' }}>Citas de hoy</div>
-                <span style={{ fontSize: 12, color: '#648DFF', fontWeight: 600 }}>{citasHoy.length} total</span>
-              </div>
-              {citasHoy.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--app-subtle)', fontSize: 13 }}>
-                  No hay citas para hoy
+                <div style={{ fontSize: 11, color: 'var(--app-subtle)', marginTop: 2 }}>
+                  {citasHoy.length === 0 ? 'Sin reservas para hoy' : `${citasHoy.length} ${citasHoy.length === 1 ? 'cita' : 'citas'} programadas`}
                 </div>
-              ) : (
-                citasHoy.slice(0, 5).map((c) => <AppointmentRow key={c.id} cita={c} />)
-              )}
-              {citasHoy.length > 0 && (
-                <Btn variant="ghost" size="sm" style={{ marginTop: 14, width: '100%', justifyContent: 'center' }}
-                  onClick={() => window.location.href = '/panel/citas'}>
-                  Ver todas las citas
-                </Btn>
-              )}
+              </div>
+              <Btn variant="ghost" size="sm" onClick={() => navigate('/panel/estadisticas')}>
+                {ArkanaIcons.chart} Ver estadísticas
+              </Btn>
             </div>
+            {citasHoy.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--app-subtle)', fontSize: 13 }}>
+                No hay citas para hoy
+              </div>
+            ) : (
+              citasHoy.slice(0, 5).map((c) => <AppointmentRow key={c.id} cita={c} />)
+            )}
+            {citasHoy.length > 0 && (
+              <Btn variant="ghost" size="sm" style={{ marginTop: 14, width: '100%', justifyContent: 'center' }}
+                onClick={() => navigate('/panel/citas')}>
+                Ver todas las citas
+              </Btn>
+            )}
           </div>
         </div>
       )}

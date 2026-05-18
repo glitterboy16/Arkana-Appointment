@@ -718,6 +718,52 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
 }
 
 /* ══════════════════════════════════════════════════════════════
+   Página QR — al imprimir, solo se ve la tarjeta imprimible.
+   ══════════════════════════════════════════════════════════════ */
+@media print {
+    @page { margin: 16mm; }
+    body, html { background: #FFFFFF !important; }
+    body * { visibility: hidden !important; }
+    .ark-qr-printable, .ark-qr-printable * { visibility: visible !important; }
+    .ark-qr-printable {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin: 0 auto !important;
+        max-width: 540px !important;
+        background: #FFFFFF !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #050A30 !important;
+    }
+    .ark-qr-printable * { color: #050A30 !important; }
+    .ark-qr-print-brand { color: #004AAD !important; }
+    .ark-qr-hide-on-print { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Perfil del negocio — grid de 2 columnas en desktop (>=1024px).
+   En móvil/tablet se apila en una sola columna.
+   ══════════════════════════════════════════════════════════════ */
+.ark-perfil-grid {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 22px;
+}
+.ark-perfil-col-left,
+.ark-perfil-col-right {
+    min-width: 0;
+}
+@media (min-width: 1024px) {
+    .ark-perfil-grid {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
    Modal de perfil del negocio — bottom-sheet en móvil,
    diálogo centrado y limitado en desktop.
    ══════════════════════════════════════════════════════════════ */

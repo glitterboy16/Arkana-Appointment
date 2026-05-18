@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase, type EstadoCita } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import ConfirmModal from '@/components/app/ConfirmModal';
 
@@ -26,6 +27,7 @@ const ESTADO_LABEL: Record<EstadoCita, { label: string; color: string; bg: strin
 
 export default function MisCitasPage() {
   const { usuario } = useAuth();
+  const { silenceNext } = useNotifications();
   const [citas, setCitas] = useState<CitaConDetalle[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<'todas' | 'proximas' | 'pasadas'>('proximas');
@@ -66,6 +68,10 @@ export default function MisCitasPage() {
     const cita = citaACancelar;
     setMsg(null);
     setCancelandoId(cita.id);
+
+    // Silencia la notif que llegará por realtime/polling: somos NOSOTROS
+    // quienes cancelamos, no el negocio.
+    silenceNext(cita.id, 'cita_cancelada');
 
     const { error } = await supabase
       .from('citas')
