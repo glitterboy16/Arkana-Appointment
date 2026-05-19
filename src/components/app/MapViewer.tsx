@@ -21,6 +21,11 @@ interface MapViewerProps {
 const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
 const ZOOM = 15;
 
+const isTouchDevice = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(hover: none)').matches;
+};
+
 export default function MapViewer({ lat, lng, height = 240, titulo, showGoogleMapsLink = true }: MapViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -30,6 +35,8 @@ export default function MapViewer({ lat, lng, height = 240, titulo, showGoogleMa
     if (mapRef.current) return;
     if (!MAPBOX_TOKEN) return;
 
+    const touch = isTouchDevice();
+
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
@@ -37,13 +44,19 @@ export default function MapViewer({ lat, lng, height = 240, titulo, showGoogleMa
       zoom: ZOOM,
       attributionControl: true,
       interactive: true,
+      // Modal/embed: requerir dos dedos en móvil para no atrapar el scroll.
+      cooperativeGestures: touch,
+      pitchWithRotate: false,
+      dragRotate: false,
     });
 
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right');
 
     const el = document.createElement('div');
+    el.className = 'ark-map-marker';
     el.innerHTML = `
-      <svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));">
+      <div class="ark-map-marker-pulse"></div>
+      <svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg" class="ark-map-marker-pin">
         <path d="M17 0C7.6 0 0 7.6 0 17c0 12 17 25 17 25s17-13 17-25C34 7.6 26.4 0 17 0z" fill="#648DFF"/>
         <circle cx="17" cy="16" r="6" fill="#FAFAFA"/>
       </svg>
@@ -98,11 +111,13 @@ export default function MapViewer({ lat, lng, height = 240, titulo, showGoogleMa
           rel="noopener noreferrer"
           style={{
             position: 'absolute', bottom: 10, left: 10,
-            padding: '6px 12px', borderRadius: 8,
-            background: 'rgba(5,10,48,0.85)', color: '#FAFAFA',
-            fontSize: 11, fontWeight: 600, textDecoration: 'none',
-            backdropFilter: 'blur(6px)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            padding: '8px 14px', borderRadius: 10,
+            background: 'rgba(5,10,48,0.88)', color: '#FAFAFA',
+            fontSize: 12, fontWeight: 600, textDecoration: 'none',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.16)',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
           }}
         >
           Abrir en Google Maps ↗

@@ -862,3 +862,233 @@ aside, header, nav, main, section, article, .glass-card, .app-surface, .app-surf
     .dashboard-3d-card-left:hover  { transform: rotateY(4deg)  rotateX(3deg); }
     .dashboard-3d-card-right:hover { transform: rotateY(-4deg) rotateX(3deg); }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MapPicker — UX moderna, segura en móvil
+   ══════════════════════════════════════════════════════════════ */
+.ark-map-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ark-map-picker-controls {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.ark-map-picker-search {
+    position: relative;
+    min-width: 0;
+}
+.ark-map-picker-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--app-subtle);
+    pointer-events: none;
+}
+.ark-map-picker-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    padding: 11px 14px 11px 38px;
+    color: var(--app-text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 150ms ease, background 150ms ease;
+}
+.ark-map-picker-input:focus {
+    border-color: #648DFF;
+    background: var(--app-surface-hover);
+}
+.ark-map-picker-input::-webkit-search-cancel-button { display: none; }
+
+.ark-map-picker-btn {
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--app-border);
+    background: transparent;
+    color: var(--app-muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px; /* touch target Apple HIG */
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+    white-space: nowrap;
+}
+.ark-map-picker-btn:hover { background: var(--app-surface-hover); color: var(--app-text); }
+.ark-map-picker-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ark-map-picker-btn-primary {
+    background: #648DFF;
+    border-color: #648DFF;
+    color: #FAFAFA;
+}
+.ark-map-picker-btn-primary:hover {
+    background: #4F7AF0;
+    border-color: #4F7AF0;
+    color: #FAFAFA;
+}
+.ark-map-picker-btn-ghost { background: transparent; }
+
+.ark-map-picker-canvas-wrap {
+    position: relative;
+    width: 100%;
+}
+.ark-map-picker-canvas {
+    width: 100%;
+    height: clamp(260px, 42vh, 380px);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+}
+
+/* Botón flotante "tap to place" — sólo touch */
+.ark-map-picker-tap-btn {
+    display: none;
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    z-index: 2;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(5,10,48,0.85);
+    color: #FAFAFA;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    align-items: center;
+    gap: 6px;
+    max-width: calc(100% - 80px);
+}
+.ark-map-picker-tap-btn.is-active {
+    background: #648DFF;
+    border-color: #648DFF;
+    box-shadow: 0 4px 14px rgba(100,141,255,0.4);
+}
+/* sólo aparece en dispositivos táctiles primarios */
+@media (pointer: coarse) and (hover: none) {
+    .ark-map-picker-tap-btn { display: inline-flex; }
+    .ark-map-picker-canvas { height: clamp(300px, 50vh, 420px); }
+}
+
+.ark-map-picker-hint {
+    font-size: 12px;
+    color: var(--app-subtle);
+    line-height: 1.5;
+}
+
+/* Reorganización del grid en móvil — buscador a línea completa, botones en fila debajo */
+@media (max-width: 560px) {
+    .ark-map-picker-controls {
+        grid-template-columns: 1fr 1fr;
+    }
+    .ark-map-picker-search { grid-column: 1 / -1; }
+}
+
+/* Marker animado — pulso suave alrededor del pin */
+.ark-map-marker {
+    position: relative;
+    width: 34px;
+    height: 42px;
+    cursor: grab;
+    will-change: transform;
+}
+.ark-map-marker:active { cursor: grabbing; }
+.ark-map-marker-pin {
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.45));
+}
+.ark-map-marker-pulse {
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(100,141,255,0.55);
+    z-index: 1;
+    animation: ark-map-pulse 2200ms ease-out infinite;
+    pointer-events: none;
+}
+@keyframes ark-map-pulse {
+    0%   { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
+    80%  { transform: translateX(-50%) scale(2.4); opacity: 0; }
+    100% { transform: translateX(-50%) scale(2.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ark-map-marker-pulse { animation: none; opacity: 0.35; transform: translateX(-50%) scale(1.4); }
+}
+
+/* Ajustes de los controles nativos de Mapbox para que combinen con el tema */
+.mapboxgl-ctrl-group {
+    background: rgba(8,12,62,0.92) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.mapboxgl-ctrl-group button {
+    width: 36px !important;
+    height: 36px !important;
+}
+.mapboxgl-ctrl-group button + button { border-top: 1px solid rgba(255,255,255,0.08) !important; }
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon { filter: invert(1) brightness(1.6); opacity: 0.9; }
+.mapboxgl-ctrl-attrib { background: rgba(5,10,48,0.75) !important; color: rgba(250,250,250,0.7) !important; }
+.mapboxgl-ctrl-attrib a { color: #648DFF !important; }
+.mapboxgl-popup-content {
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.28) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   QR — escala segura en móviles estrechos
+   ══════════════════════════════════════════════════════════════ */
+.ark-qr-printable {
+    justify-content: center;
+}
+.ark-qr-frame {
+    width: var(--ark-qr-size, 360px);
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+}
+.ark-qr-frame svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+:root { --ark-qr-size: 360px; }
+@media (max-width: 560px) {
+    .ark-qr-printable {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center;
+    }
+    :root { --ark-qr-size: min(320px, calc(100vw - 80px)); }
+}
+@media print {
+    :root { --ark-qr-size: 320px; }
+    .ark-qr-printable { flex-direction: row !important; align-items: center !important; }
+}
+
