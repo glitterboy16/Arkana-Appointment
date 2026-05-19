@@ -169,15 +169,17 @@ export default function QrPage() {
           {/* Marco del QR con logo de Arkana al centro.
               Nivel "H" → 30% de corrección de errores, suficiente para tapar
               hasta ~25% del QR con el logo sin romper la lectura. */}
-          <div ref={qrRef} style={{
+          <div ref={qrRef} className="ark-qr-frame" style={{
             background: '#FFFFFF',
-            padding: 18,
+            padding: 'clamp(12px, 3vw, 18px)',
             borderRadius: 14,
             boxShadow: '0 12px 36px rgba(0,0,0,0.18)',
             display: 'inline-flex',
             alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
             position: 'relative',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}>
             <QRCode
               value={qrUrl}
@@ -190,14 +192,15 @@ export default function QrPage() {
               position: 'absolute',
               top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: QR_PRINT_SIZE * 0.22,
-              height: QR_PRINT_SIZE * 0.22,
+              width: '22%',
+              height: '22%',
               background: '#FFFFFF',
               borderRadius: 12,
-              padding: 8,
+              padding: '6%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 0 0 4px #FFFFFF',
               pointerEvents: 'none',
+              boxSizing: 'border-box',
             }}>
               <img
                 src={arkanaIcon}
