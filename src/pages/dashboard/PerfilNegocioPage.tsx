@@ -510,8 +510,6 @@ export default function PerfilNegocioPage() {
     if (!error) setServicios((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const qrUrl = negocio ? `${window.location.origin}/n/${negocio.slug}` : '';
-
   if (loading) {
     return (
       <div style={{ flex: 1, display: 'flex', background: 'var(--app-bg)' }}>
@@ -696,20 +694,6 @@ export default function PerfilNegocioPage() {
               {ArkanaIcons.plus} Añadir servicio
             </Btn>
           )}
-        </ProfileSection>
-
-        <ProfileSection title="Código QR">
-          <div style={{ fontSize: 12, color: 'var(--app-muted)', lineHeight: 1.5, marginBottom: 12 }}>
-            Tu QR único está en la sección <strong>Código QR</strong> del menú lateral. Allí puedes descargarlo como PNG o exportarlo en PDF para imprimirlo.
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Btn variant="primary" size="sm" onClick={() => window.location.assign('/panel/qr')}>
-              Ir al QR
-            </Btn>
-            <Btn variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(qrUrl).then(() => toast.success('Enlace copiado'))}>
-              Copiar enlace de reserva
-            </Btn>
-          </div>
         </ProfileSection>
 
         </div>{/* /col-right */}

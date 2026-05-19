@@ -138,14 +138,14 @@ async function guardarUsuario(
   accessToken: string,
 ): Promise<{ data: Usuario | null; error: DBError | null }> {
   const updates = { email: row.email, nombre: row.nombre, rol: row.rol, telefono: row.telefono ?? null };
-  console.log('[Arkana] guardarUsuario - id:', row.id, 'rol:', row.rol);
+  if (import.meta.env.DEV) console.log('[Arkana] guardarUsuario - id:', row.id, 'rol:', row.rol);
 
   // 1. UPDATE (por si un trigger ya creó la fila con rol por defecto)
   const upd = await postgrest<Usuario>(`usuarios?id=eq.${row.id}`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
   }, accessToken);
-  console.log('[Arkana] PATCH:', { hayData: !!upd.data, error: upd.error });
+  if (import.meta.env.DEV) console.log('[Arkana] PATCH:', { hayData: !!upd.data, error: upd.error });
   if (upd.data) return upd;
 
   // 2. INSERT
@@ -153,7 +153,7 @@ async function guardarUsuario(
     method: 'POST',
     body: JSON.stringify(row),
   }, accessToken);
-  console.log('[Arkana] POST:', { hayData: !!ins.data, error: ins.error });
+  if (import.meta.env.DEV) console.log('[Arkana] POST:', { hayData: !!ins.data, error: ins.error });
   if (ins.data) return ins;
 
   // 3. Si INSERT falla por duplicado, la fila YA existe (trigger fue más rápido).
@@ -163,7 +163,7 @@ async function guardarUsuario(
       method: 'PATCH',
       body: JSON.stringify(updates),
     }, accessToken);
-    console.log('[Arkana] PATCH retry:', { hayData: !!upd2.data, error: upd2.error });
+    if (import.meta.env.DEV) console.log('[Arkana] PATCH retry:', { hayData: !!upd2.data, error: upd2.error });
     if (upd2.data) return { data: upd2.data, error: null };
 
     // 4. Aun sin lectura, sabemos que el usuario existe (por el 23505) y conocemos
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string, expectedRol: RolUsuario) => {
-    console.log('[Arkana] signIn - inicio para email:', email, 'esperado:', expectedRol);
+    if (import.meta.env.DEV) console.log('[Arkana] signIn - inicio para email:', email, 'esperado:', expectedRol);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       console.error('[Arkana] signIn - error auth:', error);
@@ -238,9 +238,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!data.user || !data.session) return { error: 'No se pudo iniciar sesión.' };
 
     const token = data.session.access_token;
-    console.log('[Arkana] signIn - auth OK, fetching usuario (vía REST) para id:', data.user.id);
+    if (import.meta.env.DEV) console.log('[Arkana] signIn - auth OK, fetching usuario (vía REST) para id:', data.user.id);
     const usr = await fetchUsuario(data.user.id, token);
-    console.log('[Arkana] signIn - usuario en BD:', usr);
+    if (import.meta.env.DEV) console.log('[Arkana] signIn - usuario en BD:', usr);
 
     if (!usr) {
       await supabase.auth.signOut();
@@ -260,7 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(data.session);
     setUsuario(usr);
     setNegocio(neg);
-    console.log('[Arkana] signIn - éxito, rol:', rolReal);
+    if (import.meta.env.DEV) console.log('[Arkana] signIn - éxito, rol:', rolReal);
     return { error: null, rol: rolReal };
   };
 

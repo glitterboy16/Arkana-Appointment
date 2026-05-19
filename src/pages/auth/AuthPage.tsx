@@ -4,28 +4,40 @@ import { LogoArkana } from '@/components/app/Shared';
 import { Spinner } from '@/components/app/Spinner';
 import { useAuth } from '@/contexts/AuthContext';
 
-type AuthMode = 'login' | 'register';
+// ════════════════════════════════════════════════════════════════════
+// AuthPage — Pantalla unica de inicio de sesion y registro.
+//
+// Permite al usuario elegir su rol (negocio o cliente) y, sobre esa
+// eleccion, alterna entre los formularios de login y registro. La
+// validacion se hace en tiempo real con regex; el envio real (signIn,
+// signUpNegocio, signUpCliente) se delega al AuthContext.
+// ════════════════════════════════════════════════════════════════════
+
+type ModoAuth = 'login' | 'register';
 type Rol = 'negocio' | 'cliente';
 
 interface AuthPageProps {
-  defaultMode?: AuthMode;
+  defaultMode?: ModoAuth;
 }
 
-const IconNegocio = () => (
+// ─────────────────────────────────────────────────────────────────
+// Iconos SVG inline (locales, sin dependencias)
+// ─────────────────────────────────────────────────────────────────
+const IconoNegocio = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
     <polyline points="9 22 9 12 15 12 15 22" />
   </svg>
 );
 
-const IconCliente = () => (
+const IconoCliente = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
-const IconEye = ({ open }: { open: boolean }) => open ? (
+const IconoOjo = ({ open }: { open: boolean }) => open ? (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
   </svg>
@@ -36,13 +48,13 @@ const IconEye = ({ open }: { open: boolean }) => open ? (
   </svg>
 );
 
-const IconCheck = () => (
+const IconoCheck = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 
-const IconX = () => (
+const IconoX = () => (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
@@ -62,15 +74,24 @@ const RE_PASS_LOWER = /[a-z]/;
 const RE_PASS_UPPER = /[A-Z]/;
 const RE_PASS_DIGIT = /\d/;
 
-interface PasswordChecks {
+interface ChecksContrasena {
   longitud: boolean;
   minuscula: boolean;
   mayuscula: boolean;
   numero: boolean;
 }
 
-function evaluarPassword(p: string): { checks: PasswordChecks; score: number; etiqueta: string; color: string } {
-  const checks: PasswordChecks = {
+/**
+ * Evalua una contrasena y devuelve los checks individuales, un score
+ * (0-4), una etiqueta legible y un color para la barra de fuerza.
+ */
+function evaluarContrasena(p: string): {
+  checks: ChecksContrasena;
+  score: number;
+  etiqueta: string;
+  color: string;
+} {
+  const checks: ChecksContrasena = {
     longitud: RE_PASS_MIN.test(p),
     minuscula: RE_PASS_LOWER.test(p),
     mayuscula: RE_PASS_UPPER.test(p),
@@ -85,12 +106,13 @@ function evaluarPassword(p: string): { checks: PasswordChecks; score: number; et
   return { checks, score, etiqueta, color };
 }
 
-function passwordValida(p: string): boolean {
-  const { score } = evaluarPassword(p);
+/** Una contrasena solo es valida si cumple los 4 requisitos. */
+function contrasenaValida(p: string): boolean {
+  const { score } = evaluarContrasena(p);
   return score === 4;
 }
 
-interface FormState {
+interface EstadoFormulario {
   email: string;
   password: string;
   name: string;
@@ -98,7 +120,7 @@ interface FormState {
   phone: string;
 }
 
-interface TouchedState {
+interface EstadoTocado {
   email: boolean;
   password: boolean;
   name: boolean;
@@ -106,12 +128,19 @@ interface TouchedState {
   phone: boolean;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// Componente principal
+// ════════════════════════════════════════════════════════════════════
 export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   const [rol, setRol] = useState<Rol>('negocio');
-  const [mode, setMode] = useState<AuthMode>(defaultMode);
-  const [form, setForm] = useState<FormState>({ email: '', password: '', name: '', business: '', phone: '' });
-  const [touched, setTouched] = useState<TouchedState>({ email: false, password: false, name: false, business: false, phone: false });
-  const [showPass, setShowPass] = useState(false);
+  const [mode, setMode] = useState<ModoAuth>(defaultMode);
+  const [form, setForm] = useState<EstadoFormulario>({
+    email: '', password: '', name: '', business: '', phone: '',
+  });
+  const [touched, setTouched] = useState<EstadoTocado>({
+    email: false, password: false, name: false, business: false, phone: false,
+  });
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -120,12 +149,12 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
   const reset = () => { setError(null); setInfo(null); };
 
-  const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const set = (k: keyof EstadoFormulario) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [k]: e.target.value });
     reset();
   };
 
-  const onBlur = (k: keyof TouchedState) => () => {
+  const onBlur = (k: keyof EstadoTocado) => () => {
     setTouched((t) => ({ ...t, [k]: true }));
   };
 
@@ -135,8 +164,8 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   const emailValido = useMemo(() => RE_EMAIL.test(form.email), [form.email]);
   const nombreValido = useMemo(() => RE_NOMBRE.test(form.name.trim()), [form.name]);
   const negocioValido = useMemo(() => RE_NEGOCIO.test(form.business.trim()), [form.business]);
-  const passEval = useMemo(() => evaluarPassword(form.password), [form.password]);
-  const passOK = mode === 'login' ? form.password.length > 0 : passwordValida(form.password);
+  const evalContrasena = useMemo(() => evaluarContrasena(form.password), [form.password]);
+  const passOK = mode === 'login' ? form.password.length > 0 : contrasenaValida(form.password);
   const telefonoNorm = form.phone.trim().replace(/\s/g, '');
   const telefonoValido = RE_TEL_ES.test(telefonoNorm) || RE_TEL_INTL.test(telefonoNorm);
 
@@ -148,7 +177,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   }, [mode, emailValido, passOK, nombreValido, negocioValido, telefonoValido, form.password.length, rol]);
 
   // ─────────────────────────────────────────────────────────────────
-  // Submit
+  // Envio del formulario
   // ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,14 +192,14 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
       if (rol === 'negocio' && !negocioValido) { setError('Introduce el nombre del negocio (2-80 caracteres)'); return; }
       if (rol === 'cliente' && !telefonoValido) { setError('Introduce un teléfono válido (ej. 612345678 o +34612345678)'); return; }
       if (!emailValido) { setError('Introduce un email válido'); return; }
-      if (!passwordValida(form.password)) { setError('La contraseña debe tener 8+ caracteres, mayúscula, minúscula y número'); return; }
+      if (!contrasenaValida(form.password)) { setError('La contraseña debe tener 8+ caracteres, mayúscula, minúscula y número'); return; }
     }
 
     setLoading(true);
     try {
       if (mode === 'login') {
         const { error, rol: rolUsuario } = await signIn(form.email, form.password, rol);
-        if (error) { setError(traducirError(error)); return; }
+        if (error) { setError(traducirErrorAuth(error)); return; }
         navigate(
           rolUsuario === 'admin' ? '/admin'
             : rolUsuario === 'negocio' ? '/panel'
@@ -184,7 +213,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             nombre: form.name.trim(),
             nombreNegocio: form.business.trim(),
           });
-          if (error) { setError(traducirError(error)); return; }
+          if (error) { setError(traducirErrorAuth(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
           navigate('/panel');
         } else {
@@ -194,7 +223,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             nombre: form.name.trim(),
             telefono: telefonoNorm,
           });
-          if (error) { setError(traducirError(error)); return; }
+          if (error) { setError(traducirErrorAuth(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
           navigate('/app/buscar');
         }
@@ -205,7 +234,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   };
 
   // ─────────────────────────────────────────────────────────────────
-  // Estilos
+  // Estilos en linea (la pagina no usa Tailwind, usa estilo "Apple" custom)
   // ─────────────────────────────────────────────────────────────────
   const inputBase: CSSProperties = {
     width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)',
@@ -275,7 +304,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                 }}
               >
                 <span style={{ color: active ? '#648DFF' : 'rgba(250,250,250,0.35)' }}>
-                  {r === 'negocio' ? <IconNegocio /> : <IconCliente />}
+                  {r === 'negocio' ? <IconoNegocio /> : <IconoCliente />}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: active ? 700 : 500 }}>
                   {r === 'negocio' ? 'Soy un negocio' : 'Soy un cliente'}
@@ -340,7 +369,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               <div>
                 <label style={labelStyle}>
                   <span>Tu nombre</span>
-                  {touched.name && nombreValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                  {touched.name && nombreValido && <span style={{ color: '#22C55E' }}><IconoCheck /></span>}
                 </label>
                 <input
                   style={inputStyle(touched.name, form.name ? nombreValido : null)}
@@ -361,7 +390,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               <div>
                 <label style={labelStyle}>
                   <span>Nombre del negocio</span>
-                  {touched.business && negocioValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                  {touched.business && negocioValido && <span style={{ color: '#22C55E' }}><IconoCheck /></span>}
                 </label>
                 <input
                   style={inputStyle(touched.business, form.business ? negocioValido : null)}
@@ -382,7 +411,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               <div>
                 <label style={labelStyle}>
                   <span>Teléfono</span>
-                  {touched.phone && telefonoValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                  {touched.phone && telefonoValido && <span style={{ color: '#22C55E' }}><IconoCheck /></span>}
                 </label>
                 <input
                   style={inputStyle(touched.phone, form.phone ? telefonoValido : null)}
@@ -404,7 +433,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             <div>
               <label style={labelStyle}>
                 <span>Correo electrónico</span>
-                {touched.email && emailValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                {touched.email && emailValido && <span style={{ color: '#22C55E' }}><IconoCheck /></span>}
               </label>
               <input
                 style={inputStyle(touched.email, form.email ? emailValido : null)}
@@ -425,7 +454,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
               <label style={labelStyle}>
                 <span>Contraseña</span>
                 {mode === 'register' && form.password && (
-                  <span style={{ color: passEval.color, fontWeight: 600 }}>{passEval.etiqueta}</span>
+                  <span style={{ color: evalContrasena.color, fontWeight: 600 }}>{evalContrasena.etiqueta}</span>
                 )}
               </label>
               <div style={{ position: 'relative' }}>
@@ -434,7 +463,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                     ...inputStyle(touched.password, form.password ? passOK : null),
                     paddingRight: 44,
                   }}
-                  type={showPass ? 'text' : 'password'}
+                  type={mostrarContrasena ? 'text' : 'password'}
                   value={form.password}
                   onChange={set('password')}
                   onBlur={onBlur('password')}
@@ -445,15 +474,15 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPass((v) => !v)}
-                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setMostrarContrasena((v) => !v)}
+                  aria-label={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   style={{
                     position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
                     background: 'transparent', border: 'none', cursor: 'pointer',
                     color: 'rgba(250,250,250,0.45)', padding: 8, display: 'inline-flex',
                   }}
                 >
-                  <IconEye open={showPass} />
+                  <IconoOjo open={mostrarContrasena} />
                 </button>
               </div>
 
@@ -464,17 +493,17 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                     height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden',
                   }}>
                     <div style={{
-                      width: `${(passEval.score / 4) * 100}%`,
-                      height: '100%', background: passEval.color, transition: 'all 250ms ease',
+                      width: `${(evalContrasena.score / 4) * 100}%`,
+                      height: '100%', background: evalContrasena.color, transition: 'all 250ms ease',
                     }} />
                   </div>
                   <div style={{
                     display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', marginTop: 8,
                   }}>
-                    <PassReq ok={passEval.checks.longitud} label="8+ caracteres" />
-                    <PassReq ok={passEval.checks.minuscula} label="Una minúscula" />
-                    <PassReq ok={passEval.checks.mayuscula} label="Una mayúscula" />
-                    <PassReq ok={passEval.checks.numero} label="Un número" />
+                    <RequisitoContrasena ok={evalContrasena.checks.longitud} label="8+ caracteres" />
+                    <RequisitoContrasena ok={evalContrasena.checks.minuscula} label="Una minúscula" />
+                    <RequisitoContrasena ok={evalContrasena.checks.mayuscula} label="Una mayúscula" />
+                    <RequisitoContrasena ok={evalContrasena.checks.numero} label="Un número" />
                   </div>
                 </div>
               )}
@@ -531,12 +560,17 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────
+
 const linkBtnStyle: CSSProperties = {
   background: 'transparent', border: 'none', color: '#648DFF', cursor: 'pointer',
   fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 0,
 };
 
-function PassReq({ ok, label }: { ok: boolean; label: string }) {
+/** Item visual de la checklist de requisitos de contrasena. */
+function RequisitoContrasena({ ok, label }: { ok: boolean; label: string }) {
   return (
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -549,14 +583,15 @@ function PassReq({ ok, label }: { ok: boolean; label: string }) {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        {ok ? <IconCheck /> : <IconX />}
+        {ok ? <IconoCheck /> : <IconoX />}
       </span>
       {label}
     </div>
   );
 }
 
-function traducirError(msg: string): string {
+/** Traduce los mensajes de error que devuelve Supabase Auth a algo amigable. */
+function traducirErrorAuth(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'Email o contraseña incorrectos';
   if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesión';
   if (msg.includes('User already registered')) return 'Este email ya está registrado';

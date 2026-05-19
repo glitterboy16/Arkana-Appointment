@@ -4,9 +4,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Mockup } from '@/components/ui/mockup';
 import { Glow } from '@/components/ui/glow';
-import arkanaLogoDesktop from '@/assets/Arkana Logo fix 2.svg';
-import arkanaLogoMobileClaro from '@/assets/Logo Arkana 1.svg';
-import arkanaLogoMobileOscuro from '@/assets/Logo Arkana 2.svg';
+// Logo grande del hero — variantes para cada viewport + tema.
+//   · Desktop (md+): siempre 'Arkana Logo fix 2.svg' (logo wordmark).
+//   · Movil (<md):  cambia segun el tema activo (1 claro, 2 oscuro).
+import logoHeroDesktop from '@/assets/Arkana Logo fix 2.svg';
+import logoHeroMovilClaro from '@/assets/Logo Arkana 1.svg';
+import logoHeroMovilOscuro from '@/assets/Logo Arkana 2.svg';
 import { useTheme } from '@/hooks/useTheme';
 
 interface HeroWithMockupProps {
@@ -45,7 +48,8 @@ export function HeroWithMockup({
   className,
 }: HeroWithMockupProps) {
   const { tema } = useTheme();
-  const arkanaLogoMobile = tema === 'claro' ? arkanaLogoMobileClaro : arkanaLogoMobileOscuro;
+  // En movil el logo cambia segun el tema; en desktop siempre es el mismo.
+  const logoHeroMovil = tema === 'claro' ? logoHeroMovilClaro : logoHeroMovilOscuro;
   return (
     <section
       className={cn(
@@ -58,16 +62,16 @@ export function HeroWithMockup({
 <div className="relative mx-auto max-w-[1280px] flex flex-col gap-8 lg:gap-16">
   <div className="relative z-10 flex flex-col items-center gap-4 text-center lg:gap-6">
     <div className="arkana-hero-logo-wrap overflow-visible -mb-2 md:-mb-4 lg:-mb-6 md:-mt-6 lg:-mt-10">
-      {/* Logo móvil: cambia con el tema (Logo Arkana 1 claro / 2 oscuro) */}
+      {/* Logo movil (<md): cambia con el tema (Logo Arkana 1 claro / 2 oscuro) */}
       <img
-        src={arkanaLogoMobile}
+        src={logoHeroMovil}
         alt="Arkana"
         className="arkana-hero-logo block md:hidden h-56 xs:h-64 sm:h-80 w-auto max-w-none select-none"
         draggable={false}
       />
-      {/* Logo desktop: Arkana Logo fix 2 — mismo en ambos temas */}
+      {/* Logo desktop (md+): Arkana Logo fix 2 — identico en ambos temas */}
       <img
-        src={arkanaLogoDesktop}
+        src={logoHeroDesktop}
         alt="Arkana"
         className="arkana-hero-logo hidden md:block md:h-[28rem] lg:h-[32rem] xl:h-[44rem] w-auto max-w-none select-none"
         draggable={false}
