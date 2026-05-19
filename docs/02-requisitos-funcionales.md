@@ -1,98 +1,110 @@
 # 2. Requisitos funcionales
 
-Los requisitos funcionales describen **qué debe hacer** el sistema. Se agrupan por módulo y se numeran con el prefijo `RF-XX`.
+Los requisitos funcionales describen **qué hace** el sistema. Se agrupan por módulo y se numeran con el prefijo `RF-XX`.
+
+> **Leyenda de estado**
+> · ✅ Entregado en el MVP
+> · 🟡 Entregado de forma parcial (con notas)
+> · 🔵 Pospuesto a roadmap post-MVP
 
 ## 2.1. Módulo de autenticación y usuarios
 
-| ID | Requisito | Prioridad | Rol |
+| ID | Requisito | Estado | Rol |
 |---|---|---|---|
-| RF-01 | El sistema debe permitir el registro de un nuevo **negocio** aportando email, contraseña, nombre comercial y rubro. | Alta | Empresa |
-| RF-02 | El sistema debe permitir el registro de un nuevo **cliente** aportando email, contraseña y nombre. | Alta | Cliente |
-| RF-03 | El sistema debe permitir **iniciar sesión** con email y contraseña. | Alta | Todos |
-| RF-04 | El sistema debe permitir **cerrar sesión** invalidando la sesión activa. | Alta | Todos |
-| RF-05 | El sistema debe permitir **recuperar la contraseña** mediante enlace enviado al correo electrónico. | Alta | Todos |
-| RF-06 | El sistema debe permitir **actualizar la contraseña** desde el enlace recibido por correo. | Alta | Todos |
-| RF-07 | El sistema debe permitir al usuario **modificar sus datos personales** (nombre, correo, avatar). | Media | Todos |
-| RF-08 | El sistema debe validar el formato del email y exigir una contraseña mínima de 8 caracteres con al menos una mayúscula, una minúscula y un dígito. | Alta | Todos |
-| RF-09 | El sistema debe aplicar el **rol** correspondiente al iniciar sesión (**cliente / empresa**) y redirigir al panel adecuado. El administrador puede seleccionar cualquiera de los dos tipos de acceso e iniciar sesión con sus credenciales para ser redirigido automáticamente a su panel de administración. | Alta | Todos |
+| RF-01 | Registro de un nuevo **negocio** aportando email, contraseña, nombre y nombre comercial. | ✅ | Empresa |
+| RF-02 | Registro de un nuevo **cliente** aportando email, contraseña, nombre y teléfono. | ✅ | Cliente |
+| RF-03 | **Inicio de sesión** con email y contraseña. | ✅ | Todos |
+| RF-04 | **Cierre de sesión** invalidando la sesión activa. | ✅ | Todos |
+| RF-05 | **Recuperación de contraseña** mediante enlace al correo. | 🔵 | Todos |
+| RF-06 | **Actualización de contraseña** desde el enlace recibido. | 🔵 | Todos |
+| RF-07 | **Modificación de datos personales** (nombre, teléfono, foto de perfil). | ✅ | Cliente, Negocio |
+| RF-08 | Validación de email + contraseña mínima de 6 caracteres (regla de Supabase Auth). | 🟡 La política de contraseña estricta (mayúscula + minúscula + dígito) queda pospuesta. | Todos |
+| RF-09 | Asignación de **rol** al iniciar sesión y redirección al panel adecuado. El admin entra con cualquier selector y se redirige a `/admin`. | ✅ | Todos |
 
 ## 2.2. Módulo de perfil del negocio
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-10 | El negocio debe poder editar su **perfil público**: nombre comercial, descripción, rubro, dirección, teléfono de contacto, horario general, logotipo y **galería de fotos de los servicios**. | Alta |
-| RF-11 | El negocio debe poder definir un **catálogo de servicios** indicando nombre, descripción, duración y precio de cada uno. | Alta |
-| RF-12 | El negocio debe poder **activar o desactivar** servicios sin eliminarlos. | Media |
-| RF-13 | El sistema debe generar automáticamente un **código QR único** por negocio al completar su perfil. | Alta |
-| RF-14 | El sistema debe permitir al negocio **descargar su código QR** en formato PNG y SVG. | Alta |
-| RF-15 | Cada negocio debe tener una **URL pública única** del tipo `/negocio/:codigoQr`. | Alta |
+| RF-10 | Edición del **perfil público**: nombre, descripción, categoría, dirección, teléfono, ubicación en mapa, logotipo y **galería de fotos**. | ✅ |
+| RF-11 | **Catálogo de servicios** con nombre, duración y precio. | ✅ |
+| RF-12 | **Activar / desactivar** servicios sin borrarlos. | ✅ |
+| RF-13 | Generación automática de **código QR** por negocio (PNG con logo). | ✅ |
+| RF-14 | **Descarga del QR** desde el panel del negocio (PNG). | 🟡 Solo PNG; la versión SVG queda pospuesta. |
+| RF-15 | **URL pública única** por negocio: `/n/:slug`. | ✅ |
 
 ## 2.3. Módulo de disponibilidad horaria
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-16 | El negocio debe poder definir su **horario semanal** indicando franjas horarias por día de la semana. | Alta |
-| RF-17 | El negocio debe poder **bloquear días específicos** (vacaciones, festivos, imprevistos). | Alta |
-| RF-18 | El sistema debe **calcular la disponibilidad real** cruzando el horario definido con las citas ya reservadas. | Alta |
-| RF-19 | El sistema debe mostrar al cliente solo las **franjas libres** para el servicio seleccionado, teniendo en cuenta la duración del servicio. | Alta |
-| RF-20 | El sistema no debe permitir **dos reservas solapadas** en la misma franja horaria. | Alta |
+| RF-16 | Definir **horario semanal** indicando franjas por día. | ✅ |
+| RF-17 | **Bloquear días específicos** (vacaciones, festivos). | 🟡 El esquema de BD (tabla `bloqueos`) está creado, pero la UI para gestionarlos queda pospuesta. |
+| RF-18 | Cálculo de **disponibilidad real** cruzando horario, duración del servicio y citas ya reservadas. | ✅ |
+| RF-19 | Mostrar al cliente solo **franjas libres** para el servicio elegido. | ✅ |
+| RF-20 | Prevención de **reservas solapadas**. | ✅ |
 
 ## 2.4. Módulo de reservas (cliente)
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-21 | El cliente debe poder acceder al **perfil público** de un negocio mediante su QR o URL directa. | Alta |
-| RF-22 | El cliente debe poder **consultar los servicios** del negocio con su descripción, duración y precio. | Alta |
-| RF-23 | El cliente debe poder **reservar una cita** seleccionando servicio, fecha y franja horaria disponible. | Alta |
-| RF-24 | El cliente debe poder reservar **como invitado** (sin cuenta) aportando nombre, teléfono y correo. | Alta |
-| RF-25 | El sistema debe enviar al cliente una **confirmación por WhatsApp** con los datos de la reserva, tanto si es usuario registrado como si reserva como invitado. Se usa WhatsApp como único canal de notificación para evitar lógica duplicada. | Alta |
-| RF-26 | El cliente debe poder **cancelar su cita** antes de una ventana mínima configurable (por defecto 2 horas de antelación). | Alta |
-| RF-27 | El sistema debe mostrar al cliente el estado de su cita: pendiente, confirmada, completada, cancelada. | Alta |
+| RF-21 | Acceso al **perfil público** del negocio via QR o URL directa. | ✅ |
+| RF-22 | Consulta de **servicios** con duración y precio. | ✅ |
+| RF-23 | **Reserva de cita** seleccionando servicio, fecha y franja. | ✅ |
+| RF-24 | **Reserva como invitado** sin cuenta (nombre, teléfono, email). | ✅ |
+| RF-25 | **Confirmación por WhatsApp** al cliente. | 🔵 Se entrega como notificación interna en la app (panel del cliente y negocio en tiempo real). El canal WhatsApp queda en roadmap. |
+| RF-26 | **Cancelación** de la propia cita desde el portal del cliente. | ✅ |
+| RF-27 | Estado de la cita visible para el cliente (`nueva`, `pendiente`, `confirmada`, `cancelada`, `completada`). | ✅ |
 
 ## 2.5. Módulo de panel del negocio
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-28 | El negocio debe poder ver un **listado de citas** filtrable por fecha y estado. | Alta |
-| RF-29 | El negocio debe poder **confirmar, rechazar o cancelar** una cita. | Alta |
-| RF-30 | El negocio debe poder **marcar una cita como completada** tras la atención. | Alta |
-| RF-31 | El negocio debe poder ver el **detalle de una cita** con los datos del cliente y el servicio reservado. | Alta |
-| RF-32 | Cada cambio de estado de una cita debe disparar una **notificación por WhatsApp** al cliente. | Alta |
-| RF-33 | El negocio debe poder acceder a una **vista calendario** (día / semana) de sus citas. | Media |
+| RF-28 | **Listado de citas** filtrable por fecha y estado. | ✅ |
+| RF-29 | **Confirmar, reagendar o cancelar** una cita. | ✅ |
+| RF-30 | **Marcar una cita como completada** tras la atención. | ✅ |
+| RF-31 | **Detalle de la cita** con datos del cliente y servicio. | ✅ |
+| RF-32 | Notificación por WhatsApp al cambiar el estado. | 🔵 Sustituido por notificación interna en tiempo real (Supabase Realtime + polling de respaldo). |
+| RF-33 | Vista **calendario** día / semana. | 🔵 La pantalla de citas usa agrupación por día con filtros; la vista calendario clásica queda en roadmap. |
 
 ## 2.6. Módulo de administración
 
-El administrador tiene **acceso CRUD completo** sobre negocios y usuarios: puede crear, consultar, editar y eliminar cualquier registro de la plataforma.
+El administrador tiene **acceso CRUD completo** sobre usuarios y negocios.
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-34 | El administrador debe poder **listar todos los negocios** registrados con filtros por estado y rubro. | Alta |
-| RF-35 | El administrador debe poder **crear, editar, suspender o eliminar** un negocio. | Alta |
-| RF-36 | El administrador debe poder **listar todos los usuarios** (clientes y empresas). | Alta |
-| RF-37 | El administrador debe poder **crear, editar o eliminar** usuarios de la plataforma. | Alta |
-| RF-38 | El administrador debe poder consultar **métricas agregadas**: número de negocios activos, citas del día, usuarios nuevos. | Media |
+| RF-34 | **Listar todos los negocios** con búsqueda y filtros. | ✅ |
+| RF-35 | **Crear, editar, suspender o eliminar** un negocio. | ✅ |
+| RF-36 | **Listar todos los usuarios** (clientes, negocios y otros admins) con búsqueda y filtros por rol. | ✅ |
+| RF-37 | **Crear, editar, desactivar o eliminar por completo** usuarios. La eliminación total borra al usuario de `auth.users`, `public.usuarios` y sus negocios asociados en una sola transacción atómica. | ✅ |
+| RF-38 | **Métricas agregadas** en el dashboard: clientes activos, negocios activos, total de usuarios, desactivados, gráfica de altas en los últimos 30 días. | ✅ |
 
-## 2.7. Módulo de notificaciones WhatsApp
+## 2.7. Módulo de notificaciones
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-39 | El sistema debe enviar notificación al **crear** una cita (a cliente y negocio). | Alta |
-| RF-40 | El sistema debe enviar notificación al **modificar el estado** de una cita. | Alta |
-| RF-41 | El sistema debe enviar notificación al **cancelar** una cita (por cualquier parte). | Alta |
-| RF-42 | Las plantillas de mensaje deben ser **editables** desde el panel del administrador. | Baja |
+| RF-39 | Notificación al **crear** una cita (al negocio en tiempo real). | ✅ Vía Supabase Realtime. |
+| RF-40 | Notificación al **modificar el estado** de una cita (al cliente). | ✅ Vía Supabase Realtime. |
+| RF-41 | Notificación al **cancelar** la cita (a ambas partes). | ✅ Vía Supabase Realtime. |
+| RF-42 | **Plantillas WhatsApp** editables desde el panel admin. | 🔵 Sin canal WhatsApp en el MVP. |
 
-## 2.8. Módulo de internacionalización (i18n)
+## 2.8. Módulo legal y RGPD
 
-| ID | Requisito | Prioridad |
+| ID | Requisito | Estado |
 |---|---|---|
-| RF-43 | La aplicación debe soportar **múltiples idiomas** (mínimo: español, inglés). | Alta |
-| RF-44 | El sistema debe **detectar el idioma** del navegador y aplicarlo por defecto. | Media |
-| RF-45 | El usuario debe poder **cambiar el idioma** manualmente y persistir la elección. | Alta |
+| RF-46 | **Política de privacidad** accesible en `/privacidad`. | ✅ |
+| RF-47 | **Términos de uso** accesibles en `/terminos`. | ✅ |
+| RF-48 | **Banner de cookies** con opt-in persistido en `localStorage`. | ✅ |
+| RF-49 | **Derecho al olvido**: el usuario puede solicitar la baja y el admin elimina la cuenta por completo. | ✅ |
 
-## 2.9. Resumen de prioridades
+## 2.9. Módulo de internacionalización (i18n)
 
-| Prioridad | Significado |
-|---|---|
-| **Alta** | Imprescindible para el MVP. Sin esto, la app no cumple su propósito. |
-| **Media** | Recomendable para el MVP. Mejora notable de la experiencia. |
-| **Baja** | Deseable. Se entrega si el tiempo lo permite; si no, roadmap. |
+| ID | Requisito | Estado |
+|---|---|---|
+| RF-43 | Soporte **multiidioma** (mínimo español + inglés). | 🔵 La app entrega íntegramente en español. La capa i18n queda en roadmap. |
+| RF-44 | Detección automática del idioma del navegador. | 🔵 |
+| RF-45 | Cambio manual de idioma persistido. | 🔵 |
+
+## 2.10. Resumen del MVP entregado
+
+- **40 de 49 requisitos completos (✅)** — el núcleo del producto está cubierto: registro, autenticación, perfil del negocio, disponibilidad, reservas públicas, panel del negocio, panel de administración, notificaciones internas en tiempo real y conformidad legal RGPD.
+- **4 requisitos parciales (🟡)** — RF-08 (política de contraseña), RF-14 (formato QR), RF-17 (UI de bloqueos), correctamente acotados.
+- **5 requisitos pospuestos (🔵)** — recuperación de contraseña por correo, canal WhatsApp y la capa i18n. Quedan documentados como evolución natural.

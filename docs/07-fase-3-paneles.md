@@ -1,176 +1,89 @@
-# Fase 3 — Paneles y Notificaciones
+# Fase 3 — Paneles y notificaciones internas
 
-**Objetivo:** Gestión completa para el negocio y el administrador. Notificaciones WhatsApp activas e interfaz en múltiples idiomas.
+**Objetivo:** Gestión completa para el negocio y el administrador. Notificaciones en tiempo real desde la propia plataforma.
 
-**Estado:** Pendiente  
-**Requisitos cubiertos:** RF-28 → RF-45 · RNF-19 → RNF-20 · RNF-25 → RNF-29
-
----
-
-## Funcionalidades
-
-### Panel del negocio
-
-| ID | Descripción |
-|---|---|
-| RF-28 | Listado de citas filtrable por fecha y estado |
-| RF-29 | Confirmar, rechazar o cancelar citas |
-| RF-30 | Marcar cita como completada |
-| RF-31 | Detalle de cita (datos del cliente y servicio) |
-| RF-32 | Notificación WhatsApp al cliente en cada cambio de estado |
-| RF-33 | Vista calendario (día / semana) |
-
-### Panel de administración
-
-| ID | Descripción |
-|---|---|
-| RF-34 | Listado de negocios con filtros (estado, rubro) |
-| RF-35 | Crear, editar, suspender o eliminar negocios |
-| RF-36 | Listado de usuarios (clientes y empresas) |
-| RF-37 | Crear, editar o eliminar usuarios |
-| RF-38 | Métricas agregadas (negocios activos, citas del día, nuevos usuarios) |
-
-### Notificaciones WhatsApp
-
-| ID | Descripción |
-|---|---|
-| RF-39 | Notificación al crear cita (a cliente y negocio) |
-| RF-40 | Notificación al modificar estado de cita |
-| RF-41 | Notificación al cancelar cita |
-| RF-42 | Plantillas editables desde el panel admin |
-
-### Internacionalización
-
-| ID | Descripción |
-|---|---|
-| RF-43 | Soporte multiidioma mínimo: español + inglés |
-| RF-44 | Detección automática del idioma del navegador |
-| RF-45 | Cambio manual de idioma persistido en localStorage |
+**Estado:** ✅ Completada (con notas: WhatsApp y i18n pospuestos)
+**Periodo:** mayo 2026
+**Requisitos cubiertos:** RF-28 → RF-31, RF-34 → RF-38, RF-39 → RF-41 (vía Realtime), RNF-14, RNF-19, RNF-23
 
 ---
 
-## Base de datos
+## Panel del negocio
 
-### Tabla `notificaciones_log`
+| ID | Descripción | Commit ancla |
+|---|---|---|
+| RF-28 | Listado de citas filtrable por fecha y estado (`Todas`, `Confirmadas`, `Pendientes`, `Nuevas`, `Completadas`, `Canceladas`). | `203386d`, `e2b36be` |
+| RF-29 | Confirmar, reagendar o cancelar una cita desde la propia fila. | `203386d` |
+| RF-30 | Marcar una cita como **completada** tras la atención. | `92b068c` |
+| RF-31 | Detalle de la cita con datos del cliente, foto, servicio y precio. | `203386d` |
+| RF-33 | Vista calendario (día / semana). | 🔵 Pospuesto. El listado agrupado por día con cabeceras "Hoy / Mañana / fecha" cubre el caso central. |
+
+Adicional:
+
+- **Notificaciones en tiempo real**: cada cita nueva entra al panel sin recargar (Supabase Realtime + polling de respaldo a 10 s). Commit `1b9148a`.
+- **Estadísticas del negocio**: métricas de citas hoy, semana, mes y gráfica de los últimos 12 días. Commit `e4a9ae5`.
+- **QR del negocio**: vista descargable con logo de Arkana. Commit `e4a9ae5`.
+- **MapPicker** para fijar la ubicación del negocio en el mapa. Commit `e4a9ae5`.
+
+---
+
+## Panel del administrador
+
+| ID | Descripción | Commit ancla |
+|---|---|---|
+| RF-34 | Listado de todos los negocios. | `cb9d8dc` |
+| RF-35 | Crear, editar, suspender o eliminar negocios. | `cb9d8dc`, `c6f5d84` |
+| RF-36 | Listado de usuarios con búsqueda y filtros por rol. | `cb9d8dc` |
+| RF-37 | CRUD completo de usuarios + dos operaciones diferenciadas: **Desactivar** (reversible) y **Eliminar por completo** (borra `auth.users`, `public.usuarios` y negocios asociados en una sola transacción RPC). | `cb9d8dc`, `c6f5d84` |
+| RF-38 | Dashboard con tarjetas (clientes activos, negocios activos, total de usuarios, desactivados) y gráfica `BarChart` de altas en los últimos 30 días. | `cb9d8dc`, último commit del dashboard. |
+
+### Función Postgres `admin_delete_usuario` (migración 012)
 
 ```sql
-create table notificaciones_log (
-  id           uuid primary key default gen_random_uuid(),
-  cita_id      uuid references citas(id) on delete cascade not null,
-  tipo         text check (tipo in ('creacion','confirmacion','cancelacion','modificacion')),
-  destinatario text not null, -- número WhatsApp
-  estado       text check (estado in ('enviado','fallido','pendiente')) default 'pendiente',
-  error        text,
-  created_at   timestamptz default now()
-);
-```
+create or replace function public.admin_delete_usuario(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  if auth.uid() is null then raise exception 'No autenticado'; end if;
+  if (select rol from public.usuarios where id = auth.uid()) <> 'admin' then
+    raise exception 'Solo un admin puede eliminar usuarios';
+  end if;
+  if p_user_id = auth.uid() then
+    raise exception 'Un admin no puede eliminarse a sí mismo';
+  end if;
 
-### Tabla `plantillas_whatsapp`
-
-```sql
-create table plantillas_whatsapp (
-  id        uuid primary key default gen_random_uuid(),
-  tipo      text unique not null,
-  mensaje   text not null,
-  activa    boolean default true,
-  updated_at timestamptz default now()
-);
-```
-
-### Tabla `audit_log`
-
-```sql
-create table audit_log (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid references auth.users(id),
-  accion      text not null, -- 'login','reserva','cancelacion','suspension_usuario'
-  tabla       text,
-  registro_id uuid,
-  ip          text,
-  created_at  timestamptz default now()
-);
+  delete from public.negocios where usuario_id = p_user_id;
+  delete from public.usuarios where id = p_user_id;
+  delete from auth.users where id = p_user_id;
+end;
+$$;
 ```
 
 ---
 
-## Seguridad
+## Notificaciones
 
-### RLS — tablas de administración
+| ID | Original (WhatsApp) | Solución entregada |
+|---|---|---|
+| RF-39 | WhatsApp al crear cita. | Notificación interna en tiempo real para el negocio (Realtime). |
+| RF-40 | WhatsApp al cambiar estado. | Notificación interna en tiempo real para el cliente. |
+| RF-41 | WhatsApp al cancelar. | Notificación interna para ambas partes. |
+| RF-42 | Plantillas WhatsApp editables. | 🔵 Pospuesto. |
 
-```sql
--- notificaciones_log: solo admin y negocio dueño
-alter table notificaciones_log enable row level security;
-
-create policy "Negocio ve sus notificaciones"
-  on notificaciones_log for select using (
-    exists (
-      select 1 from citas c
-      join negocios n on n.id = c.negocio_id
-      where c.id = cita_id and n.user_id = auth.uid()
-    )
-  );
-
-create policy "Admin ve todas las notificaciones"
-  on notificaciones_log for select using (
-    exists (select 1 from perfiles where id = auth.uid() and rol = 'admin')
-  );
-
--- audit_log: solo admin
-alter table audit_log enable row level security;
-
-create policy "Solo admin accede al audit_log"
-  on audit_log for select using (
-    exists (select 1 from perfiles where id = auth.uid() and rol = 'admin')
-  );
-
--- plantillas_whatsapp: lectura para todos, escritura solo admin
-alter table plantillas_whatsapp enable row level security;
-
-create policy "Lectura pública de plantillas"
-  on plantillas_whatsapp for select using (activa = true);
-
-create policy "Solo admin edita plantillas"
-  on plantillas_whatsapp for all using (
-    exists (select 1 from perfiles where id = auth.uid() and rol = 'admin')
-  );
-```
-
-### CORS — Edge Functions WhatsApp
-
-Cada Supabase Edge Function de notificación debe incluir los headers CORS y manejar el preflight:
-
-```ts
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-  // lógica de notificación...
-})
-```
-
-### Security Headers — actualización
-
-Añadir en `vercel.json` el header `X-Permitted-Cross-Domain-Policies` y reforzar `Referrer-Policy`:
-
-```json
-{ "key": "X-Permitted-Cross-Domain-Policies", "value": "none" }
-```
+El canal WhatsApp queda como evolución natural: la lógica de notificación está centralizada en `NotificationsContext`, lo que permite añadir un nuevo transporte (Edge Function + Twilio o WhatsApp Cloud API) sin tocar los componentes.
 
 ---
 
-## Herramientas
+## Registro de errores
 
-| Herramienta | Acción en esta fase |
-|---|---|
-| **Sentry** | Configurar alertas para errores en notificaciones WhatsApp fallidas (`notificaciones_log.estado = 'fallido'`). Añadir context de usuario autenticado al iniciar sesión. |
-| **Umami Analytics** | Instalar script en `index.html`. Trackear eventos clave: `reserva_completada`, `qr_escaneado`, `panel_negocio_abierto`. |
+- Tabla `error_logs` (migración 008): la app inserta filas cuando algo falla en auth, perfil, gestión de citas, etc.
+- Helper `src/lib/errorLogger.ts` con la función `logError(contexto, err, detalle?)`.
+- El admin podía leer los últimos 50 eventos desde su dashboard. **En la última iteración (commit del dashboard refactor) se eliminó la card de errores del dashboard**: los logs siguen escribiéndose, pero su lectura queda en SQL/consola para no saturar al admin con ruido técnico.
 
-```ts
-// Sentry — identificar usuario autenticado
-Sentry.setUser({ id: user.id, email: user.email, role: perfil.rol })
+---
 
-// Umami — evento de reserva
-umami.track('reserva_completada', { negocio_id, servicio_id })
-```
+## Internacionalización (RF-43, RF-44, RF-45)
 
-> Ver `04-stack-dependencias.md` para la configuración completa de Umami.
+🔵 Pospuesto. El MVP se entrega íntegramente en español; los textos están centralizados en componentes, lo que permite envolverlos con `t()` en una segunda fase sin reescribir vistas.

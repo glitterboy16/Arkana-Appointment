@@ -1,28 +1,39 @@
 # Fase 2 — Disponibilidad y Reservas
 
-**Objetivo:** Núcleo del producto. El cliente puede escanear el QR, ver disponibilidad real y completar una reserva (con o sin cuenta).
+**Objetivo:** Núcleo del producto. Disponibilidad real, reserva desde el perfil público (con o sin cuenta) y portal del cliente.
 
-**Estado:** Pendiente  
-**Requisitos cubiertos:** RF-16 → RF-27 · RNF-01 → RNF-05 · RNF-22 → RNF-24
+**Estado:** ✅ Completada
+**Periodo:** abril – mayo 2026
+**Requisitos cubiertos:** RF-10 → RF-16, RF-18 → RF-24, RF-26, RF-27, RNF-01, RNF-02, RNF-03, RNF-17
 
 ---
 
-## Funcionalidades
+## Funcionalidades entregadas
 
-| ID | Descripción | Módulo |
+| ID | Descripción | Commit ancla |
 |---|---|---|
-| RF-16 | Definir horario semanal (franjas por día) | Disponibilidad |
-| RF-17 | Bloquear días específicos (vacaciones, festivos) | Disponibilidad |
-| RF-18 | Cálculo de disponibilidad real (horario – citas existentes) | Disponibilidad |
-| RF-19 | Mostrar solo franjas libres según duración del servicio | Disponibilidad |
-| RF-20 | Prevención de reservas solapadas | Disponibilidad |
-| RF-21 | Acceso al perfil público via QR o URL directa | Reservas |
-| RF-22 | Consulta de servicios con descripción, duración y precio | Reservas |
-| RF-23 | Reserva de cita (servicio + fecha + franja) | Reservas |
-| RF-24 | Reserva como invitado (nombre, teléfono, correo) | Reservas |
-| RF-25 | Confirmación por WhatsApp al reservar | Notificaciones |
-| RF-26 | Cancelación de cita por el cliente (2h de antelación mín.) | Reservas |
-| RF-27 | Estado de la cita visible para el cliente | Reservas |
+| RF-10 | Perfil del negocio editable (nombre, descripción, categoría, dirección, teléfono, mapa, logotipo, galería). | `3fad2c2`, `f512646` |
+| RF-11 | Catálogo de servicios (nombre, duración, precio, color). | `a0397a3` |
+| RF-12 | Activar/desactivar servicios sin borrarlos. | `a0397a3` |
+| RF-13 | Generación automática del **código QR** con logo de Arkana. | `1e4f0ee`, `e4a9ae5` |
+| RF-14 | Descarga del QR en PNG desde el panel del negocio. | `e4a9ae5` |
+| RF-15 | URL pública única por negocio: `/n/:slug`. | `a0397a3` |
+| RF-16 | Horario semanal por día (`disponibilidad`). | `a0397a3` |
+| RF-18 | Cálculo de disponibilidad real cruzando horario, duración y citas existentes. | `a0397a3` |
+| RF-19 | Mostrar solo franjas libres según la duración del servicio. | `a0397a3` |
+| RF-20 | Prevención de reservas solapadas (consulta atómica al insertar). | `a0397a3` |
+| RF-21 | Acceso al perfil público vía QR o URL directa. | `a0397a3` |
+| RF-22 | Consulta pública de servicios con duración y precio. | `a0397a3` |
+| RF-23 | Reserva de cita seleccionando servicio, fecha y franja. | `a0397a3` |
+| RF-24 | Reserva como invitado (nombre, teléfono, email). | `a0397a3` |
+| RF-26 | Cancelación de la propia cita desde el portal del cliente. | `53a2fc7` |
+| RF-27 | Estado de la cita visible: `nueva`, `pendiente`, `confirmada`, `cancelada`, `completada`. | `a0397a3`, `92b068c` (estado `completed`) |
+
+Adicional a los requisitos originales:
+
+- **Buscador de negocios** desde `/app/buscar`, con búsqueda por nombre, categoría, servicio y dirección. Commit `4ada523`.
+- **Tema claro y oscuro** unificado en toda la app. Commit `8201b5c`.
+- **App 100 % responsive** con sidebar drawer en móvil y loaders animados. Commit `1bb2ef0`.
 
 ---
 
@@ -33,23 +44,11 @@
 ```sql
 create table disponibilidad (
   id          uuid primary key default gen_random_uuid(),
-  negocio_id  uuid references negocios(id) on delete cascade not null,
-  dia_semana  smallint not null check (dia_semana between 0 and 6), -- 0=lunes
+  negocio_id  uuid not null references negocios(id) on delete cascade,
+  dia_semana  smallint not null check (dia_semana between 0 and 6),
   hora_inicio time not null,
   hora_fin    time not null,
-  activo      boolean default true
-);
-```
-
-### Tabla `bloqueos`
-
-```sql
-create table bloqueos (
-  id         uuid primary key default gen_random_uuid(),
-  negocio_id uuid references negocios(id) on delete cascade not null,
-  fecha      date not null,
-  motivo     text,
-  created_at timestamptz default now()
+  activo      boolean not null default true
 );
 ```
 
@@ -58,128 +57,40 @@ create table bloqueos (
 ```sql
 create table citas (
   id               uuid primary key default gen_random_uuid(),
-  negocio_id       uuid references negocios(id) on delete cascade not null,
+  negocio_id       uuid not null references negocios(id) on delete cascade,
   servicio_id      uuid references servicios(id) on delete set null,
-  usuario_id       uuid references auth.users(id) on delete set null, -- null si invitado
+  cliente_id       uuid references usuarios(id) on delete set null, -- null si invitado
   cliente_nombre   text not null,
   cliente_telefono text not null,
-  cliente_email    text not null,
+  cliente_email    text,
   fecha            date not null,
   hora_inicio      time not null,
-  hora_fin         time not null,
-  estado           text check (estado in ('pendiente','confirmada','completada','cancelada')) default 'pendiente',
+  estado           estado_cita not null default 'new',
+  notas            text,
   created_at       timestamptz default now()
 );
+
+create type estado_cita as enum ('new', 'pending', 'confirmed', 'cancelled', 'completed');
 ```
 
-### Función — validar solapamiento
+### Tablas auxiliares (migración 005)
 
-```sql
-create or replace function check_solapamiento(
-  p_negocio_id uuid,
-  p_fecha date,
-  p_inicio time,
-  p_fin time
-) returns boolean language plpgsql as $$
-begin
-  return exists (
-    select 1 from citas
-    where negocio_id = p_negocio_id
-      and fecha = p_fecha
-      and estado not in ('cancelada')
-      and hora_inicio < p_fin
-      and hora_fin > p_inicio
-  );
-end;
-$$;
-```
+- `disponibilidad_excepciones` — días sueltos abiertos fuera del horario habitual.
+- `disponibilidad_bloqueos` — días específicos cerrados (vacaciones, festivos). Esquema listo; UI pospuesta al roadmap.
+- `negocio_fotos` — galería de fotos del negocio.
 
 ---
 
-## Seguridad
+## Integraciones
 
-### RLS — citas
-
-```sql
-alter table citas enable row level security;
-
--- Negocio ve todas sus citas
-create policy "Negocio ve sus citas"
-  on citas for select using (
-    exists (select 1 from negocios where id = negocio_id and user_id = auth.uid())
-  );
-
--- Cliente registrado ve sus propias citas
-create policy "Cliente ve sus citas"
-  on citas for select using (auth.uid() = usuario_id);
-
--- Cualquiera puede crear una cita (incluye invitados via service role)
-create policy "Inserción pública de citas"
-  on citas for insert with check (true);
-
--- Solo el negocio puede cambiar el estado
-create policy "Negocio actualiza estado"
-  on citas for update using (
-    exists (select 1 from negocios where id = negocio_id and user_id = auth.uid())
-  );
-
--- Cliente puede cancelar su propia cita
-create policy "Cliente cancela su cita"
-  on citas for update using (
-    auth.uid() = usuario_id and estado = 'cancelada'
-  );
-```
-
-### RLS — disponibilidad y bloqueos
-
-```sql
-alter table disponibilidad enable row level security;
-
-create policy "Lectura pública de disponibilidad"
-  on disponibilidad for select using (activo = true);
-
-create policy "Solo el dueño gestiona disponibilidad"
-  on disponibilidad for all using (
-    exists (select 1 from negocios where id = negocio_id and user_id = auth.uid())
-  );
-
-alter table bloqueos enable row level security;
-
-create policy "Lectura pública de bloqueos"
-  on bloqueos for select using (true);
-
-create policy "Solo el dueño gestiona bloqueos"
-  on bloqueos for all using (
-    exists (select 1 from negocios where id = negocio_id and user_id = auth.uid())
-  );
-```
-
-### CORS
-
-Sin cambios respecto a Fase 1. Si se añaden Edge Functions para WhatsApp, incluir el header `Access-Control-Allow-Origin` dentro de la función:
-
-```ts
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://www.arkanaappointments.com',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-```
+- **Mapbox** — visualización de la ubicación del negocio en el perfil público y en la ficha del cliente. Token público `VITE_MAPBOX_TOKEN`. Style `mapbox://styles/mapbox/dark-v11`. Commit `cb9d8dc`.
+- **`qrcode.react`** — generación del QR del negocio en el panel, con logo de Arkana superpuesto.
 
 ---
 
-## Herramientas
+## Rendimiento
 
-| Herramienta | Acción en esta fase |
-|---|---|
-| **Sentry** | Añadir breadcrumbs en el flujo de reserva para trazar errores paso a paso. |
-
-```ts
-// Ejemplo en el paso de reserva
-Sentry.addBreadcrumb({
-  category: 'reserva',
-  message: 'Slot seleccionado',
-  level: 'info',
-  data: { fecha, hora_inicio },
-})
-```
+- Índices añadidos en migración 011 para acelerar la consulta de disponibilidad:
+  - `idx_citas_negocio_fecha` — listado y huecos por fecha.
+  - `idx_citas_negocio_estado` — filtros del panel.
+  - `idx_disponibilidad_negocio_dia` — cálculo de horario semanal.
