@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogoArkana } from '@/components/app/Shared';
 import { Spinner } from '@/components/app/Spinner';
@@ -25,10 +25,93 @@ const IconCliente = () => (
   </svg>
 );
 
+const IconEye = ({ open }: { open: boolean }) => open ? (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+  </svg>
+) : (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a19.83 19.83 0 015.06-6.06M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a19.86 19.86 0 01-3.16 4.19M1 1l22 22" />
+    <path d="M9.5 9.5a3 3 0 004.24 4.24" />
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const IconX = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────────
+// Regex de validacion (modernos, equilibrados entre estricto y usable)
+// ─────────────────────────────────────────────────────────────────
+const RE_EMAIL = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+const RE_NOMBRE = /^[A-Za-zÀ-ÖØ-öø-ÿ' .\-]{2,60}$/;
+const RE_NEGOCIO = /^[\w\sÀ-ÖØ-öø-ÿ&'.,\-]{2,80}$/;
+const RE_TEL_ES = /^[6-9]\d{8}$/;
+const RE_TEL_INTL = /^\+\d{7,15}$/;
+const RE_PASS_MIN = /.{8,}/;
+const RE_PASS_LOWER = /[a-z]/;
+const RE_PASS_UPPER = /[A-Z]/;
+const RE_PASS_DIGIT = /\d/;
+
+interface PasswordChecks {
+  longitud: boolean;
+  minuscula: boolean;
+  mayuscula: boolean;
+  numero: boolean;
+}
+
+function evaluarPassword(p: string): { checks: PasswordChecks; score: number; etiqueta: string; color: string } {
+  const checks: PasswordChecks = {
+    longitud: RE_PASS_MIN.test(p),
+    minuscula: RE_PASS_LOWER.test(p),
+    mayuscula: RE_PASS_UPPER.test(p),
+    numero: RE_PASS_DIGIT.test(p),
+  };
+  const score = Object.values(checks).filter(Boolean).length;
+  let etiqueta = 'Demasiado corta';
+  let color = '#EF4444';
+  if (score === 4) { etiqueta = 'Excelente'; color = '#22C55E'; }
+  else if (score === 3) { etiqueta = 'Buena'; color = '#84CC16'; }
+  else if (score === 2) { etiqueta = 'Aceptable'; color = '#F59E0B'; }
+  return { checks, score, etiqueta, color };
+}
+
+function passwordValida(p: string): boolean {
+  const { score } = evaluarPassword(p);
+  return score === 4;
+}
+
+interface FormState {
+  email: string;
+  password: string;
+  name: string;
+  business: string;
+  phone: string;
+}
+
+interface TouchedState {
+  email: boolean;
+  password: boolean;
+  name: boolean;
+  business: boolean;
+  phone: boolean;
+}
+
 export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   const [rol, setRol] = useState<Rol>('negocio');
   const [mode, setMode] = useState<AuthMode>(defaultMode);
-  const [form, setForm] = useState({ email: '', password: '', name: '', business: '', phone: '' });
+  const [form, setForm] = useState<FormState>({ email: '', password: '', name: '', business: '', phone: '' });
+  const [touched, setTouched] = useState<TouchedState>({ email: false, password: false, name: false, business: false, phone: false });
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -37,18 +120,50 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
   const reset = () => { setError(null); setInfo(null); };
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [k]: e.target.value });
     reset();
   };
 
+  const onBlur = (k: keyof TouchedState) => () => {
+    setTouched((t) => ({ ...t, [k]: true }));
+  };
+
+  // ─────────────────────────────────────────────────────────────────
+  // Validacion derivada en tiempo real
+  // ─────────────────────────────────────────────────────────────────
+  const emailValido = useMemo(() => RE_EMAIL.test(form.email), [form.email]);
+  const nombreValido = useMemo(() => RE_NOMBRE.test(form.name.trim()), [form.name]);
+  const negocioValido = useMemo(() => RE_NEGOCIO.test(form.business.trim()), [form.business]);
+  const passEval = useMemo(() => evaluarPassword(form.password), [form.password]);
+  const passOK = mode === 'login' ? form.password.length > 0 : passwordValida(form.password);
+  const telefonoNorm = form.phone.trim().replace(/\s/g, '');
+  const telefonoValido = RE_TEL_ES.test(telefonoNorm) || RE_TEL_INTL.test(telefonoNorm);
+
+  const formularioValido = useMemo(() => {
+    if (mode === 'login') return emailValido && form.password.length > 0;
+    if (!emailValido || !passOK || !nombreValido) return false;
+    if (rol === 'negocio') return negocioValido;
+    return telefonoValido;
+  }, [mode, emailValido, passOK, nombreValido, negocioValido, telefonoValido, form.password.length, rol]);
+
+  // ─────────────────────────────────────────────────────────────────
+  // Submit
+  // ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     reset();
+    setTouched({ email: true, password: true, name: true, business: true, phone: true });
 
-    if (!form.email || !form.password) {
-      setError('Completa el email y la contraseña');
-      return;
+    if (mode === 'login') {
+      if (!emailValido) { setError('Introduce un email válido'); return; }
+      if (!form.password) { setError('Introduce tu contraseña'); return; }
+    } else {
+      if (!nombreValido) { setError('Introduce tu nombre (2-60 caracteres, solo letras)'); return; }
+      if (rol === 'negocio' && !negocioValido) { setError('Introduce el nombre del negocio (2-80 caracteres)'); return; }
+      if (rol === 'cliente' && !telefonoValido) { setError('Introduce un teléfono válido (ej. 612345678 o +34612345678)'); return; }
+      if (!emailValido) { setError('Introduce un email válido'); return; }
+      if (!passwordValida(form.password)) { setError('La contraseña debe tener 8+ caracteres, mayúscula, minúscula y número'); return; }
     }
 
     setLoading(true);
@@ -62,11 +177,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             : '/app/buscar',
         );
       } else {
-        if (!form.name.trim()) { setError('Introduce tu nombre'); return; }
-        if (form.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
-
         if (rol === 'negocio') {
-          if (!form.business.trim()) { setError('Introduce el nombre de tu negocio'); return; }
           const { error, needsConfirmation } = await signUpNegocio({
             email: form.email,
             password: form.password,
@@ -77,17 +188,11 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
           navigate('/panel');
         } else {
-          const telefono = form.phone.trim().replace(/\s/g, '');
-          if (!telefono) { setError('Introduce tu teléfono'); return; }
-          if (!/^[6-9]\d{8}$|^\+\d{7,15}$/.test(telefono)) {
-            setError('Introduce un número de teléfono válido (ej. 612345678 o +34612345678)');
-            return;
-          }
           const { error, needsConfirmation } = await signUpCliente({
             email: form.email,
             password: form.password,
             nombre: form.name.trim(),
-            telefono,
+            telefono: telefonoNorm,
           });
           if (error) { setError(traducirError(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
@@ -99,14 +204,30 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
     }
   };
 
-  const inputStyle: CSSProperties = {
+  // ─────────────────────────────────────────────────────────────────
+  // Estilos
+  // ─────────────────────────────────────────────────────────────────
+  const inputBase: CSSProperties = {
     width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)',
     border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '11px 14px',
     color: '#FAFAFA', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+    transition: 'border-color 150ms ease, background 150ms ease',
+  };
+  const inputStyle = (campoTocado: boolean, valido: boolean | null): CSSProperties => {
+    if (!campoTocado || valido === null) return inputBase;
+    return {
+      ...inputBase,
+      borderColor: valido ? 'rgba(34,197,94,0.45)' : 'rgba(239,68,68,0.45)',
+      background: valido ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.05)',
+    };
   };
   const labelStyle: CSSProperties = {
-    fontSize: 12, color: 'rgba(250,250,250,0.55)', display: 'block', marginBottom: 5,
+    fontSize: 12, color: 'rgba(250,250,250,0.55)', display: 'flex', justifyContent: 'space-between',
+    marginBottom: 5,
   };
+  const hintError: CSSProperties = { fontSize: 11, color: '#EF4444', marginTop: 5 };
+
+  const tituloModo = mode === 'login' ? 'Accede a tu cuenta' : 'Crea tu cuenta gratuita';
 
   return (
     <div style={{
@@ -122,14 +243,14 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
       <div style={{ width: '100%', maxWidth: 420, position: 'relative' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Link to="/" style={{ display: 'inline-block', textDecoration: 'none', margin: '0 auto 14px' }}>
+          <Link to="/" style={{ display: 'inline-block', textDecoration: 'none', margin: '0 auto 14px' }} aria-label="Volver al inicio">
             <LogoArkana size={56} />
           </Link>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#FAFAFA', fontFamily: "'SF Pro Display','Inter',sans-serif" }}>
             Arkana Appointments
           </div>
           <div style={{ fontSize: 13, color: 'rgba(250,250,250,0.45)', marginTop: 4 }}>
-            {mode === 'login' ? 'Accede a tu cuenta' : 'Crea tu cuenta gratuita'}
+            {tituloModo}
           </div>
         </div>
 
@@ -142,6 +263,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                 key={r}
                 type="button"
                 onClick={() => { setRol(r); reset(); }}
+                aria-pressed={active}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
                   border: active ? '1px solid rgba(100,141,255,0.60)' : '1px solid rgba(255,255,255,0.10)',
@@ -149,6 +271,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                   color: active ? '#FAFAFA' : 'rgba(250,250,250,0.45)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                   transition: 'all 200ms ease',
+                  minHeight: 76,
                 }}
               >
                 <span style={{ color: active ? '#648DFF' : 'rgba(250,250,250,0.35)' }}>
@@ -170,24 +293,32 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           borderRadius: 16, padding: '24px 24px', backdropFilter: 'blur(12px)',
         }}>
           {/* Tabs login / registro */}
-          <div style={{
+          <div role="tablist" style={{
             display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 9,
             padding: 3, marginBottom: 20,
           }}>
             {(['login', 'register'] as const).map((m) => (
-              <button key={m} type="button" onClick={() => { setMode(m); reset(); }} style={{
-                flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                fontFamily: 'inherit', fontSize: 13, fontWeight: 600, transition: 'all 150ms ease',
-                background: mode === m ? '#004AAD' : 'transparent',
-                color: mode === m ? '#FAFAFA' : 'rgba(250,250,250,0.45)',
-              }}>
+              <button
+                key={m}
+                role="tab"
+                aria-selected={mode === m}
+                type="button"
+                onClick={() => { setMode(m); reset(); }}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', fontSize: 13, fontWeight: 600, transition: 'all 150ms ease',
+                  background: mode === m ? '#004AAD' : 'transparent',
+                  color: mode === m ? '#FAFAFA' : 'rgba(250,250,250,0.45)',
+                  minHeight: 40,
+                }}
+              >
                 {m === 'login' ? 'Iniciar sesión' : 'Registrarse'}
               </button>
             ))}
           </div>
 
           {info && (
-            <div style={{
+            <div role="status" style={{
               background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)',
               borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#22C55E', marginBottom: 16,
             }}>
@@ -196,7 +327,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           )}
 
           {error && (
-            <div style={{
+            <div role="alert" style={{
               background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)',
               borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#EF4444', marginBottom: 16,
             }}>
@@ -204,54 +335,170 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {mode === 'register' && (
               <div>
-                <label style={labelStyle}>Tu nombre</label>
-                <input style={inputStyle} value={form.name} onChange={set('name')} placeholder="Nombre completo" />
+                <label style={labelStyle}>
+                  <span>Tu nombre</span>
+                  {touched.name && nombreValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                </label>
+                <input
+                  style={inputStyle(touched.name, form.name ? nombreValido : null)}
+                  value={form.name}
+                  onChange={set('name')}
+                  onBlur={onBlur('name')}
+                  placeholder="Nombre completo"
+                  autoComplete="name"
+                  required
+                  aria-invalid={touched.name && !nombreValido}
+                />
+                {touched.name && form.name && !nombreValido && (
+                  <div style={hintError}>Solo letras, espacios, apóstrofes o guiones. Mínimo 2 caracteres.</div>
+                )}
               </div>
             )}
             {mode === 'register' && rol === 'negocio' && (
               <div>
-                <label style={labelStyle}>Nombre del negocio</label>
-                <input style={inputStyle} value={form.business} onChange={set('business')} placeholder="Ej. Clínica Dental Sonrisa" />
+                <label style={labelStyle}>
+                  <span>Nombre del negocio</span>
+                  {touched.business && negocioValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                </label>
+                <input
+                  style={inputStyle(touched.business, form.business ? negocioValido : null)}
+                  value={form.business}
+                  onChange={set('business')}
+                  onBlur={onBlur('business')}
+                  placeholder="Ej. Clínica Dental Sonrisa"
+                  autoComplete="organization"
+                  required
+                  aria-invalid={touched.business && !negocioValido}
+                />
+                {touched.business && form.business && !negocioValido && (
+                  <div style={hintError}>Entre 2 y 80 caracteres.</div>
+                )}
               </div>
             )}
             {mode === 'register' && rol === 'cliente' && (
               <div>
-                <label style={labelStyle}>Teléfono</label>
+                <label style={labelStyle}>
+                  <span>Teléfono</span>
+                  {touched.phone && telefonoValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+                </label>
                 <input
-                  style={inputStyle}
+                  style={inputStyle(touched.phone, form.phone ? telefonoValido : null)}
                   type="tel"
                   value={form.phone}
                   onChange={set('phone')}
+                  onBlur={onBlur('phone')}
                   placeholder="612345678"
                   autoComplete="tel"
                   inputMode="tel"
+                  required
+                  aria-invalid={touched.phone && !telefonoValido}
                 />
+                {touched.phone && form.phone && !telefonoValido && (
+                  <div style={hintError}>Formato no válido. Ej. 612345678 o +34612345678.</div>
+                )}
               </div>
             )}
             <div>
-              <label style={labelStyle}>Correo electrónico</label>
-              <input style={inputStyle} type="email" value={form.email} onChange={set('email')} placeholder="correo@ejemplo.com" autoComplete="email" />
+              <label style={labelStyle}>
+                <span>Correo electrónico</span>
+                {touched.email && emailValido && <span style={{ color: '#22C55E' }}><IconCheck /></span>}
+              </label>
+              <input
+                style={inputStyle(touched.email, form.email ? emailValido : null)}
+                type="email"
+                value={form.email}
+                onChange={set('email')}
+                onBlur={onBlur('email')}
+                placeholder="correo@ejemplo.com"
+                autoComplete="email"
+                required
+                aria-invalid={touched.email && !emailValido}
+              />
+              {touched.email && form.email && !emailValido && (
+                <div style={hintError}>Introduce un email con formato válido (usuario@dominio.com).</div>
+              )}
             </div>
             <div>
-              <label style={labelStyle}>Contraseña</label>
-              <input style={inputStyle} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
-            </div>
-            {mode === 'login' && (
-              <div style={{ textAlign: 'right', marginTop: -6 }}>
-                <span style={{ fontSize: 12, color: '#648DFF', cursor: 'pointer' }}>¿Olvidaste tu contraseña?</span>
+              <label style={labelStyle}>
+                <span>Contraseña</span>
+                {mode === 'register' && form.password && (
+                  <span style={{ color: passEval.color, fontWeight: 600 }}>{passEval.etiqueta}</span>
+                )}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  style={{
+                    ...inputStyle(touched.password, form.password ? passOK : null),
+                    paddingRight: 44,
+                  }}
+                  type={showPass ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={set('password')}
+                  onBlur={onBlur('password')}
+                  placeholder={mode === 'register' ? 'Mínimo 8 caracteres' : '••••••••'}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  required
+                  aria-invalid={mode === 'register' && touched.password && !passOK}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((v) => !v)}
+                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  style={{
+                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'rgba(250,250,250,0.45)', padding: 8, display: 'inline-flex',
+                  }}
+                >
+                  <IconEye open={showPass} />
+                </button>
               </div>
-            )}
-            <button type="submit" disabled={loading} style={{
-              width: '100%', padding: '13px 0', borderRadius: 9, border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              background: '#004AAD', color: '#FAFAFA', fontSize: 15, fontWeight: 700,
-              fontFamily: 'inherit', marginTop: 4, transition: 'all 150ms ease',
-              opacity: loading ? 0.85 : 1,
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            }}>
+
+              {/* Barra de fuerza + checklist (solo en registro) */}
+              {mode === 'register' && form.password && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{
+                    height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      width: `${(passEval.score / 4) * 100}%`,
+                      height: '100%', background: passEval.color, transition: 'all 250ms ease',
+                    }} />
+                  </div>
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', marginTop: 8,
+                  }}>
+                    <PassReq ok={passEval.checks.longitud} label="8+ caracteres" />
+                    <PassReq ok={passEval.checks.minuscula} label="Una minúscula" />
+                    <PassReq ok={passEval.checks.mayuscula} label="Una mayúscula" />
+                    <PassReq ok={passEval.checks.numero} label="Un número" />
+                  </div>
+                </div>
+              )}
+
+              {mode === 'login' && (
+                <div style={{ textAlign: 'right', marginTop: 6 }}>
+                  <span style={{ fontSize: 12, color: '#648DFF', cursor: 'pointer' }}>¿Olvidaste tu contraseña?</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || (touched.email && !formularioValido && mode === 'register')}
+              style={{
+                width: '100%', padding: '13px 0', borderRadius: 9, border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                background: '#004AAD', color: '#FAFAFA', fontSize: 15, fontWeight: 700,
+                fontFamily: 'inherit', marginTop: 4, transition: 'all 150ms ease',
+                opacity: loading ? 0.85 : 1,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                minHeight: 48,
+              }}
+            >
               {loading && <Spinner size={16} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
               {loading ? 'Cargando…' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </button>
@@ -259,7 +506,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
           {mode === 'register' && (
             <div style={{ fontSize: 11, color: 'rgba(250,250,250,0.30)', textAlign: 'center', marginTop: 16, lineHeight: 1.5 }}>
-              Al registrarte aceptas los <span style={{ color: '#648DFF' }}>Términos de servicio</span> y la <span style={{ color: '#648DFF' }}>Política de privacidad</span>
+              Al registrarte aceptas los <Link to="/legal/terminos" style={{ color: '#648DFF', textDecoration: 'none' }}>Términos de servicio</Link> y la <Link to="/legal/privacidad" style={{ color: '#648DFF', textDecoration: 'none' }}>Política de privacidad</Link>
             </div>
           )}
         </div>
@@ -267,15 +514,15 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
         <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'rgba(250,250,250,0.35)' }}>
           {mode === 'login' ? (
             <>¿No tienes cuenta?{' '}
-              <span style={{ color: '#648DFF', cursor: 'pointer', fontWeight: 600 }} onClick={() => { setMode('register'); reset(); }}>
+              <button type="button" onClick={() => { setMode('register'); reset(); }} style={linkBtnStyle}>
                 Regístrate gratis
-              </span>
+              </button>
             </>
           ) : (
             <>¿Ya tienes cuenta?{' '}
-              <span style={{ color: '#648DFF', cursor: 'pointer', fontWeight: 600 }} onClick={() => { setMode('login'); reset(); }}>
+              <button type="button" onClick={() => { setMode('login'); reset(); }} style={linkBtnStyle}>
                 Inicia sesión
-              </span>
+              </button>
             </>
           )}
         </div>
@@ -284,11 +531,36 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   );
 }
 
+const linkBtnStyle: CSSProperties = {
+  background: 'transparent', border: 'none', color: '#648DFF', cursor: 'pointer',
+  fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 0,
+};
+
+function PassReq({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      fontSize: 11, color: ok ? '#22C55E' : 'rgba(250,250,250,0.40)',
+      transition: 'color 200ms ease',
+    }}>
+      <span style={{
+        width: 14, height: 14, borderRadius: '50%',
+        background: ok ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.06)',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        {ok ? <IconCheck /> : <IconX />}
+      </span>
+      {label}
+    </div>
+  );
+}
+
 function traducirError(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'Email o contraseña incorrectos';
   if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesión';
   if (msg.includes('User already registered')) return 'Este email ya está registrado';
-  if (msg.includes('Password should be')) return 'La contraseña debe tener al menos 6 caracteres';
+  if (msg.includes('Password should be')) return 'La contraseña debe tener al menos 8 caracteres';
   if (msg.includes('Unable to validate')) return 'Email o contraseña incorrectos';
   return msg;
 }

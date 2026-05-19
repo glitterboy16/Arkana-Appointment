@@ -4,7 +4,10 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Mockup } from '@/components/ui/mockup';
 import { Glow } from '@/components/ui/glow';
-import arkanaLogo from '@/assets/Arkana Logo fix 2.svg';
+import arkanaLogoDesktop from '@/assets/Arkana Logo fix 2.svg';
+import arkanaLogoMobileClaro from '@/assets/Logo Arkana 1.svg';
+import arkanaLogoMobileOscuro from '@/assets/Logo Arkana 2.svg';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HeroWithMockupProps {
   title: string;
@@ -41,6 +44,8 @@ export function HeroWithMockup({
   mockupImage,
   className,
 }: HeroWithMockupProps) {
+  const { tema } = useTheme();
+  const arkanaLogoMobile = tema === 'claro' ? arkanaLogoMobileClaro : arkanaLogoMobileOscuro;
   return (
     <section
       className={cn(
@@ -53,10 +58,18 @@ export function HeroWithMockup({
 <div className="relative mx-auto max-w-[1280px] flex flex-col gap-8 lg:gap-16">
   <div className="relative z-10 flex flex-col items-center gap-4 text-center lg:gap-6">
     <div className="arkana-hero-logo-wrap overflow-visible -mb-2 md:-mb-4 lg:-mb-6 md:-mt-6 lg:-mt-10">
+      {/* Logo móvil: cambia con el tema (Logo Arkana 1 claro / 2 oscuro) */}
       <img
-        src={arkanaLogo}
+        src={arkanaLogoMobile}
         alt="Arkana"
-        className="arkana-hero-logo h-80 sm:h-96 md:h-[28rem] lg:h-[32rem] xl:h-[44rem] w-auto max-w-none select-none"
+        className="arkana-hero-logo block md:hidden h-56 xs:h-64 sm:h-80 w-auto max-w-none select-none"
+        draggable={false}
+      />
+      {/* Logo desktop: Arkana Logo fix 2 — mismo en ambos temas */}
+      <img
+        src={arkanaLogoDesktop}
+        alt="Arkana"
+        className="arkana-hero-logo hidden md:block md:h-[28rem] lg:h-[32rem] xl:h-[44rem] w-auto max-w-none select-none"
         draggable={false}
       />
     </div>
