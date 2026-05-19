@@ -2,78 +2,93 @@
 
 Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atributos de calidad, restricciones técnicas y exigencias del entorno. Se numeran con el prefijo `RNF-XX`.
 
+> **Leyenda de estado**
+> · ✅ Cubierto en el MVP
+> · 🟡 Cubierto de forma parcial
+> · 🔵 Pospuesto a roadmap
+
 ## 3.1. Rendimiento
 
-| ID | Requisito | Métrica objetivo |
-|---|---|---|
-| RNF-01 | Tiempo de carga inicial de cualquier página pública en red 4G. | < 2,5 s (LCP) |
-| RNF-02 | Tiempo de respuesta de una operación de reserva de cita. | < 1,5 s |
-| RNF-03 | Consultas de disponibilidad horaria servidas en tiempo real. | < 500 ms |
-| RNF-04 | Tamaño del bundle de producción minificado y comprimido (gzip). | < 300 KB inicial |
-| RNF-05 | La aplicación debe soportar al menos **500 reservas diarias** por negocio sin degradación perceptible. | 500 reservas/día |
+| ID | Requisito | Métrica objetivo | Estado |
+|---|---|---|---|
+| RNF-01 | Tiempo de carga inicial (LCP) en 4G. | < 2,5 s | ✅ Lazy loading por ruta + chunks por página. |
+| RNF-02 | Tiempo de respuesta de una reserva. | < 1,5 s | ✅ |
+| RNF-03 | Consulta de disponibilidad horaria. | < 500 ms | ✅ Índices `idx_citas_negocio_fecha` y `idx_disponibilidad_negocio_dia` en migración 011. |
+| RNF-04 | Bundle inicial minificado y comprimido (gzip). | < 300 KB inicial | 🟡 El index inicial es ≈148 KB gzip; el chunk del geocoder de Mapbox (≈500 KB gzip) solo se carga al editar la dirección del negocio. |
+| RNF-05 | Soportar al menos 500 reservas/día por negocio sin degradación. | 500/día | ✅ |
 
 ## 3.2. Seguridad
 
-| ID | Requisito |
-|---|---|
-| RNF-06 | Toda la comunicación entre el usuario y la aplicación debe ser **segura y cifrada** (HTTPS). |
-| RNF-07 | Las contraseñas nunca se guardan tal cual; el sistema las protege internamente de forma que no puedan leerse aunque alguien acceda a la base de datos. |
-| RNF-08 | Cada usuario solo puede ver y modificar sus propios datos según su rol (cliente, empresa o admin). El sistema aplica **RLS (Row Level Security)** en la base de datos para garantizarlo. |
-| RNF-09 | Las páginas privadas de la aplicación verifican que el usuario ha iniciado sesión antes de mostrar el contenido. |
-| RNF-10 | Las claves y tokens privados (WhatsApp, base de datos) **nunca** llegan al navegador del usuario; se gestionan solo en el servidor. |
-| RNF-11 | Los archivos de configuración con datos sensibles no se suben al repositorio. |
-| RNF-12 | La aplicación cumple con la normativa de protección de datos (RGPD): el usuario puede pedir borrar sus datos y hay política de privacidad visible. |
-| RNF-13 | El enlace de recuperación de contraseña expira en **1 hora** desde su envío. |
-| RNF-14 | El sistema registra eventos clave: inicio de sesión, reserva, cancelación de cita y suspensión de usuario. |
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-06 | Toda la comunicación va por **HTTPS** (forzado por Vercel + HSTS). | ✅ |
+| RNF-07 | Las contraseñas no se guardan en claro. Las gestiona Supabase Auth con bcrypt. | ✅ |
+| RNF-08 | Cada usuario solo accede a sus datos según su rol. La autorización se aplica desde la capa de aplicación y, en producción, se reactivará **RLS** sobre las tablas críticas. | 🟡 En el MVP las políticas RLS quedan desactivadas a nivel base de datos para evitar bloqueos durante el desarrollo; los filtros se aplican en cliente. Endurecer las políticas es la primera tarea del roadmap. |
+| RNF-09 | Las páginas privadas verifican sesión antes de mostrar contenido (`AppLayout`, `ClienteLayout`, `AdminLayout`). | ✅ |
+| RNF-10 | Las claves privadas no llegan al navegador. Solo se exponen `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y `VITE_MAPBOX_TOKEN` (claves públicas). | ✅ |
+| RNF-11 | Los archivos con datos sensibles (`.env.local`, `supabase/`) están en `.gitignore`. | ✅ |
+| RNF-12 | Cumplimiento RGPD: política de privacidad, términos de uso, banner de cookies y derecho al olvido. | ✅ |
+| RNF-13 | Enlace de recuperación de contraseña expira en 1 h. | 🔵 Recuperación por correo pospuesta. |
+| RNF-14 | Registro de **eventos clave** en la tabla `error_logs`: errores de auth, reservas, carga del panel admin, etc. | ✅ |
+| RNF-15 | **Security headers** completos en `vercel.json`: CSP, HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy. | ✅ |
 
 ## 3.3. Usabilidad y accesibilidad
 
-| ID | Requisito |
-|---|---|
-| RNF-16 | La interfaz debe ser **responsive** y funcionar correctamente en resoluciones desde 320 px (móvil) hasta 1920 px (escritorio). |
-| RNF-17 | El flujo de reserva debe completarse en **menos de 5 pasos** desde el escaneo del QR hasta la confirmación. |
-| RNF-18 | El sistema debe cumplir las pautas **WCAG 2.1 nivel AA** en contraste de color, navegación por teclado y etiquetas de formulario. |
-| RNF-19 | Los mensajes de error deben ser **comprensibles** para el usuario final (sin exponer trazas técnicas). |
-| RNF-20 | El sistema debe estar disponible en **español e inglés** como mínimo. |
-| RNF-21 | La interfaz debe soportar **tema claro y oscuro**. |
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-16 | Interfaz **responsive** de 320 px a 1920 px. | ✅ Sidebar drawer en móvil, loaders animados, grids fluidos. |
+| RNF-17 | Flujo de reserva en menos de 5 pasos desde el QR hasta la confirmación. | ✅ QR → selección servicio → fecha y franja → datos de contacto → confirmación (4 pasos). |
+| RNF-18 | WCAG 2.1 nivel AA en contraste, navegación por teclado y etiquetas. | 🟡 Se aplica contraste y semántica básica; auditoría WCAG formal queda en roadmap. |
+| RNF-19 | Mensajes de error **comprensibles**, sin trazas técnicas. Traducción automática de los códigos típicos de Supabase. | ✅ |
+| RNF-20 | Soporte multiidioma (mín. español e inglés). | 🔵 MVP en español. |
+| RNF-21 | **Tema claro y oscuro** unificado en toda la app con transiciones suaves. | ✅ |
 
 ## 3.4. Disponibilidad y fiabilidad
 
-| ID | Requisito | Métrica |
-|---|---|---|
-| RNF-22 | Disponibilidad mensual del servicio. | ≥ 99 % (uptime Vercel + Supabase) |
-| RNF-23 | El sistema debe degradar con elegancia si el envío de WhatsApp falla: la cita se registra y se notifica al usuario del fallo. | — |
-| RNF-24 | La base de datos debe contar con **backups diarios** automáticos (proporcionado por Supabase). | Retención 7 días |
+| ID | Requisito | Métrica | Estado |
+|---|---|---|---|
+| RNF-22 | Disponibilidad mensual del servicio. | ≥ 99 % | ✅ Uptime heredado de Vercel + Supabase. |
+| RNF-23 | Degradación con elegancia: una operación que falla muestra un mensaje y registra el incidente en `error_logs` sin romper la sesión. | — | ✅ |
+| RNF-24 | Backups automáticos en la base de datos. | Diario, retención 7 días | ✅ Plan gratuito de Supabase. |
 
 ## 3.5. Mantenibilidad
 
-| ID | Requisito |
-|---|---|
-| RNF-25 | El código fuente se escribe en **TypeScript estricto**, evitando el uso de `any` salvo justificación documentada. |
-| RNF-26 | El proyecto sigue la separación por **capas**: presentación (components/pages), estado (store), dominio (interfaces), datos (repositories), infraestructura (supabase). |
-| RNF-27 | El repositorio mantiene una estrategia de ramas **GitFlow simplificada**: `main` (producción), `develop` (integración), `feature/*` (trabajo diario). |
-| RNF-28 | Cada funcionalidad nueva se integra mediante **Pull Request** con revisión antes de mergear a `develop`. |
-| RNF-29 | El proyecto dispone de un **README** actualizado y de documentación funcional en la carpeta `docs/`. |
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-25 | TypeScript en modo estricto (`strict: true`). | ✅ |
+| RNF-26 | Separación por capas: `pages/`, `components/`, `contexts/`, `layouts/`, `lib/`, `hooks/`. | ✅ |
+| RNF-27 | Estrategia de ramas: `main` (producción, despliega a Vercel) + `feature/*` para cada tanda de trabajo, con merge `--no-ff`. | ✅ |
+| RNF-28 | Cada cambio sube primero a su rama y se integra cuando está estable. | ✅ |
+| RNF-29 | README y carpeta `docs/` actualizados con la documentación funcional, técnica y los manuales de despliegue, usuario y técnico. | ✅ |
+| RNF-30 | **Error boundaries** en rutas críticas (`/panel`, `/app`, `/admin`) que registran el error en `error_logs` y permiten reintentar sin recargar. | ✅ |
 
 ## 3.6. Compatibilidad
 
-| ID | Requisito |
-|---|---|
-| RNF-31 | La aplicación debe funcionar correctamente en los navegadores modernos más usados (Chrome, Firefox, Safari, Edge) y en dispositivos móviles con iOS 15+ o Android 10+, sin requerir instalación de nada adicional por parte del usuario. |
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-31 | Funcionamiento en Chrome, Firefox, Safari y Edge (últimas 2 versiones) y en móvil con iOS 15+ o Android 10+. | ✅ |
 
 ## 3.7. Despliegue y entorno
 
-| ID | Requisito |
-|---|---|
-| RNF-37 | El despliegue de producción se realiza en **Vercel**, con integración continua desde la rama `main`. |
-| RNF-38 | Los despliegues de vista previa (preview deployments) se generan automáticamente por cada Pull Request. |
-| RNF-39 | La base de datos y el sistema de autenticación residen en **Supabase** (EU region). |
-| RNF-40 | Las variables de entorno se gestionan en Vercel (producción) y en `.env` local (desarrollo). |
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-37 | Despliegue de producción en **Vercel** con integración continua desde `main`. | ✅ |
+| RNF-38 | Despliegues de vista previa por rama / Pull Request. | ✅ Las ramas `feature/*` generan preview deployment automático. |
+| RNF-39 | Base de datos y autenticación en **Supabase** (región EU). | ✅ |
+| RNF-40 | Gestión de variables de entorno en Vercel (producción) y `.env.local` (desarrollo). | ✅ Tres variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_MAPBOX_TOKEN`. |
 
 ## 3.8. Legal y conformidad
 
-| ID | Requisito |
-|---|---|
-| RNF-41 | La aplicación debe disponer de **Política de Privacidad** y **Términos de Uso** accesibles desde cualquier página pública. |
-| RNF-42 | Los datos personales de clientes (nombre, teléfono, correo) deben almacenarse **solo** el tiempo necesario para la ejecución del servicio y eliminarse a petición del titular. |
-| RNF-43 | El sistema debe incluir un **aviso de cookies** conforme a la normativa europea. |
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-41 | Política de privacidad y términos de uso accesibles desde cualquier página. | ✅ Enlaces en el footer; rutas `/privacidad` y `/terminos`. |
+| RNF-42 | Conservación de datos personales solo el tiempo necesario; eliminación a petición del titular. | ✅ El admin elimina por completo al usuario vía RPC `admin_delete_usuario` (borra `auth.users`, `public.usuarios` y sus negocios asociados en una sola transacción). |
+| RNF-43 | Aviso de cookies conforme al RGPD. | ✅ |
+
+## 3.9. Monitoreo (roadmap)
+
+| ID | Requisito | Estado |
+|---|---|---|
+| RNF-44 | Captura de errores en producción con Sentry. | 🔵 Se reemplaza por la tabla `error_logs` visible desde el panel admin. |
+| RNF-45 | Uptime monitoring con Betterstack. | 🔵 |
+| RNF-46 | Analíticas privacy-first con Umami. | 🔵 |

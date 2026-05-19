@@ -69,7 +69,6 @@ build/
 
 # otros
 design-export/
-docs/
 
 # Playwright (local, no subir)
 .playwright-mcp/

@@ -11,7 +11,7 @@
 | Autor | Angel Andrés Villorina Cambero |
 | Tutor | Francisco José Mera Calderón |
 | Curso | 2025 / 2026 |
-| Dominio web | [www.arkanaappointments.com](https://www.arkanaappointments.com) |
+| Dominio web | [www.arkana-appointments.com](https://www.arkana-appointments.com) |
 
 ## 1.2. Resumen ejecutivo
 
@@ -46,12 +46,15 @@ El alcance del Trabajo de Fin de Grado cubrirá la entrega de un **MVP** (produc
 | Perfil público de negocio | ✅ |
 | Generación de código QR por negocio | ✅ |
 | Gestión de disponibilidad horaria | ✅ |
-| Reserva de cita desde el perfil público | ✅ |
-| Panel del negocio (gestión de citas propias) | ✅ |
-| Panel de administrador (gestión global) | ✅ |
-| Notificaciones por WhatsApp | ✅ |
-| Interfaz multiidioma (i18n) | ✅ |
-| Diseño responsive | ✅ |
+| Reserva de cita desde el perfil público (con o sin cuenta) | ✅ |
+| Panel del negocio (gestión de citas propias, estadísticas y QR) | ✅ |
+| Panel de administrador (CRUD usuarios y negocios, métricas) | ✅ |
+| Notificaciones en tiempo real dentro de la app | ✅ |
+| Notificaciones por WhatsApp | 🔵 Pospuesto (roadmap) |
+| Interfaz multiidioma (i18n) | 🔵 Pospuesto (roadmap) — MVP entregado en español |
+| Diseño responsive (320 → 1920 px) | ✅ |
+| Tema claro y oscuro | ✅ |
+| Conformidad RGPD (privacidad, términos, cookies, derecho al olvido) | ✅ |
 
 ### Fuera de alcance (trabajo futuro)
 
