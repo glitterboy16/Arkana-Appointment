@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { BiSearch, BiTrash, BiEdit, BiPlus, BiUndo } from 'react-icons/bi';
+import { BiSearch, BiTrash, BiEdit, BiPlus, BiBlock, BiCheck } from 'react-icons/bi';
 import { supabase, type Usuario, type RolUsuario } from '@/lib/supabase';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import { Btn } from '@/components/app/Shared';
@@ -10,7 +10,7 @@ import ConfirmModal from '@/components/app/ConfirmModal';
 import StyledSelect from '@/components/app/StyledSelect';
 import { logError } from '@/lib/errorLogger';
 
-type Filtro = 'todos' | 'cliente' | 'negocio' | 'admin' | 'eliminados';
+type Filtro = 'todos' | 'cliente' | 'negocio' | 'admin';
 
 interface EditState {
   id: string;
@@ -53,6 +53,7 @@ export default function AdminUsuariosPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditState | null>(null);
   const [creating, setCreating] = useState<CreateState | null>(null);
+  const [desactivarTarget, setDesactivarTarget] = useState<Usuario | null>(null);
   const [eliminarTarget, setEliminarTarget] = useState<Usuario | null>(null);
 
   const load = async () => {
@@ -76,12 +77,7 @@ export default function AdminUsuariosPage() {
 
   const filtered = useMemo(() => {
     return usuarios.filter(u => {
-      if (filtro === 'eliminados') {
-        if (!u.eliminado) return false;
-      } else {
-        if (u.eliminado) return false;
-        if (filtro !== 'todos' && u.rol !== filtro) return false;
-      }
+      if (filtro !== 'todos' && u.rol !== filtro) return false;
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -130,48 +126,53 @@ export default function AdminUsuariosPage() {
     toast.success('Usuario actualizado');
   };
 
-  // ---------- ELIMINAR (soft) ----------
-  const confirmEliminar = async () => {
-    if (!eliminarTarget) return;
-    setSavingId(eliminarTarget.id);
+  // ---------- DESACTIVAR / ACTIVAR (soft, reversible) ----------
+  const confirmDesactivar = async () => {
+    if (!desactivarTarget) return;
+    const target = desactivarTarget;
+    const desactivar = !target.eliminado; // si está activo lo desactivamos y al revés
+    setSavingId(target.id);
     const { error } = await supabase
       .from('usuarios')
-      .update({ eliminado: true, eliminado_at: new Date().toISOString() })
-      .eq('id', eliminarTarget.id);
+      .update({
+        eliminado: desactivar,
+        eliminado_at: desactivar ? new Date().toISOString() : null,
+      })
+      .eq('id', target.id);
     setSavingId(null);
 
     if (error) {
-      await logError('admin.usuarios.delete', error, { usuario_id: eliminarTarget.id });
-      toast.error(`Error eliminando: ${error.message}`);
-      setEliminarTarget(null);
+      await logError('admin.usuarios.toggle_activo', error, { usuario_id: target.id });
+      toast.error(`Error: ${error.message}`);
+      setDesactivarTarget(null);
       return;
     }
 
     setUsuarios(prev => prev.map(u =>
-      u.id === eliminarTarget.id ? { ...u, eliminado: true } : u,
+      u.id === target.id ? { ...u, eliminado: desactivar } : u,
     ));
-    setEliminarTarget(null);
-    toast.success('Usuario eliminado (soft delete)');
+    setDesactivarTarget(null);
+    toast.success(desactivar ? 'Usuario desactivado' : 'Usuario reactivado');
   };
 
-  const restaurar = async (u: Usuario) => {
-    setSavingId(u.id);
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ eliminado: false, eliminado_at: null })
-      .eq('id', u.id);
+  // ---------- ELIMINAR (hard, irreversible — vía RPC SECURITY DEFINER) ----------
+  const confirmEliminarTotal = async () => {
+    if (!eliminarTarget) return;
+    const target = eliminarTarget;
+    setSavingId(target.id);
+    const { error } = await supabase.rpc('admin_delete_usuario', { p_user_id: target.id });
     setSavingId(null);
 
     if (error) {
-      await logError('admin.usuarios.restore', error, { usuario_id: u.id });
-      toast.error(`Error restaurando: ${error.message}`);
+      await logError('admin.usuarios.hard_delete', error, { usuario_id: target.id });
+      toast.error(`No se pudo eliminar: ${error.message}`);
+      setEliminarTarget(null);
       return;
     }
 
-    setUsuarios(prev => prev.map(x =>
-      x.id === u.id ? { ...x, eliminado: false } : x,
-    ));
-    toast.success('Usuario restaurado');
+    setUsuarios(prev => prev.filter(u => u.id !== target.id));
+    setEliminarTarget(null);
+    toast.success('Usuario eliminado por completo');
   };
 
   // ---------- CREAR ----------
@@ -285,7 +286,7 @@ export default function AdminUsuariosPage() {
         {/* Filtros */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {(['todos', 'cliente', 'negocio', 'admin', 'eliminados'] as Filtro[]).map(f => (
+            {(['todos', 'cliente', 'negocio', 'admin'] as Filtro[]).map(f => (
               <button
                 key={f}
                 onClick={() => setFiltro(f)}
@@ -338,6 +339,7 @@ export default function AdminUsuariosPage() {
                     <th style={th}>Teléfono</th>
                     <th style={th}>Rol</th>
                     <th style={th}>Alta</th>
+                    <th style={th}>Estado</th>
                     <th style={{ ...th, textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -365,23 +367,47 @@ export default function AdminUsuariosPage() {
                         <td style={{ ...td, color: 'var(--app-subtle)', fontSize: 12 }}>
                           {format(parseISO(u.created_at), "d MMM yyyy", { locale: es })}
                         </td>
+                        <td style={td}>
+                          {u.eliminado ? (
+                            <span style={{
+                              padding: '3px 9px', borderRadius: 6,
+                              background: 'rgba(245,158,11,0.15)', color: '#F59E0B',
+                              fontSize: 11, fontWeight: 600,
+                            }}>
+                              Desactivado
+                            </span>
+                          ) : (
+                            <span style={{
+                              padding: '3px 9px', borderRadius: 6,
+                              background: 'rgba(34,197,94,0.15)', color: '#22C55E',
+                              fontSize: 11, fontWeight: 600,
+                            }}>
+                              Activo
+                            </span>
+                          )}
+                        </td>
                         <td style={{ ...td, textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: 6 }}>
+                          <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                             {saving && <Spinner size={14} />}
-                            {!u.eliminado ? (
-                              <>
-                                <button onClick={() => startEdit(u)} disabled={saving} style={actionBtn('#648DFF')}>
-                                  <BiEdit size={14} />
-                                </button>
-                                <button onClick={() => setEliminarTarget(u)} disabled={saving || u.rol === 'admin'} style={actionBtn('#EF4444')} title={u.rol === 'admin' ? 'No se puede eliminar un admin' : 'Eliminar'}>
-                                  <BiTrash size={14} />
-                                </button>
-                              </>
-                            ) : (
-                              <button onClick={() => restaurar(u)} disabled={saving} style={actionBtn('#22C55E')}>
-                                <BiUndo size={14} /> Restaurar
-                              </button>
-                            )}
+                            <button onClick={() => startEdit(u)} disabled={saving} style={actionBtn('#648DFF')} title="Editar">
+                              <BiEdit size={14} />
+                            </button>
+                            <button
+                              onClick={() => setDesactivarTarget(u)}
+                              disabled={saving || u.rol === 'admin'}
+                              style={actionBtn(u.eliminado ? '#22C55E' : '#F59E0B')}
+                              title={u.rol === 'admin' ? 'No se puede desactivar un admin' : (u.eliminado ? 'Activar' : 'Desactivar')}
+                            >
+                              {u.eliminado ? <BiCheck size={14} /> : <BiBlock size={14} />}
+                            </button>
+                            <button
+                              onClick={() => setEliminarTarget(u)}
+                              disabled={saving || u.rol === 'admin'}
+                              style={actionBtn('#EF4444')}
+                              title={u.rol === 'admin' ? 'No se puede eliminar un admin' : 'Eliminar por completo'}
+                            >
+                              <BiTrash size={14} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -457,19 +483,49 @@ export default function AdminUsuariosPage() {
       )}
 
       <ConfirmModal
+        open={!!desactivarTarget}
+        title={desactivarTarget?.eliminado ? '¿Reactivar usuario?' : '¿Desactivar usuario?'}
+        message={desactivarTarget ? (
+          desactivarTarget.eliminado ? (
+            <>
+              Vas a reactivar a <strong>{desactivarTarget.nombre}</strong> ({desactivarTarget.email}).
+              Podrá volver a iniciar sesión y usar la plataforma con normalidad.
+            </>
+          ) : (
+            <>
+              Vas a desactivar a <strong>{desactivarTarget.nombre}</strong> ({desactivarTarget.email}).
+              <br />No podrá iniciar sesión, pero sus datos se conservan y podrás reactivarlo cuando quieras.
+            </>
+          )
+        ) : null}
+        confirmLabel={desactivarTarget?.eliminado ? 'Sí, reactivar' : 'Sí, desactivar'}
+        cancelLabel="Cancelar"
+        variant={desactivarTarget?.eliminado ? 'primary' : 'danger'}
+        loading={savingId === desactivarTarget?.id}
+        onConfirm={confirmDesactivar}
+        onCancel={() => { if (!savingId) setDesactivarTarget(null); }}
+      />
+
+      <ConfirmModal
         open={!!eliminarTarget}
-        title="¿Eliminar usuario?"
+        title="¿Eliminar por completo?"
         message={eliminarTarget ? (
           <>
-            Vas a marcar como eliminado a <strong>{eliminarTarget.nombre}</strong> ({eliminarTarget.email}).
-            <br />Es un soft-delete: el usuario no se borra de la BD, sólo se oculta. Lo puedes restaurar desde el filtro "Eliminados".
+            Esta acción <strong>no se puede deshacer</strong>. Vas a borrar a{' '}
+            <strong>{eliminarTarget.nombre}</strong> ({eliminarTarget.email}) de la base de datos.
+            {eliminarTarget.rol === 'negocio' && (
+              <> También se borrará su negocio, servicios, horarios y citas asociadas.</>
+            )}
+            <br /><br />
+            Si solo quieres bloquearle el acceso temporalmente, usa <strong>Desactivar</strong> en
+            su lugar.
           </>
         ) : null}
-        confirmLabel="Sí, eliminar"
+        confirmLabel="Sí, eliminar para siempre"
         cancelLabel="Cancelar"
         variant="danger"
         loading={savingId === eliminarTarget?.id}
-        onConfirm={confirmEliminar}
+        onConfirm={confirmEliminarTotal}
         onCancel={() => { if (!savingId) setEliminarTarget(null); }}
       />
     </div>

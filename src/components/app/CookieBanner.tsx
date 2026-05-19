@@ -36,26 +36,30 @@ export default function CookieBanner() {
       style={{
         position: 'fixed',
         zIndex: 9999,
-        left: 'max(16px, env(safe-area-inset-left))',
-        right: 'max(16px, env(safe-area-inset-right))',
-        bottom: 'max(16px, env(safe-area-inset-bottom))',
-        maxWidth: 520,
-        marginLeft: 'auto',
-        marginRight: 'auto',
-        background: 'rgba(10, 10, 14, 0.92)',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        boxSizing: 'border-box',
+        padding: 'clamp(14px, 3.5vw, 20px) clamp(16px, 4vw, 32px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + clamp(14px, 3.5vw, 20px))',
+        background: 'rgba(10, 10, 14, 0.94)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 14,
-        padding: '16px 18px',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.45)',
+        borderTop: '1px solid rgba(255,255,255,0.10)',
+        boxShadow: '0 -8px 30px rgba(0,0,0,0.45)',
         color: '#FAFAFA',
         fontFamily: "'SF Pro Display','Inter',sans-serif",
         fontSize: 13,
         lineHeight: 1.55,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        flexWrap: 'wrap',
       }}
     >
-      <div style={{ marginBottom: 14 }}>
+      <div style={{ flex: '1 1 280px', minWidth: 0 }}>
         Usamos solo cookies técnicas necesarias para que la app funcione. No hay rastreo
         publicitario.{' '}
         <Link
@@ -66,12 +70,12 @@ export default function CookieBanner() {
         </Link>
         .
       </div>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
         <button
           type="button"
           onClick={() => persist('rejected')}
           style={{
-            padding: '8px 14px',
+            padding: '9px 16px',
             borderRadius: 8,
             border: '1px solid rgba(255,255,255,0.14)',
             background: 'transparent',
@@ -88,7 +92,7 @@ export default function CookieBanner() {
           type="button"
           onClick={() => persist('accepted')}
           style={{
-            padding: '8px 14px',
+            padding: '9px 16px',
             borderRadius: 8,
             border: 'none',
             background: '#648DFF',
