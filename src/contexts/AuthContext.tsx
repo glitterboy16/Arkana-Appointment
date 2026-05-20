@@ -7,6 +7,7 @@ export interface SignUpNegocioData {
   password: string;
   nombre: string;
   nombreNegocio: string;
+  telefono: string;
 }
 
 export interface SignUpClienteData {
@@ -21,12 +22,17 @@ interface AuthCtx {
   usuario: Usuario | null;
   negocio: Negocio | null;
   loading: boolean;
+  emailVerificado: boolean;
   signIn: (email: string, password: string, expectedRol: RolUsuario) => Promise<{ error: string | null; rol?: RolUsuario }>;
   signUpNegocio: (data: SignUpNegocioData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signUpCliente: (data: SignUpClienteData) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signOut: () => Promise<void>;
   refreshNegocio: () => Promise<void>;
   refreshUsuario: () => Promise<void>;
+  changeEmail: (newEmail: string) => Promise<{ error: string | null }>;
+  changePassword: (newPassword: string) => Promise<{ error: string | null }>;
+  requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
+  resendVerification: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -208,7 +214,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+
+    // Sincroniza la sesión cuando cambia (logout en otra pestaña, refresh
+    // de token, confirmación de email, recovery desde enlace mágico, etc).
+    // Guardamos por access_token para no propagar re-renders cuando Supabase
+    // emite el mismo token (typical INITIAL_SESSION justo después de getSession).
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (cancelled) return;
+      setSession(prev => {
+        if (prev?.access_token === newSession?.access_token) return prev;
+        return newSession;
+      });
+      if (!newSession) {
+        setUsuario(null);
+        setNegocio(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string, expectedRol: RolUsuario) => {
@@ -247,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, rol: rolReal };
   };
 
-  const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
+  const signUpNegocio = async ({ email, password, nombre, nombreNegocio, telefono }: SignUpNegocioData) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
@@ -256,7 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = data.session.access_token;
 
     const { data: usr, error: errUsr } = await guardarUsuario(
-      { id: data.user.id, email, nombre, rol: 'negocio' },
+      { id: data.user.id, email, nombre, rol: 'negocio', telefono: telefono || null },
       token,
     );
     if (errUsr || !usr) return { error: errUsr ? traducirErrorBD(errUsr, 'usuario') : 'No se pudo crear el usuario.' };
@@ -264,7 +290,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const slug = generarSlug(nombreNegocio);
     const neg = await postgrest<Negocio>('negocios', {
       method: 'POST',
-      body: JSON.stringify({ usuario_id: data.user.id, nombre: nombreNegocio, slug }),
+      body: JSON.stringify({
+        usuario_id: data.user.id,
+        nombre: nombreNegocio,
+        slug,
+        telefono: telefono || null,
+      }),
     }, token);
     if (neg.error || !neg.data) return { error: neg.error ? traducirErrorBD(neg.error, 'negocio') : 'No se pudo crear el negocio.' };
 
@@ -313,8 +344,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(usr);
   };
 
+  const changeEmail = async (newEmail: string) => {
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    if (error) return { error: error.message };
+    // Importante: Supabase no aplica el cambio hasta que el usuario confirma
+    // desde el correo nuevo. Hasta entonces, la sesión sigue con el email
+    // viejo. Por eso no actualizamos `usuario` aquí.
+    return { error: null };
+  };
+
+  const changePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    const redirectTo = typeof window !== 'undefined'
+      ? `${window.location.origin}/recuperar-password`
+      : undefined;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const resendVerification = async () => {
+    if (!session?.user?.email) return { error: 'No hay sesión activa.' };
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: session.user.email,
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const emailVerificado = !!session?.user?.email_confirmed_at;
+
   return (
-    <AuthContext.Provider value={{ session, usuario, negocio, loading, signIn, signUpNegocio, signUpCliente, signOut, refreshNegocio, refreshUsuario }}>
+    <AuthContext.Provider value={{
+      session, usuario, negocio, loading, emailVerificado,
+      signIn, signUpNegocio, signUpCliente, signOut, refreshNegocio, refreshUsuario,
+      changeEmail, changePassword, requestPasswordReset, resendVerification,
+    }}>
       {children}
     </AuthContext.Provider>
   );

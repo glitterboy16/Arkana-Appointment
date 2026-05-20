@@ -140,7 +140,6 @@ El proyecto se abrirá en: **http://localhost:5173**
 | `whatsapp_log` | 9 | Registro de cada notificación WhatsApp enviada (estado, error, message_id) |
 | `error_logs` | 4 | Errores de cliente capturados por el ErrorBoundary global |
 
-*Filas a fecha de la última instantánea. Las cifras crecen con el uso real.*
 
 ### Storage Buckets
 
@@ -149,19 +148,6 @@ El proyecto se abrirá en: **http://localhost:5173**
 | `avatars` | Avatar del usuario |
 | `negocio-logos` | Logo del negocio |
 | `negocio-fotos` | Galería pública del negocio |
-
-### Migraciones
-
-Las migraciones están versionadas en [`supabase/migrations/`](supabase/migrations/) y se aplican secuencialmente. Hitos relevantes:
-
-- `002` — Perfil de cliente
-- `005` — Horarios, excepciones y galería
-- `006` — Realtime sobre tabla `citas`
-- `007` — Ubicación geográfica del negocio
-- `008` — Panel admin
-- `010` — Buckets de imágenes
-- `011` — Índices de rendimiento + estado `completed`
-- `013` — Notificaciones WhatsApp (tabla `whatsapp_log`, opt-in, trigger de reagendado)
 
 ---
 
@@ -193,7 +179,6 @@ Las migraciones están versionadas en [`supabase/migrations/`](supabase/migratio
 | 📊 **Recharts** | Gráficas en el dashboard de estadísticas |
 | 🎬 **GSAP** | Animaciones de la landing |
 | 🔔 **react-hot-toast + SweetAlert2** | Notificaciones y diálogos modales |
-| 🌐 **i18next** | Sistema preparado para internacionalización |
 | 📷 **react-qr-code** | Generación del QR único por negocio |
 
 ---

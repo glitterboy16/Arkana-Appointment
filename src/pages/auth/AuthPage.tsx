@@ -2,6 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogoArkana } from '@/components/app/Shared';
 import { Spinner } from '@/components/app/Spinner';
+import MessageBox, { type MessageType } from '@/components/app/MessageBox';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ════════════════════════════════════════════════════════════════════
@@ -61,56 +62,15 @@ const IconoX = () => (
   </svg>
 );
 
-// ─────────────────────────────────────────────────────────────────
-// Regex de validacion (modernos, equilibrados entre estricto y usable)
-// ─────────────────────────────────────────────────────────────────
-const RE_EMAIL = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-const RE_NOMBRE = /^[A-Za-zÀ-ÖØ-öø-ÿ' .\-]{2,60}$/;
-const RE_NEGOCIO = /^[\w\sÀ-ÖØ-öø-ÿ&'.,\-]{2,80}$/;
-const RE_TEL_ES = /^[6-9]\d{8}$/;
-const RE_TEL_INTL = /^\+\d{7,15}$/;
-const RE_PASS_MIN = /.{8,}/;
-const RE_PASS_LOWER = /[a-z]/;
-const RE_PASS_UPPER = /[A-Z]/;
-const RE_PASS_DIGIT = /\d/;
-
-interface ChecksContrasena {
-  longitud: boolean;
-  minuscula: boolean;
-  mayuscula: boolean;
-  numero: boolean;
-}
-
-/**
- * Evalua una contrasena y devuelve los checks individuales, un score
- * (0-4), una etiqueta legible y un color para la barra de fuerza.
- */
-function evaluarContrasena(p: string): {
-  checks: ChecksContrasena;
-  score: number;
-  etiqueta: string;
-  color: string;
-} {
-  const checks: ChecksContrasena = {
-    longitud: RE_PASS_MIN.test(p),
-    minuscula: RE_PASS_LOWER.test(p),
-    mayuscula: RE_PASS_UPPER.test(p),
-    numero: RE_PASS_DIGIT.test(p),
-  };
-  const score = Object.values(checks).filter(Boolean).length;
-  let etiqueta = 'Demasiado corta';
-  let color = '#EF4444';
-  if (score === 4) { etiqueta = 'Excelente'; color = '#22C55E'; }
-  else if (score === 3) { etiqueta = 'Buena'; color = '#84CC16'; }
-  else if (score === 2) { etiqueta = 'Aceptable'; color = '#F59E0B'; }
-  return { checks, score, etiqueta, color };
-}
-
-/** Una contrasena solo es valida si cumple los 4 requisitos. */
-function contrasenaValida(p: string): boolean {
-  const { score } = evaluarContrasena(p);
-  return score === 4;
-}
+import {
+  RE_NOMBRE,
+  RE_NEGOCIO,
+  contrasenaValida,
+  emailValido as esEmailValido,
+  evaluarContrasena,
+  telefonoValido as esTelefonoValido,
+  PASSWORD_REQUISITOS_MSG,
+} from '@/lib/validators';
 
 interface EstadoFormulario {
   email: string;
@@ -142,12 +102,38 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   });
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: MessageType; text: string } | null>(null);
   const navigate = useNavigate();
-  const { signIn, signUpNegocio, signUpCliente } = useAuth();
+  const { signIn, signUpNegocio, signUpCliente, requestPasswordReset } = useAuth();
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSending, setResetSending] = useState(false);
+  const [resetMsg, setResetMsg] = useState<{ type: MessageType; text: string } | null>(null);
 
-  const reset = () => { setError(null); setInfo(null); };
+  const setError = (text: string) => setMessage({ type: 'err', text });
+  const setInfo  = (text: string) => setMessage({ type: 'ok',  text });
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetMsg(null);
+    if (!esEmailValido(resetEmail)) {
+      setResetMsg({ type: 'err', text: 'Introduce un email válido' });
+      return;
+    }
+    setResetSending(true);
+    const { error } = await requestPasswordReset(resetEmail);
+    setResetSending(false);
+    if (error) {
+      setResetMsg({ type: 'err', text: traducirErrorAuth(error) });
+      return;
+    }
+    setResetMsg({
+      type: 'ok',
+      text: 'Si el email existe, te hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja (y la carpeta de spam).',
+    });
+  };
+
+  const reset = () => setMessage(null);
 
   const set = (k: keyof EstadoFormulario) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [k]: e.target.value });
@@ -161,19 +147,19 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   // ─────────────────────────────────────────────────────────────────
   // Validacion derivada en tiempo real
   // ─────────────────────────────────────────────────────────────────
-  const emailValido = useMemo(() => RE_EMAIL.test(form.email), [form.email]);
+  const emailValido = useMemo(() => esEmailValido(form.email), [form.email]);
   const nombreValido = useMemo(() => RE_NOMBRE.test(form.name.trim()), [form.name]);
   const negocioValido = useMemo(() => RE_NEGOCIO.test(form.business.trim()), [form.business]);
   const evalContrasena = useMemo(() => evaluarContrasena(form.password), [form.password]);
   const passOK = mode === 'login' ? form.password.length > 0 : contrasenaValida(form.password);
   const telefonoNorm = form.phone.trim().replace(/\s/g, '');
-  const telefonoValido = RE_TEL_ES.test(telefonoNorm) || RE_TEL_INTL.test(telefonoNorm);
+  const telefonoValido = esTelefonoValido(telefonoNorm);
 
   const formularioValido = useMemo(() => {
     if (mode === 'login') return emailValido && form.password.length > 0;
-    if (!emailValido || !passOK || !nombreValido) return false;
+    if (!emailValido || !passOK || !nombreValido || !telefonoValido) return false;
     if (rol === 'negocio') return negocioValido;
-    return telefonoValido;
+    return true;
   }, [mode, emailValido, passOK, nombreValido, negocioValido, telefonoValido, form.password.length, rol]);
 
   // ─────────────────────────────────────────────────────────────────
@@ -190,9 +176,9 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
     } else {
       if (!nombreValido) { setError('Introduce tu nombre (2-60 caracteres, solo letras)'); return; }
       if (rol === 'negocio' && !negocioValido) { setError('Introduce el nombre del negocio (2-80 caracteres)'); return; }
-      if (rol === 'cliente' && !telefonoValido) { setError('Introduce un teléfono válido (ej. 612345678 o +34612345678)'); return; }
+      if (!telefonoValido) { setError('Introduce un teléfono válido (ej. 612345678 o +34612345678)'); return; }
       if (!emailValido) { setError('Introduce un email válido'); return; }
-      if (!contrasenaValida(form.password)) { setError('La contraseña debe tener 8+ caracteres, mayúscula, minúscula y número'); return; }
+      if (!contrasenaValida(form.password)) { setError(PASSWORD_REQUISITOS_MSG); return; }
     }
 
     setLoading(true);
@@ -212,6 +198,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             password: form.password,
             nombre: form.name.trim(),
             nombreNegocio: form.business.trim(),
+            telefono: telefonoNorm,
           });
           if (error) { setError(traducirErrorAuth(error)); return; }
           if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
@@ -346,22 +333,10 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             ))}
           </div>
 
-          {info && (
-            <div role="status" style={{
-              background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)',
-              borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#22C55E', marginBottom: 16,
-            }}>
-              {info}
-            </div>
-          )}
-
-          {error && (
-            <div role="alert" style={{
-              background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)',
-              borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#EF4444', marginBottom: 16,
-            }}>
-              {error}
-            </div>
+          {message && (
+            <MessageBox type={message.type} style={{ marginBottom: 16 }}>
+              {message.text}
+            </MessageBox>
           )}
 
           <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -407,10 +382,10 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
                 )}
               </div>
             )}
-            {mode === 'register' && rol === 'cliente' && (
+            {mode === 'register' && (
               <div>
                 <label style={labelStyle}>
-                  <span>Teléfono</span>
+                  <span>{rol === 'negocio' ? 'Teléfono del negocio' : 'Teléfono'}</span>
                   {touched.phone && telefonoValido && <span style={{ color: '#22C55E' }}><IconoCheck /></span>}
                 </label>
                 <input
@@ -510,7 +485,20 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
               {mode === 'login' && (
                 <div style={{ textAlign: 'right', marginTop: 6 }}>
-                  <span style={{ fontSize: 12, color: '#648DFF', cursor: 'pointer' }}>¿Olvidaste tu contraseña?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetEmail(form.email);
+                      setResetMsg(null);
+                      setResetOpen(true);
+                    }}
+                    style={{
+                      background: 'transparent', border: 'none', padding: 0,
+                      fontSize: 12, color: '#648DFF', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
                 </div>
               )}
             </div>
@@ -556,6 +544,85 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
           )}
         </div>
       </div>
+
+      {resetOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Recuperar contraseña"
+          onClick={() => { if (!resetSending) setResetOpen(false); }}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(3,10,24,0.78)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20, zIndex: 100,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 380,
+              background: '#0B1340', border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 14, padding: 24, color: '#FAFAFA',
+            }}
+          >
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, marginBottom: 6, letterSpacing: '-0.01em' }}>
+              Recuperar contraseña
+            </h3>
+            <p style={{ fontSize: 13, color: 'rgba(250,250,250,0.55)', marginTop: 0, marginBottom: 16, lineHeight: 1.5 }}>
+              Introduce el email de tu cuenta y te enviaremos un enlace para
+              elegir una contraseña nueva.
+            </p>
+
+            {resetMsg && (
+              <MessageBox type={resetMsg.type} style={{ marginBottom: 14 }}>
+                {resetMsg.text}
+              </MessageBox>
+            )}
+
+            <form onSubmit={handleResetSubmit} noValidate>
+              <input
+                style={inputBase}
+                type="email"
+                value={resetEmail}
+                onChange={(e) => { setResetEmail(e.target.value); setResetMsg(null); }}
+                placeholder="correo@ejemplo.com"
+                autoComplete="email"
+                required
+                disabled={resetSending || resetMsg?.type === 'ok'}
+              />
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => { if (!resetSending) setResetOpen(false); }}
+                  disabled={resetSending}
+                  style={{
+                    flex: 1, padding: '11px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+                    background: 'transparent', color: 'rgba(250,250,250,0.75)', fontSize: 13, fontWeight: 600,
+                    fontFamily: 'inherit', cursor: resetSending ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {resetMsg?.type === 'ok' ? 'Cerrar' : 'Cancelar'}
+                </button>
+                {resetMsg?.type !== 'ok' && (
+                  <button
+                    type="submit"
+                    disabled={resetSending}
+                    style={{
+                      flex: 2, padding: '11px 0', borderRadius: 8, border: 'none',
+                      background: '#004AAD', color: '#FAFAFA', fontSize: 13, fontWeight: 700,
+                      fontFamily: 'inherit', cursor: resetSending ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}
+                  >
+                    {resetSending && <Spinner size={14} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
+                    {resetSending ? 'Enviando…' : 'Enviar enlace'}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -59,13 +60,13 @@ function rowToItem(row: NotifRow): NotifItem {
 }
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
-  const { session, usuario } = useAuth();
+  const { usuario } = useAuth();
   const uid = usuario?.id;
   const [items, setItems] = useState<NotifItem[]>([]);
 
-  // Carga inicial al loguearse o cambiar de usuario. Trae el historial completo
-  // (limitado a MAX_ITEMS) desde Supabase, así el usuario ve también lo que se
-  // generó mientras estaba desconectado.
+  // Carga inicial al cambiar de usuario. Trae el historial completo (capado
+  // a MAX_ITEMS) desde Supabase, así el usuario ve también lo que se generó
+  // mientras estaba desconectado. Realtime se encarga del resto en vivo.
   useEffect(() => {
     if (!uid) {
       setItems([]);
@@ -87,10 +88,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [uid]);
 
   // Suscripción realtime a INSERTs en notificaciones del usuario actual.
-  // Cualquier cambio en `citas` dispara el trigger que inserta filas aquí,
-  // y este canal nos las trae al instante.
+  // El canal vive mientras dure este uid; los refresh de token no lo tiran.
   useEffect(() => {
-    if (!session?.user || !uid) return;
+    if (!uid) return;
 
     const channel = supabase
       .channel(`arkana-notifs-${uid}`)
@@ -100,7 +100,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         (payload) => {
           const row = payload.new as NotifRow;
           setItems(prev => {
-            // Dedup por id (puede llegar también del polling visibility-change)
             if (prev.some(p => p.id === row.id)) return prev;
             return [rowToItem(row), ...prev].slice(0, MAX_ITEMS);
           });
@@ -109,59 +108,47 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [session?.user, uid]);
-
-  // Fallback: al volver la pestaña al foco, recargamos por si realtime se cayó.
-  useEffect(() => {
-    if (!uid) return;
-    const onVisible = async () => {
-      if (document.hidden) return;
-      const { data } = await supabase
-        .from('notificaciones')
-        .select('id, cita_id, kind, titulo, detalle, leida, created_at')
-        .eq('usuario_id', uid)
-        .order('created_at', { ascending: false })
-        .limit(MAX_ITEMS);
-      if (!data) return;
-      setItems(data.map(d => rowToItem(d as NotifRow)));
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [uid]);
 
   const markAllRead = useCallback(async () => {
     if (!uid) return;
-    const unreadIds = items.filter(n => !n.leida).map(n => n.id);
+    let unreadIds: string[] = [];
+    setItems(prev => {
+      unreadIds = prev.filter(n => !n.leida).map(n => n.id);
+      if (unreadIds.length === 0) return prev;
+      return prev.map(n => ({ ...n, leida: true }));
+    });
     if (unreadIds.length === 0) return;
-    // Optimistic update
-    setItems(prev => prev.map(n => ({ ...n, leida: true })));
     const { error } = await supabase
       .from('notificaciones')
       .update({ leida: true })
       .in('id', unreadIds);
     if (error) {
-      // Rollback si falló
-      setItems(prev => prev.map(n => unreadIds.includes(n.id) ? { ...n, leida: false } : n));
+      const failedIds = new Set(unreadIds);
+      setItems(prev => prev.map(n => failedIds.has(n.id) ? { ...n, leida: false } : n));
     }
-  }, [uid, items]);
+  }, [uid]);
 
   const clear = useCallback(async () => {
     if (!uid) return;
-    const prev = items;
-    setItems([]);
+    let prev: NotifItem[] = [];
+    setItems(curr => { prev = curr; return []; });
     const { error } = await supabase
       .from('notificaciones')
       .delete()
       .eq('usuario_id', uid);
-    if (error) {
-      setItems(prev);
-    }
-  }, [uid, items]);
+    if (error) setItems(prev);
+  }, [uid]);
 
-  const unread = items.filter(n => !n.leida).length;
+  const unread = useMemo(() => items.filter(n => !n.leida).length, [items]);
+
+  const value = useMemo(
+    () => ({ items, unread, markAllRead, clear }),
+    [items, unread, markAllRead, clear],
+  );
 
   return (
-    <NotificationsContext.Provider value={{ items, unread, markAllRead, clear }}>
+    <NotificationsContext.Provider value={value}>
       {children}
     </NotificationsContext.Provider>
   );

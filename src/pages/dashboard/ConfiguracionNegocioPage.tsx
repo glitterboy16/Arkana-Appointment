@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CiDark, CiLight } from 'react-icons/ci';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
+import CuentaSeguridadCard from '@/components/app/CuentaSeguridadCard';
 
 export default function ConfiguracionNegocioPage() {
   const { tema, setTema } = useTheme();
@@ -58,8 +59,10 @@ export default function ConfiguracionNegocioPage() {
         </div>
       </section>
 
+      <CuentaSeguridadCard />
+
       <section style={cardStyle}>
-        <h2 style={sectionTitleStyle}>Cuenta</h2>
+        <h2 style={sectionTitleStyle}>Perfil del negocio</h2>
         <p style={helperStyle}>Edita los datos de tu negocio en la sección de Perfil del negocio.</p>
         <button onClick={handleLogout} style={btnDanger}>
           Cerrar sesión

@@ -11,6 +11,7 @@ import { FullScreenLoader } from './components/app/Spinner';
 // Landing y auth — entradas comunes, se cargan en chunks separados
 const InicioArkanaPage = lazy(() => import('./pages/arkana/InicioArkanaPage'));
 const AuthPage = lazy(() => import('./pages/auth/AuthPage'));
+const RecuperarPasswordPage = lazy(() => import('./pages/auth/RecuperarPasswordPage'));
 const ReservaPublicaPage = lazy(() => import('./pages/booking/ReservaPublicaPage'));
 
 // Panel del negocio
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/" element={<InicioArkanaPage />} />
             <Route path="/iniciarSesion" element={<AuthPage defaultMode="login" />} />
             <Route path="/registro" element={<AuthPage defaultMode="register" />} />
+            <Route path="/recuperar-password" element={<RecuperarPasswordPage />} />
             <Route path="/n/:slug" element={<ReservaPublicaPage />} />
             <Route path="/privacidad" element={<PrivacidadPage />} />
             <Route path="/terminos" element={<TerminosPage />} />
