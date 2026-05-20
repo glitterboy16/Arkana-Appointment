@@ -8,7 +8,6 @@ import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import { Btn } from '@/components/app/Shared';
 import ConfirmModal from '@/components/app/ConfirmModal';
 import StyledSelect from '@/components/app/StyledSelect';
-import { logError } from '@/lib/errorLogger';
 
 type Filtro = 'todos' | 'cliente' | 'negocio' | 'admin';
 
@@ -64,7 +63,6 @@ export default function AdminUsuariosPage() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      await logError('admin.usuarios.load', error);
       toast.error('No se pudieron cargar los usuarios');
       setUsuarios([]);
     } else {
@@ -114,7 +112,6 @@ export default function AdminUsuariosPage() {
     setSavingId(null);
 
     if (error) {
-      await logError('admin.usuarios.update', error, { usuario_id: editing.id });
       toast.error(`Error guardando: ${error.message}`);
       return;
     }
@@ -142,7 +139,6 @@ export default function AdminUsuariosPage() {
     setSavingId(null);
 
     if (error) {
-      await logError('admin.usuarios.toggle_activo', error, { usuario_id: target.id });
       toast.error(`Error: ${error.message}`);
       setDesactivarTarget(null);
       return;
@@ -164,7 +160,6 @@ export default function AdminUsuariosPage() {
     setSavingId(null);
 
     if (error) {
-      await logError('admin.usuarios.hard_delete', error, { usuario_id: target.id });
       toast.error(`No se pudo eliminar: ${error.message}`);
       setEliminarTarget(null);
       return;
@@ -213,7 +208,6 @@ export default function AdminUsuariosPage() {
 
     if (error || !data.user) {
       setSavingId(null);
-      await logError('admin.usuarios.create.auth', error, { email: creating.email });
       toast.error(`No se pudo crear: ${error?.message ?? 'desconocido'}`);
       return;
     }
@@ -230,7 +224,6 @@ export default function AdminUsuariosPage() {
 
     if (errProfile) {
       setSavingId(null);
-      await logError('admin.usuarios.create.profile', errProfile, { usuario_id: data.user.id });
       toast.error(`Usuario creado en auth pero falló el perfil: ${errProfile.message}`);
       return;
     }
@@ -247,7 +240,6 @@ export default function AdminUsuariosPage() {
 
       if (errNeg) {
         setSavingId(null);
-        await logError('admin.usuarios.create.negocio', errNeg, { usuario_id: data.user.id });
         toast.error(`Usuario creado pero falló el negocio: ${errNeg.message}`);
         return;
       }

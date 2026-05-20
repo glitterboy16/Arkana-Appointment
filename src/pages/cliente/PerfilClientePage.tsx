@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Spinner } from '@/components/app/Spinner';
-import { logError } from '@/lib/errorLogger';
 
 export default function PerfilClientePage() {
   const { usuario, refreshUsuario } = useAuth();
@@ -39,7 +38,6 @@ export default function PerfilClientePage() {
     setSaving(false);
 
     if (error) {
-      await logError('perfil.cliente.save', error, { usuario_id: usuario.id });
       setMsg({ type: 'err', text: `Error al guardar: ${error.message}` });
       return;
     }
@@ -68,7 +66,6 @@ export default function PerfilClientePage() {
 
     if (upErr) {
       setUploading(false);
-      await logError('perfil.cliente.upload', upErr, { usuario_id: usuario.id });
       setMsg({ type: 'err', text: `Error al subir la imagen: ${upErr.message}` });
       return;
     }
@@ -84,7 +81,6 @@ export default function PerfilClientePage() {
     setUploading(false);
 
     if (updErr) {
-      await logError('perfil.cliente.persistFoto', updErr, { usuario_id: usuario.id });
       setMsg({ type: 'err', text: `Imagen subida pero no se pudo guardar: ${updErr.message}` });
       return;
     }

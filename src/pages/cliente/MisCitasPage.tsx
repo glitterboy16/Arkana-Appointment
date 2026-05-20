@@ -4,7 +4,6 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase, type EstadoCita } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNotifications } from '@/contexts/NotificationsContext';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import ConfirmModal from '@/components/app/ConfirmModal';
 
@@ -13,7 +12,6 @@ interface CitaConDetalle {
   fecha: string;
   hora_inicio: string;
   estado: EstadoCita;
-  notas: string | null;
   negocio: { id: string; nombre: string; slug: string; logo_url: string | null } | null;
   servicio: { id: string; nombre: string; duracion_min: number; precio_centimos: number } | null;
 }
@@ -28,7 +26,6 @@ const ESTADO_LABEL: Record<EstadoCita, { label: string; color: string; bg: strin
 
 export default function MisCitasPage() {
   const { usuario } = useAuth();
-  const { silenceNext } = useNotifications();
   const [citas, setCitas] = useState<CitaConDetalle[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<'todas' | 'proximas' | 'pasadas'>('proximas');
@@ -42,7 +39,7 @@ export default function MisCitasPage() {
     (async () => {
       const { data } = await supabase
         .from('citas')
-        .select('id, fecha, hora_inicio, estado, notas, negocio:negocios(id, nombre, slug, logo_url), servicio:servicios(id, nombre, duracion_min, precio_centimos)')
+        .select('id, fecha, hora_inicio, estado, negocio:negocios(id, nombre, slug, logo_url), servicio:servicios(id, nombre, duracion_min, precio_centimos)')
         .eq('cliente_id', usuario.id)
         .order('fecha', { ascending: false })
         .order('hora_inicio', { ascending: false });
@@ -69,10 +66,6 @@ export default function MisCitasPage() {
     const cita = citaACancelar;
     setMsg(null);
     setCancelandoId(cita.id);
-
-    // Silencia la notif que llegará por realtime/polling: somos NOSOTROS
-    // quienes cancelamos, no el negocio.
-    silenceNext(cita.id, 'cita_cancelada');
 
     const { error } = await supabase
       .from('citas')

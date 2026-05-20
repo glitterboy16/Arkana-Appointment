@@ -1,22 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Usuario, type Negocio, type RolUsuario } from '@/lib/supabase';
-import { logError } from '@/lib/errorLogger';
-
-/**
- * Borra TODAS las keys de notifs (cualquier versión) del navegador.
- * Inline aquí para evitar dependencia circular con NotificationsContext.
- */
-function clearAllNotifStorage() {
-  try {
-    const toRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('arkana.notifs.')) toRemove.push(k);
-    }
-    toRemove.forEach(k => localStorage.removeItem(k));
-  } catch { /* ignorar */ }
-}
 
 export interface SignUpNegocioData {
   email: string;
@@ -232,7 +216,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       console.error('[Arkana] signIn - error auth:', error);
-      await logError('auth.signin', error, { email });
       return { error: error.message };
     }
     if (!data.user || !data.session) return { error: 'No se pudo iniciar sesión.' };
@@ -266,10 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio }: SignUpNegocioData) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      await logError('auth.signup.negocio', error, { email });
-      return { error: error.message };
-    }
+    if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 
@@ -296,10 +276,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpCliente = async ({ email, password, nombre, telefono }: SignUpClienteData) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      await logError('auth.signup.cliente', error, { email });
-      return { error: error.message };
-    }
+    if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     if (!data.session) return { error: null, needsConfirmation: true };
 
@@ -319,9 +296,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    // Limpiar todas las keys de notificaciones para evitar arrastre entre sesiones
-    // cuando el mismo navegador alterna entre cuentas o roles.
-    clearAllNotifStorage();
     setSession(null);
     setUsuario(null);
     setNegocio(null);

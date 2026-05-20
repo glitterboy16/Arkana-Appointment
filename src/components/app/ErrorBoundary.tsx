@@ -1,9 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface Props {
   children: ReactNode;
-  /** Contexto humano para localizar la rama que falló en error_logs. */
+  /** Identificador de la rama que falló — usado para logs en consola. */
   contexto: string;
   fallback?: ReactNode;
 }
@@ -20,15 +19,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    void supabase.from('error_logs').insert({
-      contexto: `boundary.${this.props.contexto}`,
-      mensaje: error.message ?? 'Error desconocido',
-      detalle: {
-        stack: error.stack?.slice(0, 2000) ?? null,
-        componentStack: info.componentStack?.slice(0, 2000) ?? null,
-      },
-      url: typeof window !== 'undefined' ? window.location.pathname : null,
-    });
+    console.error(`[Arkana boundary:${this.props.contexto}]`, error, info.componentStack);
   }
 
   private handleReload = () => {

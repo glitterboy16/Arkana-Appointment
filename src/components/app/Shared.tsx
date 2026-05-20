@@ -186,7 +186,7 @@ export function Btn({ children, variant = 'primary', size = 'md', onClick, style
   const variants: Record<BtnVariant, CSSProperties> = {
     primary: { background: '#004AAD', color: '#FAFAFA', border: 'none' },
     accent:  { background: '#648DFF', color: '#FAFAFA', border: 'none' },
-    ghost:   { background: 'rgba(255,255,255,0.08)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.12)' },
+    ghost:   { background: 'var(--app-surface)', color: 'var(--app-text)', border: '1px solid var(--app-border)' },
     outline: { background: 'transparent', color: '#648DFF', border: '1px solid #648DFF' },
   };
   const sizes: Record<BtnSize, CSSProperties> = {

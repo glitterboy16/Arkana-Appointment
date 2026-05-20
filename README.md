@@ -358,4 +358,4 @@ Distribuido bajo licencia **MIT**. Consulta el archivo `LICENSE` para más infor
 
 ---
 
-> 💜 *Reservar una cita no debería ser más complicado que escanear un código.*
+> 🌊 *Reservar una cita no debería ser más complicado que escanear un código.*

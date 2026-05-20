@@ -20,6 +20,14 @@ const navBtnLeave = (e: MouseEvent<HTMLAnchorElement>) => {
   e.currentTarget.style.background = 'transparent';
   e.currentTarget.style.color = 'rgba(250,250,250,0.65)';
 };
+
+// La página pública es siempre dark; forzamos colores oscuros en los botones
+// "ghost" para que no se vuelvan invisibles cuando el usuario tiene modo claro.
+const ghostDarkStyle: CSSProperties = {
+  background: 'rgba(255,255,255,0.08)',
+  color: '#FAFAFA',
+  border: '1px solid rgba(255,255,255,0.12)',
+};
 import { format, addDays, getISODay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArkanaIcons, Btn, LogoArkana } from '@/components/app/Shared';
@@ -338,14 +346,24 @@ export default function ReservaPublicaPage() {
             ← Mis citas
           </Link>
         ) : usuario?.rol === 'negocio' ? (
-          <Link
-            to="/panel"
-            style={navBtnStyle}
-            onMouseEnter={navBtnHover}
-            onMouseLeave={navBtnLeave}
-          >
-            ← Volver al panel
-          </Link>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <Link
+              to="/panel"
+              style={{ ...navBtnStyle, marginLeft: 0 }}
+              onMouseEnter={navBtnHover}
+              onMouseLeave={navBtnLeave}
+            >
+              ← Volver al panel
+            </Link>
+            <Link
+              to="/panel/citas"
+              style={{ ...navBtnStyle, marginLeft: 0 }}
+              onMouseEnter={navBtnHover}
+              onMouseLeave={navBtnLeave}
+            >
+              ← Volver a Mis citas
+            </Link>
+          </div>
         ) : (
           <Link
             to="/"
@@ -515,7 +533,7 @@ export default function ReservaPublicaPage() {
                   )}
 
                   <div style={{ display: 'flex', gap: 10 }}>
-                    <Btn variant="ghost" size="lg" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center' }}>Atrás</Btn>
+                    <Btn variant="ghost" size="lg" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center', ...ghostDarkStyle }}>Atrás</Btn>
                     <Btn
                       variant="primary" size="lg"
                       onClick={() => selectedTime && setStep(3)}
@@ -585,7 +603,7 @@ export default function ReservaPublicaPage() {
               )}
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <Btn variant="ghost" size="lg" onClick={() => setStep(2)} style={{ flex: 1, justifyContent: 'center' }}>Atrás</Btn>
+                <Btn variant="ghost" size="lg" onClick={() => setStep(2)} style={{ flex: 1, justifyContent: 'center', ...ghostDarkStyle }}>Atrás</Btn>
                 <Btn
                   variant="accent" size="lg"
                   onClick={handleConfirmar}
@@ -617,7 +635,7 @@ export default function ReservaPublicaPage() {
                 <Btn
                   variant="ghost" size="md"
                   onClick={() => { setStep(1); setSelectedServicio(null); setSelectedTime(null); setForm({ nombre: '', telefono: '', email: '' }); }}
-                  style={{ display: 'inline-flex' }}
+                  style={{ display: 'inline-flex', ...ghostDarkStyle }}
                 >
                   Hacer otra reserva
                 </Btn>

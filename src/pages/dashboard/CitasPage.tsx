@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { BiCalendarEdit } from 'react-icons/bi';
 import { ArkanaIcons, Avatar, Badge, Btn, type AppointmentStatus } from '@/components/app/Shared';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNotifications } from '@/contexts/NotificationsContext';
 import { supabase, type Cita } from '@/lib/supabase';
 import { InlineLoader, Spinner } from '@/components/app/Spinner';
 import ConfirmModal from '@/components/app/ConfirmModal';
 import ReagendarModal from '@/components/app/ReagendarModal';
-import NuevaCitaModal from '@/components/app/NuevaCitaModal';
 
 interface CitaConServicio extends Cita {
   servicios: { nombre: string; duracion_min: number; precio_centimos: number } | null;
@@ -148,14 +147,13 @@ const TABS: { id: FilterId; label: string }[] = [
 
 export default function CitasPage() {
   const { negocio } = useAuth();
-  const { silenceNext } = useNotifications();
+  const navigate = useNavigate();
   const [citas, setCitas] = useState<CitaConServicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterId>('all');
   const [savingId, setSavingId] = useState<string | null>(null);
   const [citaACancelar, setCitaACancelar] = useState<CitaConServicio | null>(null);
   const [citaAReagendar, setCitaAReagendar] = useState<CitaConServicio | null>(null);
-  const [nuevaCitaOpen, setNuevaCitaOpen] = useState(false);
 
   const loadCitas = async () => {
     if (!negocio) { setLoading(false); return; }
@@ -179,9 +177,6 @@ export default function CitasPage() {
 
   const handleConfirmar = async (id: string) => {
     setSavingId(id);
-    // Si el negocio activa también el rol cliente o realtime rebota, evitamos
-    // que el negocio reciba su propia notificación.
-    silenceNext(id, 'cita_confirmada');
     const { error } = await supabase.from('citas').update({ estado: 'confirmed' }).eq('id', id);
     setSavingId(null);
     if (error) { toast.error('No se pudo confirmar la cita'); return; }
@@ -202,8 +197,6 @@ export default function CitasPage() {
     if (!citaACancelar) return;
     const id = citaACancelar.id;
     setSavingId(id);
-    // Es el negocio quien cancela: no nos auto-notifiquemos.
-    silenceNext(id, 'cita_cancelada');
     const { error } = await supabase.from('citas').update({ estado: 'cancelled' }).eq('id', id);
     setSavingId(null);
     setCitaACancelar(null);
@@ -216,7 +209,6 @@ export default function CitasPage() {
     if (!citaAReagendar) return;
     const id = citaAReagendar.id;
     setSavingId(id);
-    silenceNext(id, 'cita_reagendada');
     const horaConSec = hora.length === 5 ? `${hora}:00` : hora;
     const { error } = await supabase
       .from('citas')
@@ -248,7 +240,7 @@ export default function CitasPage() {
           <Btn
             variant="primary"
             size="sm"
-            onClick={() => setNuevaCitaOpen(true)}
+            onClick={() => negocio && navigate(`/n/${negocio.slug}?fromPanel=1`)}
             disabled={!negocio}
           >
             {ArkanaIcons.plus} Nueva cita
@@ -328,14 +320,6 @@ export default function CitasPage() {
         onConfirm={handleReagendarConfirmado}
         onCancel={() => { if (!savingId) setCitaAReagendar(null); }}
       />
-
-      {nuevaCitaOpen && negocio && (
-        <NuevaCitaModal
-          negocio={negocio}
-          onClose={() => setNuevaCitaOpen(false)}
-          onCreated={() => { void loadCitas(); }}
-        />
-      )}
     </div>
   );
 }

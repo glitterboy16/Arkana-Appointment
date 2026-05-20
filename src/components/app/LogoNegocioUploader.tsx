@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 import { BiCamera, BiTrash } from 'react-icons/bi';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { logError } from '@/lib/errorLogger';
 import { Spinner } from './Spinner';
 
 interface LogoNegocioUploaderProps {
@@ -41,7 +40,6 @@ export default function LogoNegocioUploader({ negocioId, logoUrl, nombre }: Logo
         .upload(path, file, { cacheControl: '3600', upsert: false });
 
       if (upErr) {
-        await logError('logo.upload', upErr, { negocioId });
         toast.error(`No se pudo subir: ${upErr.message}`);
         return;
       }
@@ -55,7 +53,6 @@ export default function LogoNegocioUploader({ negocioId, logoUrl, nombre }: Logo
         .eq('id', negocioId);
 
       if (updErr) {
-        await logError('logo.persist', updErr, { negocioId });
         toast.error(`Imagen subida pero no se pudo guardar: ${updErr.message}`);
         return;
       }

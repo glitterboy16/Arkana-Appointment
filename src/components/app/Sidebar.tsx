@@ -40,12 +40,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     { id: 'profile',      icon: ArkanaIcons.building, label: 'Perfil del negocio', path: '/panel/perfil' },
     { id: 'stats',        icon: ArkanaIcons.chart,    label: 'Estadísticas',       path: '/panel/estadisticas' },
     { id: 'qr',           icon: ArkanaIcons.qr,       label: 'Código QR',          path: '/panel/qr' },
-    {
-      id: 'public', icon: ArkanaIcons.eye, label: 'Vista pública',
-      section: 'ACCESOS RÁPIDOS',
-      path: negocio ? `/n/${negocio.slug}` : undefined,
-    },
-    { id: 'settings', icon: ArkanaIcons.settings, label: 'Configuración', path: '/panel/configuracion' },
+    { id: 'settings', icon: ArkanaIcons.settings, label: 'Configuración', section: 'ACCESOS RÁPIDOS', path: '/panel/configuracion' },
     {
       id: 'logout', icon: ArkanaIcons.logout, label: 'Cerrar sesión',
       action: () => setConfirmLogout(true),

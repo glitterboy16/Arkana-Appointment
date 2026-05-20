@@ -27,16 +27,6 @@ export interface Usuario {
   created_at: string;
 }
 
-export interface ErrorLog {
-  id: string;
-  contexto: string;
-  mensaje: string;
-  detalle: Record<string, unknown> | null;
-  usuario_id: string | null;
-  url: string | null;
-  created_at: string;
-}
-
 export interface Negocio {
   id: string;
   usuario_id: string;
@@ -85,6 +75,5 @@ export interface Cita {
   fecha: string;
   hora_inicio: string;
   estado: EstadoCita;
-  notas: string | null;
   created_at: string;
 }
