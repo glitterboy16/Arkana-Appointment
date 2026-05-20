@@ -1,4 +1,4 @@
-# 💜 Arkana Appointments — Reserva de citas con QR sin fricción
+# 🌊 Arkana Appointments — Reserva de citas con QR sin fricción
 
 ![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
@@ -8,7 +8,7 @@
 ![Vercel](https://img.shields.io/badge/Deploy-Vercel-000?logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-> 💜 **Arkana Appointments** es una aplicación web SaaS que digitaliza la gestión de citas para negocios de servicios (peluquerías, clínicas, estudios, talleres). Cada negocio recibe un **QR único** que sus clientes escanean para reservar sin necesidad de registrarse, mientras el negocio gestiona toda su agenda desde un panel moderno con notificaciones WhatsApp automáticas.
+> 🌊 **Arkana Appointments** es una aplicación web SaaS que digitaliza la gestión de citas para negocios de servicios (peluquerías, clínicas, estudios, talleres). Cada negocio recibe un **QR único** que sus clientes escanean para reservar sin necesidad de registrarse, mientras el negocio gestiona toda su agenda desde un panel moderno con notificaciones WhatsApp automáticas.
 
 ---
 
