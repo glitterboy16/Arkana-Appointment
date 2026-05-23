@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 
 const navBtnStyle: CSSProperties = {
@@ -132,6 +132,80 @@ function TimeSlot({ time, available, selected, onClick }: { time: string; availa
   );
 }
 
+interface HourBucket {
+  hour: string;          // "09"
+  label: string;         // "09:00"
+  slots: string[];       // ["09:00", "09:10", ...]
+  availableCount: number;
+}
+
+function HourSlot({
+  bucket, selected, expanded, onClick,
+}: {
+  bucket: HourBucket;
+  selected: boolean;
+  expanded: boolean;
+  onClick: () => void;
+}) {
+  const noneAvailable = bucket.availableCount === 0;
+  const single = bucket.slots.length === 1;
+  // Una hora "expandida" se distingue del estado "seleccionada" por un anillo
+  // exterior sutil; así el usuario sabe qué bucket está abierto incluso si
+  // todavía no ha elegido un minuto concreto.
+  const borderColor = selected
+    ? '#648DFF'
+    : expanded
+      ? 'rgba(100,141,255,0.55)'
+      : 'rgba(255,255,255,0.10)';
+  const background = selected
+    ? 'rgba(100,141,255,0.18)'
+    : expanded
+      ? 'rgba(100,141,255,0.08)'
+      : noneAvailable
+        ? 'rgba(255,255,255,0.02)'
+        : 'rgba(255,255,255,0.06)';
+  const color = selected
+    ? '#648DFF'
+    : noneAvailable
+      ? 'rgba(250,250,250,0.25)'
+      : '#FAFAFA';
+
+  return (
+    <button
+      type="button"
+      onClick={noneAvailable ? undefined : onClick}
+      aria-pressed={selected || expanded}
+      aria-expanded={single ? undefined : expanded}
+      style={{
+        position: 'relative',
+        padding: '12px 0 10px', borderRadius: 10, fontSize: 14, fontWeight: 700,
+        cursor: noneAvailable ? 'default' : 'pointer',
+        border: `1px solid ${borderColor}`,
+        background,
+        color,
+        transition: 'all 150ms ease', fontFamily: 'inherit',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+      }}
+    >
+      <span>{bucket.label}</span>
+      {!single && (
+        <span style={{
+          fontSize: 10, fontWeight: 500, letterSpacing: '0.04em',
+          color: noneAvailable
+            ? 'rgba(250,250,250,0.30)'
+            : selected
+              ? 'rgba(100,141,255,0.85)'
+              : 'rgba(250,250,250,0.45)',
+        }}>
+          {noneAvailable
+            ? 'Sin huecos'
+            : `${bucket.availableCount} ${bucket.availableCount === 1 ? 'hueco' : 'huecos'}`}
+        </span>
+      )}
+    </button>
+  );
+}
+
 type PageState = 'loading' | 'notfound' | 'booking' | 'done';
 
 export default function ReservaPublicaPage() {
@@ -154,6 +228,7 @@ export default function ReservaPublicaPage() {
   const [selectedServicio, setSelectedServicio] = useState<string | null>(null);
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [expandedHour, setExpandedHour] = useState<string | null>(null);
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [slots, setSlots] = useState<string[]>([]);
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '' });
@@ -218,6 +293,7 @@ export default function ReservaPublicaPage() {
     const newSlots = generateSlots(day.dispo.hora_inicio, day.dispo.hora_fin, servicio.duracion_min, tramosDelDia);
     setSlots(newSlots);
     setSelectedTime(null);
+    setExpandedHour(null);
 
     if (!negocio) return;
     supabase
@@ -230,6 +306,14 @@ export default function ReservaPublicaPage() {
         setOccupiedSlots(new Set((data ?? []).map((c: { hora_inicio: string }) => c.hora_inicio.slice(0, 5))));
       });
   }, [selectedServicio, selectedDayIdx, availableDays, servicios, negocio, tramosExcluidos]);
+
+  // Si el usuario vuelve atrás desde el paso 3 con una hora ya elegida,
+  // re-abrimos su bucket para que vea su selección destacada.
+  useEffect(() => {
+    if (selectedTime && !expandedHour) {
+      setExpandedHour(selectedTime.slice(0, 2));
+    }
+  }, [selectedTime, expandedHour]);
 
   const handleConfirmar = async () => {
     if (!negocio || !selectedServicio || !selectedTime || !availableDays[selectedDayIdx]) return;
@@ -263,6 +347,29 @@ export default function ReservaPublicaPage() {
 
   const servicio = servicios.find((s) => s.id === selectedServicio);
   const selectedDay = availableDays[selectedDayIdx];
+
+  // Agrupamos los slots por hora para que el selector muestre primero la
+  // hora "redonda" (09:00, 10:00…) y, al desplegarse, los minutos disponibles
+  // dentro de esa hora. Reduce el ruido visual cuando la duración del
+  // servicio es muy corta (10–15 min) y genera decenas de slots.
+  const hourBuckets = useMemo<HourBucket[]>(() => {
+    const map = new Map<string, HourBucket>();
+    for (const t of slots) {
+      const hour = t.slice(0, 2);
+      let bucket = map.get(hour);
+      if (!bucket) {
+        bucket = { hour, label: `${hour}:00`, slots: [], availableCount: 0 };
+        map.set(hour, bucket);
+      }
+      bucket.slots.push(t);
+      if (!occupiedSlots.has(t)) bucket.availableCount += 1;
+    }
+    return Array.from(map.values());
+  }, [slots, occupiedSlots]);
+
+  const expandedBucket = expandedHour
+    ? hourBuckets.find(b => b.hour === expandedHour) ?? null
+    : null;
 
   if (pageState === 'loading') {
     return <FullScreenLoader label="Cargando reserva…" />;
@@ -519,17 +626,69 @@ export default function ReservaPublicaPage() {
                       No hay huecos disponibles este día
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 20 }}>
-                      {slots.map((t) => (
-                        <TimeSlot
-                          key={t}
-                          time={t}
-                          available={!occupiedSlots.has(t)}
-                          selected={selectedTime === t}
-                          onClick={() => setSelectedTime(t)}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(82px, 1fr))',
+                        gap: 8,
+                        marginBottom: expandedBucket ? 12 : 20,
+                      }}>
+                        {hourBuckets.map((b) => (
+                          <HourSlot
+                            key={b.hour}
+                            bucket={b}
+                            selected={selectedTime ? selectedTime.startsWith(`${b.hour}:`) : false}
+                            expanded={expandedHour === b.hour}
+                            onClick={() => {
+                              if (b.slots.length === 1) {
+                                if (!occupiedSlots.has(b.slots[0])) {
+                                  setSelectedTime(b.slots[0]);
+                                  setExpandedHour(b.hour);
+                                }
+                                return;
+                              }
+                              setExpandedHour((prev) => (prev === b.hour ? null : b.hour));
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      {expandedBucket && expandedBucket.slots.length > 1 && (
+                        <div
+                          className="ark-page-fade"
+                          style={{
+                            marginBottom: 20,
+                            padding: '14px 16px',
+                            background: 'rgba(100,141,255,0.06)',
+                            border: '1px solid rgba(100,141,255,0.18)',
+                            borderRadius: 12,
+                          }}
+                        >
+                          <div style={{
+                            fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
+                            textTransform: 'uppercase', color: 'rgba(250,250,250,0.50)',
+                            marginBottom: 10,
+                          }}>
+                            Horarios a las {expandedBucket.label}
+                          </div>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(68px, 1fr))',
+                            gap: 8,
+                          }}>
+                            {expandedBucket.slots.map((t) => (
+                              <TimeSlot
+                                key={t}
+                                time={t}
+                                available={!occupiedSlots.has(t)}
+                                selected={selectedTime === t}
+                                onClick={() => setSelectedTime(t)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div style={{ display: 'flex', gap: 10 }}>

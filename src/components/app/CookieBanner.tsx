@@ -5,16 +5,26 @@ const STORAGE_KEY = 'arkana.cookies.consent.v1';
 
 type Consent = 'accepted' | 'rejected';
 
+// Compacto en desktop (tarjeta esquina inferior derecha), full-width sólo en
+// móviles estrechos donde apilar la columna ya es lo correcto. Evita que el
+// banner tape submit-buttons que viven al pie de los formularios largos.
+
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    let shouldShow = false;
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) setVisible(true);
+      shouldShow = !localStorage.getItem(STORAGE_KEY);
     } catch {
-      setVisible(true);
+      shouldShow = true;
     }
+    if (!shouldShow) return;
+    // Pequeño delay para no chocar con la animación de entrada del hero;
+    // así el banner se posa cuando el resto del contenido ya está colocado.
+    const t = window.setTimeout(() => { if (!cancelled) setVisible(true); }, 1100);
+    return () => { cancelled = true; window.clearTimeout(t); };
   }, []);
 
   const persist = (value: Consent) => {
@@ -33,75 +43,28 @@ export default function CookieBanner() {
       role="dialog"
       aria-live="polite"
       aria-label="Aviso de cookies"
-      style={{
-        position: 'fixed',
-        zIndex: 9999,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: 'clamp(14px, 3.5vw, 20px) clamp(16px, 4vw, 32px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + clamp(14px, 3.5vw, 20px))',
-        background: 'rgba(10, 10, 14, 0.94)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderTop: '1px solid rgba(255,255,255,0.10)',
-        boxShadow: '0 -8px 30px rgba(0,0,0,0.45)',
-        color: '#FAFAFA',
-        fontFamily: "'SF Pro Display','Inter',sans-serif",
-        fontSize: 13,
-        lineHeight: 1.55,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        flexWrap: 'wrap',
-      }}
+      className="ark-cookie-banner"
     >
-      <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+      <div className="ark-cookie-banner__copy">
         Usamos solo cookies técnicas necesarias para que la app funcione. No hay rastreo
         publicitario.{' '}
-        <Link
-          to="/privacidad"
-          style={{ color: '#648DFF', textDecoration: 'underline', textUnderlineOffset: 2 }}
-        >
+        <Link to="/privacidad" className="ark-cookie-banner__link">
           Más información
         </Link>
         .
       </div>
-      <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+      <div className="ark-cookie-banner__actions">
         <button
           type="button"
           onClick={() => persist('rejected')}
-          style={{
-            padding: '9px 16px',
-            borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.14)',
-            background: 'transparent',
-            color: 'rgba(250,250,250,0.85)',
-            fontFamily: 'inherit',
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          className="ark-cookie-banner__btn ark-cookie-banner__btn--ghost"
         >
           Solo necesarias
         </button>
         <button
           type="button"
           onClick={() => persist('accepted')}
-          style={{
-            padding: '9px 16px',
-            borderRadius: 8,
-            border: 'none',
-            background: '#648DFF',
-            color: '#FAFAFA',
-            fontFamily: 'inherit',
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          className="ark-cookie-banner__btn ark-cookie-banner__btn--primary"
         >
           Aceptar
         </button>

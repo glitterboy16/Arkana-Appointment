@@ -31,7 +31,7 @@ export function MinimalFooter() {
 
   return (
     <footer className="relative" style={{ fontFamily: "'SF Pro Display','SF Pro Text','Inter',sans-serif" }}>
-      <div className="mx-auto max-w-4xl border-white/10 md:border-x">
+      <div className="mx-auto max-w-4xl border-border md:border-x">
         <div className="grid max-w-4xl grid-cols-6 gap-6 p-4">
           <div className="col-span-6 flex flex-col gap-5 md:col-span-4">
             <a href="/" className="flex w-max items-center gap-2.5 no-underline">
@@ -51,7 +51,7 @@ export function MinimalFooter() {
               {socialLinks.map((item, i) => (
                 <a
                   key={i}
-                  className="rounded-md border border-white/10 p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  className="rounded-md border border-border p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   target="_blank"
                   rel="noreferrer noopener"
                   href={item.link}
@@ -91,7 +91,7 @@ export function MinimalFooter() {
             </div>
           </div>
         </div>
-        <div className="border-t border-white/10" />
+        <div className="border-t border-border" />
         <div className="flex max-w-4xl flex-col justify-between gap-2 pb-5 pt-4">
           <p className="text-center text-xs font-light text-muted-foreground">
             © {year} Arkana Appointments. Todos los derechos reservados.

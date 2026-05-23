@@ -70,10 +70,10 @@ export function Dashboard3D() {
 
       <div className="relative mx-auto max-w-6xl">
         <div className="mb-10 flex flex-col items-center gap-3 px-2 text-center md:mb-12">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+          <span className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
             Tu negocio de un solo vistazo
           </span>
-          <h2 className="bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text pb-2 text-[clamp(1.6rem,5.5vw,2rem)] font-bold leading-[1.18] tracking-[-0.01em] text-transparent md:pb-3 md:text-5xl">
+          <h2 className="pb-2 text-[clamp(1.6rem,5.5vw,2rem)] font-bold leading-[1.18] tracking-[-0.02em] text-foreground md:pb-3 md:text-5xl">
             Tu negocio en una sola pantalla
           </h2>
           <p className="max-w-xl text-sm text-muted-foreground sm:text-base md:text-lg">

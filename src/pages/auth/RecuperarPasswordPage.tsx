@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogoArkana } from '@/components/app/Shared';
-import { Spinner } from '@/components/app/Spinner';
+import { FullScreenLoader, Spinner } from '@/components/app/Spinner';
 import MessageBox from '@/components/app/MessageBox';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -32,7 +32,14 @@ export default function RecuperarPasswordPage() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true);
     });
-    return () => sub.subscription.unsubscribe();
+    // Si tras 4s no llega ningún evento, asumimos enlace caducado o
+    // mal copiado y revelamos la pantalla de "Enlace no válido" en lugar
+    // de dejar al usuario mirando un spinner.
+    const fallback = window.setTimeout(() => setReady(true), 4000);
+    return () => {
+      sub.subscription.unsubscribe();
+      window.clearTimeout(fallback);
+    };
   }, [session]);
 
   const ok = useMemo(() => contrasenaValida(pass) && pass === pass2, [pass, pass2]);
@@ -66,14 +73,7 @@ export default function RecuperarPasswordPage() {
   };
 
   if (!ready) {
-    return (
-      <div style={{
-        minHeight: '100vh', background: '#050A30',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Spinner size={28} />
-      </div>
-    );
+    return <FullScreenLoader label="Validando enlace…" />;
   }
 
   // Si llegamos aquí sin sesión, el enlace ya caducó o fue mal copiado.
@@ -148,7 +148,7 @@ export default function RecuperarPasswordPage() {
             required
           />
 
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(250,250,250,0.55)' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--app-muted)' }}>
             <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
             Mostrar contraseña
           </label>
@@ -173,32 +173,34 @@ export default function RecuperarPasswordPage() {
 }
 
 const pageStyle: CSSProperties = {
-  minHeight: '100vh', background: '#050A30',
+  minHeight: '100vh', background: 'var(--app-bg)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   padding: 24,
 };
 
 const cardStyle: CSSProperties = {
   width: '100%', maxWidth: 420,
-  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 16, padding: '28px 24px', backdropFilter: 'blur(12px)', color: '#FAFAFA',
+  background: 'var(--app-surface)', border: '1px solid var(--app-border)',
+  borderRadius: 16, padding: '28px 24px', backdropFilter: 'blur(12px)',
+  color: 'var(--app-text)',
 };
 
 const titleStyle: CSSProperties = {
   fontSize: 20, fontWeight: 700, margin: 0, marginBottom: 8,
   letterSpacing: '-0.01em', textAlign: 'center',
+  color: 'var(--app-text)',
   fontFamily: "'SF Pro Display','Inter',sans-serif",
 };
 
 const subtitleStyle: CSSProperties = {
-  fontSize: 13, color: 'rgba(250,250,250,0.55)', marginTop: 0, marginBottom: 18,
+  fontSize: 13, color: 'var(--app-muted)', marginTop: 0, marginBottom: 18,
   textAlign: 'center', lineHeight: 1.5,
 };
 
 const inputStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '11px 14px',
-  color: '#FAFAFA', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+  width: '100%', boxSizing: 'border-box', background: 'var(--app-input-bg)',
+  border: '1px solid var(--app-border)', borderRadius: 8, padding: '11px 14px',
+  color: 'var(--app-text)', fontSize: 14, fontFamily: 'inherit', outline: 'none',
 };
 
 const primaryBtnStyle: CSSProperties = {

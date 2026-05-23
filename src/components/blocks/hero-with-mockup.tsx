@@ -81,12 +81,10 @@ export function HeroWithMockup({
           <h1
             className={cn(
               'inline-block animate-appear opacity-0 [animation-delay:600ms]',
-              'bg-gradient-to-b from-foreground via-foreground/90 to-muted-foreground',
-              'bg-clip-text text-transparent',
+              'text-foreground',
               'text-4xl font-bold sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl',
-              'leading-[1.18] tracking-[-0.01em]',
+              'leading-[1.18] tracking-[-0.02em]',
               'pb-2 md:pb-3',
-              'drop-shadow-sm dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]',
             )}
           >
             {title}
