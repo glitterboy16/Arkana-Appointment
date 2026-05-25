@@ -104,34 +104,9 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: MessageType; text: string } | null>(null);
   const navigate = useNavigate();
-  const { signIn, signUpNegocio, signUpCliente, requestPasswordReset } = useAuth();
-  const [resetOpen, setResetOpen] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetSending, setResetSending] = useState(false);
-  const [resetMsg, setResetMsg] = useState<{ type: MessageType; text: string } | null>(null);
+  const { signIn, signUpNegocio, signUpCliente } = useAuth();
 
   const setError = (text: string) => setMessage({ type: 'err', text });
-  const setInfo  = (text: string) => setMessage({ type: 'ok',  text });
-
-  const handleResetSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetMsg(null);
-    if (!esEmailValido(resetEmail)) {
-      setResetMsg({ type: 'err', text: 'Introduce un email válido' });
-      return;
-    }
-    setResetSending(true);
-    const { error } = await requestPasswordReset(resetEmail);
-    setResetSending(false);
-    if (error) {
-      setResetMsg({ type: 'err', text: traducirErrorAuth(error) });
-      return;
-    }
-    setResetMsg({
-      type: 'ok',
-      text: 'Si el email existe, te hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja (y la carpeta de spam).',
-    });
-  };
 
   const reset = () => setMessage(null);
 
@@ -201,7 +176,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             telefono: telefonoNorm,
           });
           if (error) { setError(traducirErrorAuth(error)); return; }
-          if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
+          if (needsConfirmation) { navigate(`/verificar-email?email=${encodeURIComponent(form.email)}`); return; }
           navigate('/panel');
         } else {
           const { error, needsConfirmation } = await signUpCliente({
@@ -211,7 +186,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             telefono: telefonoNorm,
           });
           if (error) { setError(traducirErrorAuth(error)); return; }
-          if (needsConfirmation) { setInfo('Revisa tu email para confirmar la cuenta, luego inicia sesión.'); setMode('login'); return; }
+          if (needsConfirmation) { navigate(`/verificar-email?email=${encodeURIComponent(form.email)}`); return; }
           navigate('/app/buscar');
         }
       }
@@ -485,20 +460,14 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
 
               {mode === 'login' && (
                 <div style={{ textAlign: 'right', marginTop: 6 }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setResetEmail(form.email);
-                      setResetMsg(null);
-                      setResetOpen(true);
-                    }}
+                  <Link
+                    to="/recuperar-password"
                     style={{
-                      background: 'transparent', border: 'none', padding: 0,
-                      fontSize: 12, color: '#648DFF', cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: 12, color: '#648DFF', textDecoration: 'none', fontFamily: 'inherit',
                     }}
                   >
                     ¿Olvidaste tu contraseña?
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -545,84 +514,6 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
         </div>
       </div>
 
-      {resetOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Recuperar contraseña"
-          onClick={() => { if (!resetSending) setResetOpen(false); }}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(3,10,24,0.78)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 20, zIndex: 100,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%', maxWidth: 380,
-              background: '#0B1340', border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 14, padding: 24, color: '#FAFAFA',
-            }}
-          >
-            <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, marginBottom: 6, letterSpacing: '-0.01em' }}>
-              Recuperar contraseña
-            </h3>
-            <p style={{ fontSize: 13, color: 'rgba(250,250,250,0.55)', marginTop: 0, marginBottom: 16, lineHeight: 1.5 }}>
-              Introduce el email de tu cuenta y te enviaremos un enlace para
-              elegir una contraseña nueva.
-            </p>
-
-            {resetMsg && (
-              <MessageBox type={resetMsg.type} style={{ marginBottom: 14 }}>
-                {resetMsg.text}
-              </MessageBox>
-            )}
-
-            <form onSubmit={handleResetSubmit} noValidate>
-              <input
-                style={inputBase}
-                type="email"
-                value={resetEmail}
-                onChange={(e) => { setResetEmail(e.target.value); setResetMsg(null); }}
-                placeholder="correo@ejemplo.com"
-                autoComplete="email"
-                required
-                disabled={resetSending || resetMsg?.type === 'ok'}
-              />
-              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                <button
-                  type="button"
-                  onClick={() => { if (!resetSending) setResetOpen(false); }}
-                  disabled={resetSending}
-                  style={{
-                    flex: 1, padding: '11px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
-                    background: 'transparent', color: 'rgba(250,250,250,0.75)', fontSize: 13, fontWeight: 600,
-                    fontFamily: 'inherit', cursor: resetSending ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {resetMsg?.type === 'ok' ? 'Cerrar' : 'Cancelar'}
-                </button>
-                {resetMsg?.type !== 'ok' && (
-                  <button
-                    type="submit"
-                    disabled={resetSending}
-                    style={{
-                      flex: 2, padding: '11px 0', borderRadius: 8, border: 'none',
-                      background: '#004AAD', color: '#FAFAFA', fontSize: 13, fontWeight: 700,
-                      fontFamily: 'inherit', cursor: resetSending ? 'not-allowed' : 'pointer',
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    }}
-                  >
-                    {resetSending && <Spinner size={14} color="#FAFAFA" trackColor="rgba(250,250,250,0.35)" />}
-                    {resetSending ? 'Enviando…' : 'Enviar enlace'}
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -12,6 +12,8 @@ import { FullScreenLoader } from './components/app/Spinner';
 const InicioArkanaPage = lazy(() => import('./pages/arkana/InicioArkanaPage'));
 const AuthPage = lazy(() => import('./pages/auth/AuthPage'));
 const RecuperarPasswordPage = lazy(() => import('./pages/auth/RecuperarPasswordPage'));
+const NuevaPasswordPage = lazy(() => import('./pages/auth/NuevaPasswordPage'));
+const VerificarEmailPage = lazy(() => import('./pages/auth/VerificarEmailPage'));
 const ReservaPublicaPage = lazy(() => import('./pages/booking/ReservaPublicaPage'));
 
 // Panel del negocio
@@ -47,6 +49,8 @@ export default function App() {
             <Route path="/iniciarSesion" element={<AuthPage defaultMode="login" />} />
             <Route path="/registro" element={<AuthPage defaultMode="register" />} />
             <Route path="/recuperar-password" element={<RecuperarPasswordPage />} />
+            <Route path="/nueva-password" element={<NuevaPasswordPage />} />
+            <Route path="/verificar-email" element={<VerificarEmailPage />} />
             <Route path="/n/:slug" element={<ReservaPublicaPage />} />
             <Route path="/privacidad" element={<PrivacidadPage />} />
             <Route path="/terminos" element={<TerminosPage />} />

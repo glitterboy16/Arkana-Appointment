@@ -32,7 +32,7 @@ interface AuthCtx {
   changeEmail: (newEmail: string) => Promise<{ error: string | null }>;
   changePassword: (newPassword: string) => Promise<{ error: string | null }>;
   requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
-  resendVerification: () => Promise<{ error: string | null }>;
+  resendVerification: (email?: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -361,18 +361,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const requestPasswordReset = async (email: string) => {
     const redirectTo = typeof window !== 'undefined'
-      ? `${window.location.origin}/recuperar-password`
+      ? `${window.location.origin}/nueva-password`
       : undefined;
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) return { error: error.message };
     return { error: null };
   };
 
-  const resendVerification = async () => {
-    if (!session?.user?.email) return { error: 'No hay sesión activa.' };
+  const resendVerification = async (emailOverride?: string) => {
+    const targetEmail = emailOverride ?? session?.user?.email;
+    if (!targetEmail) return { error: 'Introduce tu email para reenviar el enlace.' };
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email: session.user.email,
+      email: targetEmail,
     });
     if (error) return { error: error.message };
     return { error: null };
