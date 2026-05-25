@@ -14,12 +14,51 @@ import MapPicker from '@/components/app/MapPicker';
 
 const CATEGORIAS = [
   { value: '', label: 'Sin categoría' },
+  // Salud y bienestar
+  { value: 'Clínica médica', label: 'Clínica médica' },
   { value: 'Clínica dental', label: 'Clínica dental' },
-  { value: 'Salón de belleza', label: 'Salón de belleza' },
-  { value: 'Spa / Bienestar', label: 'Spa / Bienestar' },
-  { value: 'Peluquería', label: 'Peluquería' },
   { value: 'Fisioterapia', label: 'Fisioterapia' },
-  { value: 'Consultoría', label: 'Consultoría' },
+  { value: 'Psicología', label: 'Psicología' },
+  { value: 'Nutrición y Dietética', label: 'Nutrición y Dietética' },
+  { value: 'Podología', label: 'Podología' },
+  { value: 'Óptica', label: 'Óptica' },
+  { value: 'Veterinaria', label: 'Veterinaria' },
+  // Belleza y estética
+  { value: 'Peluquería', label: 'Peluquería' },
+  { value: 'Barbería', label: 'Barbería' },
+  { value: 'Salón de belleza', label: 'Salón de belleza' },
+  { value: 'Uñas y Manicura', label: 'Uñas y Manicura' },
+  { value: 'Spa / Bienestar', label: 'Spa / Bienestar' },
+  { value: 'Maquillaje e Imagen', label: 'Maquillaje e Imagen' },
+  // Deporte y actividad física
+  { value: 'Entrenador Personal', label: 'Entrenador Personal' },
+  { value: 'Yoga y Meditación', label: 'Yoga y Meditación' },
+  { value: 'Pilates', label: 'Pilates' },
+  { value: 'Fisioterapia Deportiva', label: 'Fisioterapia Deportiva' },
+  // Consultoría y asesoría
+  { value: 'Consultoría Digital', label: 'Consultoría Digital' },
+  { value: 'Consultoría Jurídica', label: 'Consultoría Jurídica' },
+  { value: 'Asesoría Fiscal y Contable', label: 'Asesoría Fiscal y Contable' },
+  { value: 'Consultoría de Marketing', label: 'Consultoría de Marketing' },
+  { value: 'Consultoría de RRHH', label: 'Consultoría de RRHH' },
+  { value: 'Consultoría de Empresas', label: 'Consultoría de Empresas' },
+  // Formación
+  { value: 'Academia / Clases Particulares', label: 'Academia / Clases Particulares' },
+  { value: 'Formación Empresarial', label: 'Formación Empresarial' },
+  { value: 'Idiomas', label: 'Idiomas' },
+  // Servicios creativos y digitales
+  { value: 'Diseño Gráfico', label: 'Diseño Gráfico' },
+  { value: 'Fotografía y Vídeo', label: 'Fotografía y Vídeo' },
+  { value: 'Desarrollo Web', label: 'Desarrollo Web' },
+  { value: 'Arquitectura e Interiorismo', label: 'Arquitectura e Interiorismo' },
+  // Hogar y reformas
+  { value: 'Fontanería', label: 'Fontanería' },
+  { value: 'Electricidad', label: 'Electricidad' },
+  { value: 'Reformas y Construcción', label: 'Reformas y Construcción' },
+  // Otros servicios profesionales
+  { value: 'Inmobiliaria', label: 'Inmobiliaria' },
+  { value: 'Notaría / Gestoría', label: 'Notaría / Gestoría' },
+  { value: 'Seguros y Finanzas', label: 'Seguros y Finanzas' },
   { value: 'Otro', label: 'Otro' },
 ];
 
