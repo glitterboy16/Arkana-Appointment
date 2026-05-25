@@ -27,16 +27,6 @@ interface CreateState {
   nombreNegocio: string; // solo si rol === 'negocio'
 }
 
-function generarSlug(nombre: string): string {
-  return nombre
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .concat('-', Math.random().toString(36).slice(2, 6));
-}
 
 const ROL_BADGE: Record<RolUsuario, { bg: string; color: string; label: string }> = {
   cliente: { bg: 'rgba(100,141,255,0.15)', color: '#648DFF', label: 'Cliente' },
@@ -192,60 +182,22 @@ export default function AdminUsuariosPage() {
 
     setSavingId('__creating');
 
-    // Hacemos signUp con un cliente nuevo de Supabase para NO mover la sesión del admin actual.
-    // El usuario creado queda autenticado en ese cliente paralelo, pero no afecta a la sesión del admin.
-    const { createClient } = await import('@supabase/supabase-js');
-    const tmp = createClient(
-      import.meta.env.VITE_SUPABASE_URL as string,
-      import.meta.env.VITE_SUPABASE_ANON_KEY as string,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
-
-    const { data, error } = await tmp.auth.signUp({
-      email: creating.email,
-      password: creating.password,
+    const { error } = await supabase.rpc('admin_create_usuario', {
+      p_email: creating.email,
+      p_password: creating.password,
+      p_nombre: creating.nombre.trim(),
+      p_rol: creating.rol,
+      p_telefono: creating.telefono.trim() || null,
+      p_nombre_negocio: creating.nombreNegocio.trim() || null,
     });
-
-    if (error || !data.user) {
-      setSavingId(null);
-      toast.error(`No se pudo crear: ${error?.message ?? 'desconocido'}`);
-      return;
-    }
-
-    // Crear/actualizar la fila en public.usuarios con el rol que escogió el admin
-    const { error: errProfile } = await supabase.from('usuarios').upsert({
-      id: data.user.id,
-      email: creating.email,
-      nombre: creating.nombre.trim(),
-      rol: creating.rol,
-      telefono: creating.telefono.trim() || null,
-      eliminado: false,
-    });
-
-    if (errProfile) {
-      setSavingId(null);
-      toast.error(`Usuario creado en auth pero falló el perfil: ${errProfile.message}`);
-      return;
-    }
-
-    // Si el rol es 'negocio', creamos también la fila en `negocios` con su slug.
-    // Sin esto, el usuario podría loguearse pero su panel quedaría capado (sin perfil).
-    if (creating.rol === 'negocio') {
-      const slug = generarSlug(creating.nombreNegocio);
-      const { error: errNeg } = await supabase.from('negocios').insert({
-        usuario_id: data.user.id,
-        nombre: creating.nombreNegocio.trim(),
-        slug,
-      });
-
-      if (errNeg) {
-        setSavingId(null);
-        toast.error(`Usuario creado pero falló el negocio: ${errNeg.message}`);
-        return;
-      }
-    }
 
     setSavingId(null);
+
+    if (error) {
+      toast.error(`No se pudo crear: ${error.message}`);
+      return;
+    }
+
     setCreating(null);
     toast.success(`Usuario ${creating.email} creado`);
     void load();
