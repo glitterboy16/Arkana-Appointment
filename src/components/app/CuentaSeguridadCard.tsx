@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Spinner } from '@/components/app/Spinner';
 import { Btn } from '@/components/app/Shared';
 import MessageBox, { type MessageType } from '@/components/app/MessageBox';
-import { contrasenaValida, emailValido, PASSWORD_REQUISITOS_MSG } from '@/lib/validators';
+import { emailValido } from '@/lib/validators';
 
 // Tarjeta compartida por ConfiguracionPage (cliente) y
 // ConfiguracionNegocioPage (negocio) con las tres acciones de seguridad:
@@ -13,7 +13,7 @@ import { contrasenaValida, emailValido, PASSWORD_REQUISITOS_MSG } from '@/lib/va
 type Msg = { type: MessageType; text: string } | null;
 
 export default function CuentaSeguridadCard() {
-  const { session, emailVerificado, changeEmail, changePassword, resendVerification } = useAuth();
+  const { session, emailVerificado, changeEmail, resendVerification, requestPasswordReset } = useAuth();
   const emailActual = session?.user?.email ?? '';
 
   return (
@@ -70,25 +70,24 @@ export default function CuentaSeguridadCard() {
 
       <CollapsibleAction
         title="Cambiar contraseña"
-        description="Elige una nueva contraseña para tu cuenta."
-        submitLabel="Guardar contraseña"
-        onSubmit={async ({ pass, pass2 }) => {
-          if (!contrasenaValida(pass ?? '')) {
-            return { msg: { type: 'err', text: PASSWORD_REQUISITOS_MSG } };
-          }
-          if (pass !== pass2) {
-            return { msg: { type: 'err', text: 'Las contraseñas no coinciden.' } };
-          }
-          const { error } = await changePassword(pass);
+        description="Te enviaremos un enlace seguro a tu correo para elegir una nueva contraseña."
+        submitLabel="Enviar enlace"
+        onSubmit={async () => {
+          const { error } = await requestPasswordReset(emailActual);
           if (error) return { msg: { type: 'err', text: error } };
           return {
-            msg: { type: 'ok', text: 'Contraseña actualizada correctamente.' },
+            msg: {
+              type: 'ok',
+              text: `Hemos enviado un enlace a ${emailActual}. Pulsa el enlace en el correo para elegir una contraseña nueva.`,
+            },
             reset: true,
           };
         }}
       >
-        {(state, setState) => (
-          <CambioPasswordInputs state={state} setState={setState} />
+        {() => (
+          <p style={{ fontSize: 13, color: 'var(--app-muted)', margin: 0 }}>
+            Recibirás un email en <strong style={{ color: 'var(--app-text)' }}>{emailActual}</strong> con un enlace para cambiar tu contraseña.
+          </p>
         )}
       </CollapsibleAction>
     </section>
@@ -268,45 +267,6 @@ function CollapsibleAction({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Inputs del cambio de contraseña (dos campos + toggle mostrar)
-// ─────────────────────────────────────────────────────────────────
-
-function CambioPasswordInputs({
-  state,
-  setState,
-}: {
-  state: ActionState;
-  setState: (patch: ActionState) => void;
-}) {
-  const [show, setShow] = useState(false);
-  return (
-    <>
-      <input
-        style={inputStyle}
-        type={show ? 'text' : 'password'}
-        value={state.pass ?? ''}
-        onChange={(e) => setState({ pass: e.target.value })}
-        placeholder="Contraseña nueva"
-        autoComplete="new-password"
-        required
-      />
-      <input
-        style={inputStyle}
-        type={show ? 'text' : 'password'}
-        value={state.pass2 ?? ''}
-        onChange={(e) => setState({ pass2: e.target.value })}
-        placeholder="Repite la contraseña"
-        autoComplete="new-password"
-        required
-      />
-      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--app-muted)' }}>
-        <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
-        Mostrar contraseña
-      </label>
-    </>
-  );
-}
 
 function Divider() {
   return <div style={{ height: 1, background: 'var(--app-border)', margin: '18px 0' }} />;

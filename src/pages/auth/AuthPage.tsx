@@ -168,7 +168,7 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
         );
       } else {
         if (rol === 'negocio') {
-          const { error, needsConfirmation } = await signUpNegocio({
+          const { error } = await signUpNegocio({
             email: form.email,
             password: form.password,
             nombre: form.name.trim(),
@@ -176,18 +176,16 @@ export default function AuthPage({ defaultMode = 'login' }: AuthPageProps) {
             telefono: telefonoNorm,
           });
           if (error) { setError(traducirErrorAuth(error)); return; }
-          if (needsConfirmation) { navigate(`/verificar-email?email=${encodeURIComponent(form.email)}`); return; }
-          navigate('/panel');
+          navigate(`/verificar-email?email=${encodeURIComponent(form.email)}`);
         } else {
-          const { error, needsConfirmation } = await signUpCliente({
+          const { error } = await signUpCliente({
             email: form.email,
             password: form.password,
             nombre: form.name.trim(),
             telefono: telefonoNorm,
           });
           if (error) { setError(traducirErrorAuth(error)); return; }
-          if (needsConfirmation) { navigate(`/verificar-email?email=${encodeURIComponent(form.email)}`); return; }
-          navigate('/app/buscar');
+          navigate(`/verificar-email?email=${encodeURIComponent(form.email)}`);
         }
       }
     } finally {
