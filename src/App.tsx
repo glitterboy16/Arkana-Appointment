@@ -38,6 +38,9 @@ const AdminUsuariosPage = lazy(() => import('./pages/admin/AdminUsuariosPage'));
 // Legal
 const PrivacidadPage = lazy(() => import('./pages/legal/PrivacidadPage'));
 const TerminosPage = lazy(() => import('./pages/legal/TerminosPage'));
+const EstadoPage = lazy(() => import('./pages/legal/EstadoPage'));
+const SeguridadPage = lazy(() => import('./pages/legal/SeguridadPage'));
+const SobreNosotrosPage = lazy(() => import('./pages/legal/SobreNosotrosPage'));
 
 export default function App() {
   return (
@@ -54,6 +57,9 @@ export default function App() {
             <Route path="/n/:slug" element={<ReservaPublicaPage />} />
             <Route path="/privacidad" element={<PrivacidadPage />} />
             <Route path="/terminos" element={<TerminosPage />} />
+            <Route path="/estado" element={<EstadoPage />} />
+            <Route path="/seguridad" element={<SeguridadPage />} />
+            <Route path="/sobre-nosotros" element={<SobreNosotrosPage />} />
 
             <Route
               path="/panel"

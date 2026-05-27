@@ -7,7 +7,7 @@ export default function PrivacidadPage() {
       <p>
         Arkana Appointments (en adelante, “Arkana”) es responsable del tratamiento de los datos
         personales recogidos a través de esta plataforma. Puedes contactar con nosotros en{' '}
-        <a href="mailto:hola@arkana-appointments.com">hola@arkana-appointments.com</a>.
+        <a href="mailto:support@arkana-appointments.com">support@arkana-appointments.com</a>.
       </p>
 
       <h2>2. Datos que recogemos</h2>
@@ -53,7 +53,7 @@ export default function PrivacidadPage() {
       <p>
         Puedes ejercer en cualquier momento tus derechos de <strong>acceso, rectificación, supresión,
         oposición, limitación y portabilidad</strong> escribiendo a{' '}
-        <a href="mailto:privacidad@arkana-appointments.com">privacidad@arkana-appointments.com</a>.
+        <a href="mailto:support@arkana-appointments.com">support@arkana-appointments.com</a>.
         También puedes presentar una reclamación ante la Agencia Española de Protección de Datos
         (<a href="https://www.aepd.es" target="_blank" rel="noreferrer">aepd.es</a>).
       </p>

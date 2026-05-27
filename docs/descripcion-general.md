@@ -51,22 +51,10 @@ El alcance del Trabajo de Fin de Grado cubrirá la entrega de un **MVP** (produc
 | Panel de administrador (CRUD usuarios y negocios, métricas) | ✅ |
 | Notificaciones en tiempo real dentro de la app | ✅ |
 | Notificaciones por WhatsApp | 🔵 Pospuesto (roadmap) |
-| Interfaz multiidioma (i18n) | 🔵 Pospuesto (roadmap) — MVP entregado en español |
 | Diseño responsive (320 → 1920 px) | ✅ |
 | Tema claro y oscuro | ✅ |
-| Conformidad RGPD (privacidad, términos, cookies, derecho al olvido) | ✅ |
+| Conformidad RGPD (privacidad, términos, cookies) | ✅ |
 
-### Fuera de alcance (trabajo futuro)
-
-Las siguientes funcionalidades quedan documentadas como **mejoras futuras** y no forman parte de la entrega del MVP:
-
-- Gestión de múltiples empleados por negocio con agendas independientes.
-- Pasarela de pagos online (Stripe / Redsys).
-- Recordatorios automáticos por correo electrónico o push.
-- Sistema de reseñas y valoraciones de clientes.
-- Analíticas avanzadas e informes exportables para el negocio.
-- Integración con calendarios externos (Google Calendar, Outlook).
-- Aplicación móvil nativa.
 
 ## 1.5. Público objetivo
 

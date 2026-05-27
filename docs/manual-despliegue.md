@@ -10,7 +10,7 @@ El despliegue es automático: cada push a la rama `main` dispara un nuevo deploy
 
 | Rol | Email | Contraseña |
 |---|---|---|
-| Administrador (Tribunal 1) | `admin1@gmail.com` | `admin123` |
+| Administrador (Tribunal 1) | `admin@gmail.com` | `admin123` |
 | Administrador (Tribunal 2) | `admin2@gmail.com` | `admin123` |
 | Negocio (ejemplo) | `N-ejemplo@gmail.com` | `negocio123` |
 | Cliente (ejemplo) | `C-ejemplo@gmail.com` | `cliente123` |

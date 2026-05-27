@@ -59,6 +59,7 @@ export default function VerificarEmailPage() {
           type="button"
           onClick={handleResend}
           disabled={sending}
+          className="ark-auth-btn-outline"
           style={{
             ...secondaryBtnStyle,
             opacity: sending ? 0.7 : 1,
@@ -66,11 +67,11 @@ export default function VerificarEmailPage() {
             marginBottom: 12,
           }}
         >
-          {sending && <Spinner size={14} color="#648DFF" trackColor="rgba(100,141,255,0.3)" />}
+          {sending && <Spinner size={14} color="var(--app-accent,#648DFF)" trackColor="rgba(100,141,255,0.3)" />}
           {sending ? 'Enviando…' : 'Reenviar enlace de verificación'}
         </button>
 
-        <Link to="/iniciarSesion" style={linkStyle}>
+        <Link to="/iniciarSesion" className="ark-link-muted" style={linkStyle}>
           Volver al inicio de sesión
         </Link>
       </div>
@@ -113,7 +114,7 @@ const secondaryBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
   width: '100%', padding: '12px 0', borderRadius: 9,
   border: '1px solid rgba(100,141,255,0.35)',
-  background: 'rgba(100,141,255,0.08)', color: '#648DFF', fontSize: 14, fontWeight: 600,
+  background: 'rgba(100,141,255,0.08)', color: 'var(--app-accent, #648DFF)', fontSize: 14, fontWeight: 600,
   fontFamily: 'inherit', cursor: 'pointer', boxSizing: 'border-box',
 };
 

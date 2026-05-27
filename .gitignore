@@ -52,39 +52,21 @@ coverage/
 # Vercel
 .vercel
 
-# CLAUDE
-.claude
-
-# build
-dist/
-build/
-
-# entorno (MUY IMPORTANTE)
-.env
-.env.local
-.env.*.local
-
-# supabase
+# Supabase (local)
 .supabase/
+supabase/
 
-# otros
-design-export/
-
-# Playwright (local, no subir)
-.playwright-mcp/
+# Playwright
 playwright-report/
 test-results/
 playwright/.cache/
 
-# Supabase migrations / scripts (locales, se ejecutan desde el dashboard de Supabase)
-supabase/
-
-# Notas locales / scratch
+# Varios locales
+design-export/
 notas/
 scratch/
 TODO.md
 NOTES.md
-CLAUDE.md
 
 # Backups y temporales
 *.bak
@@ -93,6 +75,6 @@ CLAUDE.md
 *.swp
 *~
 
-# Archivos del sistema operativo (extra)
+# Sistema operativo (extra)
 desktop.ini
 $RECYCLE.BIN/

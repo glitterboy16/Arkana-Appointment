@@ -69,6 +69,7 @@ export default function RecuperarPasswordPage() {
             <button
               type="submit"
               disabled={sending}
+              className="ark-auth-btn-primary"
               style={{
                 ...primaryBtnStyle,
                 opacity: sending ? 0.7 : 1,
@@ -84,6 +85,7 @@ export default function RecuperarPasswordPage() {
 
         <Link
           to="/iniciarSesion"
+          className="ark-link-muted"
           style={{ ...linkBtnStyle, marginTop: message?.type === 'ok' ? 0 : 16 }}
         >
           {message?.type === 'ok' ? 'Volver al inicio de sesión' : '← Volver'}
@@ -126,7 +128,7 @@ const inputStyle: CSSProperties = {
 const primaryBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
   width: '100%', padding: '12px 0', borderRadius: 9, border: 'none',
-  background: '#004AAD', color: '#FAFAFA', fontSize: 14, fontWeight: 700,
+  background: 'var(--app-primary, #004AAD)', color: 'var(--app-text, #FAFAFA)', fontSize: 14, fontWeight: 700,
   fontFamily: 'inherit', cursor: 'pointer', textDecoration: 'none',
   textAlign: 'center', boxSizing: 'border-box',
 };

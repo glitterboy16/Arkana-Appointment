@@ -14,14 +14,14 @@
 
 ## 🌍 Descripción general
 
-Arkana resuelve un problema concreto: **los pequeños negocios pierden citas porque sus clientes no quieren bajar otra app más**. La solución es un flujo radicalmente simple: el cliente escanea el QR pegado en el local, ve disponibilidad real en el móvil y reserva en menos de 30 segundos. El negocio recibe la cita por WhatsApp y la gestiona desde un dashboard pensado para usarse desde el móvil del mostrador.
+Arkana resuelve un problema concreto: **los pequeños negocios pierden citas porque sus clientes no quieren bajar otra app más**. La solución es un flujo radicalmente simple: el cliente escanea el QR pegado en el local, ve disponibilidad real en el móvil y reserva en menos de 30 segundos. El negocio recibe la cita por WhatsApp y la gestiona desde un dashboard pensado para usarse desde el móvil o odenador del mostrador.
 
 🔹 **Frontend:** React 19 + Vite 7 + TypeScript + TailwindCSS 4
 🔹 **Backend:** Supabase (PostgreSQL + Auth + Storage + Edge Functions)
 🔹 **WhatsApp:** Evolution API v2.3.7 desplegada en Railway sobre Baileys
 🔹 **Mapas:** Mapbox GL para ubicación geográfica del negocio
-🔹 **Diseño:** dark-first con glassmorphism, inspirado en Linear y Raycast
-🔹 **Idiomas:** español por defecto, con i18next preparado para multi-idioma
+🔹 **Diseño:** inspirado en Linear y Raycast
+🔹 **Idiomas:** español por defecto.
 🔹 **Objetivo:** SaaS multi-negocio con panel cliente, panel negocio y panel admin
 
 ---
@@ -119,7 +119,7 @@ VITE_MAPBOX_TOKEN="pk.tu-token-publico-de-mapbox"
 npm run dev
 ```
 
-El proyecto se abrirá en: **http://localhost:5173**
+El proyecto se abrirá en: **http://localhost**
 
 ---
 

@@ -67,7 +67,7 @@ export default function NuevaPasswordPage() {
             El enlace para restablecer tu contraseña ha caducado o ya se ha usado.
             Vuelve a pedirlo desde la pantalla de inicio de sesión.
           </p>
-          <Link to="/recuperar-password" style={primaryBtnStyle}>Pedir nuevo enlace</Link>
+          <Link to="/recuperar-password" className="ark-auth-btn-primary" style={primaryBtnStyle}>Pedir nuevo enlace</Link>
         </div>
       </div>
     );
@@ -84,7 +84,7 @@ export default function NuevaPasswordPage() {
           <p style={subtitleStyle}>
             Tu contraseña se ha cambiado correctamente. Ya puedes iniciar sesión con la nueva.
           </p>
-          <button onClick={handleVolver} style={primaryBtnStyle}>Ir a iniciar sesión</button>
+          <button onClick={handleVolver} className="ark-auth-btn-primary" style={primaryBtnStyle}>Ir a iniciar sesión</button>
         </div>
       </div>
     );
@@ -122,13 +122,15 @@ export default function NuevaPasswordPage() {
             autoComplete="new-password"
             required
           />
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--app-muted)' }}>
-            <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--app-muted)', cursor: 'pointer', userSelect: 'none' }}>
+            <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)}
+              style={{ accentColor: 'var(--app-accent, #648DFF)', width: 14, height: 14, cursor: 'pointer' }} />
             Mostrar contraseña
           </label>
           <button
             type="submit"
             disabled={loading || !ok}
+            className="ark-auth-btn-primary"
             style={{
               ...primaryBtnStyle,
               opacity: loading || !ok ? 0.7 : 1,
@@ -178,7 +180,7 @@ const inputStyle: CSSProperties = {
 const primaryBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
   width: '100%', padding: '12px 0', borderRadius: 9, border: 'none',
-  background: '#004AAD', color: '#FAFAFA', fontSize: 14, fontWeight: 700,
+  background: 'var(--app-primary, #004AAD)', color: 'var(--app-text, #FAFAFA)', fontSize: 14, fontWeight: 700,
   fontFamily: 'inherit', cursor: 'pointer', textDecoration: 'none',
   textAlign: 'center', boxSizing: 'border-box',
 };
