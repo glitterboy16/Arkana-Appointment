@@ -436,9 +436,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resendVerification = async (emailOverride?: string) => {
     const targetEmail = emailOverride ?? session?.user?.email;
     if (!targetEmail) return { error: 'Introduce tu email para reenviar el enlace.' };
+    const redirectPath = usuario?.rol === 'cliente' ? '/app/buscar' : '/panel';
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: targetEmail,
+      options: { emailRedirectTo: `${window.location.origin}${redirectPath}` },
     });
     if (error) return { error: error.message };
     return { error: null };
