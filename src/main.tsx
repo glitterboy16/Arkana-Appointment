@@ -8,7 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 
 Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
+  dsn: 'https://f8083f4a4fbd946a87357916ccdd8799@o4511468672909312.ingest.de.sentry.io/4511468682018896',
   environment: import.meta.env.MODE,
   integrations: [Sentry.browserTracingIntegration()],
   tracesSampleRate: import.meta.env.PROD ? 0.2 : 0,
