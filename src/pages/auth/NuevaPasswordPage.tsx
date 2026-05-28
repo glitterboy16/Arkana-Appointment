@@ -98,7 +98,7 @@ export default function NuevaPasswordPage() {
         </div>
         <h1 style={titleStyle}>Elige una contraseña nueva</h1>
         <p style={subtitleStyle}>
-          Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
+          Mínimo 8 caracteres, una mayúscula, una minúscula y un número.
         </p>
 
         {error && <MessageBox type="err" style={{ marginBottom: 14 }}>{error}</MessageBox>}
@@ -114,7 +114,12 @@ export default function NuevaPasswordPage() {
             required
           />
           <input
-            style={inputStyle}
+            style={{
+              ...inputStyle,
+              borderColor: pass2.length > 0
+                ? pass === pass2 ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)'
+                : undefined,
+            }}
             type={show ? 'text' : 'password'}
             value={pass2}
             onChange={(e) => { setPass2(e.target.value); setError(null); }}
@@ -122,6 +127,11 @@ export default function NuevaPasswordPage() {
             autoComplete="new-password"
             required
           />
+          {pass2.length > 0 && (
+            <p style={{ margin: '-4px 0 0', fontSize: 11, color: pass === pass2 ? '#22C55E' : '#EF4444' }}>
+              {pass === pass2 ? '✓ Las contraseñas coinciden' : 'Las contraseñas no coinciden'}
+            </p>
+          )}
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--app-muted)', cursor: 'pointer', userSelect: 'none' }}>
             <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)}
               style={{ accentColor: 'var(--app-accent, #648DFF)', width: 14, height: 14, cursor: 'pointer' }} />

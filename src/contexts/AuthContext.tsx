@@ -333,7 +333,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
     // Sin sesión → Supabase tiene "Confirm email" activo; el perfil se crea al primer login.
-    if (!data.session) return { error: null, needsConfirmation: true };
+    if (!data.session) {
+      if (data.user.email_confirmed_at) {
+        return { error: 'Este email ya está registrado. Inicia sesión o recupera tu contraseña.' };
+      }
+      return { error: null, needsConfirmation: true };
+    }
 
     const token = data.session.access_token;
 
@@ -366,7 +371,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
-    if (!data.session) return { error: null, needsConfirmation: true };
+    if (!data.session) {
+      if (data.user.email_confirmed_at) {
+        return { error: 'Este email ya está registrado. Inicia sesión o recupera tu contraseña.' };
+      }
+      return { error: null, needsConfirmation: true };
+    }
 
     const token = data.session.access_token;
 
