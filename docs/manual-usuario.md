@@ -1,3 +1,17 @@
+# Arkana Appointments
+
+## Manual de Usuario
+
+---
+
+**Autor:** Ángel Andrés Villorina Cambero
+**Ciclo formativo:** DAW2-A
+**Proyecto:** Proyecto Final de Grado
+**Centro educativo:** IES Albarregas
+**Lugar y fecha:** Mérida, Badajoz — Junio 2026
+
+---
+
 # Manual de usuario
 
 Guía práctica de uso de Arkana Appointments para los tres perfiles de la plataforma: **cliente**, **negocio** y **administrador**.
@@ -108,9 +122,6 @@ Sí, desde **Configuración** dentro de la app (tanto en el portal de cliente co
 
 **¿Por qué me pide verificar el email?**
 Es necesario confirmar el correo antes de acceder a la app. Revisa tu bandeja de entrada (y la carpeta de spam) tras registrarte.
-
-**¿Puedo cambiar el idioma?**
-La app se entrega íntegramente en español. El soporte multiidioma está pospuesto.
 
 **¿Qué pasa si elimino mi cuenta?**
 Se borran de forma irreversible todos tus datos: cuenta de acceso, perfil, negocios (si eres negocio), servicios, horarios, citas y fotos. Equivale al **derecho al olvido** del RGPD.

@@ -1,3 +1,17 @@
+# Arkana Appointments
+
+## Manual Técnico
+
+---
+
+**Autor:** Ángel Andrés Villorina Cambero
+**Ciclo formativo:** DAW2-A
+**Proyecto:** Proyecto Final de Grado
+**Centro educativo:** IES Albarregas
+**Lugar y fecha:** Mérida, Badajoz — Junio 2026
+
+---
+
 # Manual técnico
 
 Documento de referencia para el tribunal y para futuros desarrolladores. Describe el stack, la base de datos, la estructura del código, los requisitos cubiertos y las acciones disponibles por rol.

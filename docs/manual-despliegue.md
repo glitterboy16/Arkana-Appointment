@@ -1,3 +1,17 @@
+# Arkana Appointments
+
+## Manual de Despliegue
+
+---
+
+**Autor:** Ángel Andrés Villorina Cambero
+**Ciclo formativo:** DAW2-A
+**Proyecto:** Proyecto Final de Grado
+**Centro educativo:** IES Albarregas
+**Lugar y fecha:** Mérida, Badajoz — Junio 2026
+
+---
+
 # Manual de despliegue
 
 ## URL de la aplicación
@@ -46,22 +60,14 @@ VITE_MAPBOX_TOKEN="pk.<tu-token-de-mapbox>"
 
 ### 3. Base de datos
 
-En el proyecto de Supabase, abrir el **SQL Editor** y ejecutar **en orden** las migraciones de la carpeta `supabase/migrations/` (no están en el repo por estar en `.gitignore`; se distribuyen aparte). El número de migración indica el orden:
+En el proyecto de Supabase, abrir el **SQL Editor** y ejecutar **en orden** las migraciones de la carpeta `supabase/migrations/`. El número de archivo indica el orden:
 
-```
-001_schema_inicial.sql
-002_perfil_cliente.sql
-003_fix_rls_y_perfil_cliente.sql
-004_destrabar_todo_dev.sql
-005_horarios_excepciones_y_galeria.sql
-006_activar_realtime_citas.sql
-007_ubicacion_negocio.sql
-008_admin_panel.sql
-009_fix_dia_semana_check.sql
-010_buckets_imagenes.sql
-011_indices_rendimiento_y_completed.sql   # ALTER TYPE en un run, índices en otro
-012_admin_delete_usuario.sql
-```
+| Archivo | Contenido |
+|---|---|
+| `001_esquema_completo.sql` | Columnas, tablas auxiliares, RLS, Storage y Realtime |
+| `002_admin_panel.sql` | Rol admin, RPCs y usuario administrador inicial |
+| `003_whatsapp_notificaciones.sql` | Opt-in WhatsApp, log de envíos y notificaciones persistentes |
+| `004_unique_slot.sql` | Índice único que impide solapamiento de citas activas |
 
 ### 4. Despliegue en Vercel
 

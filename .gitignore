@@ -52,9 +52,10 @@ coverage/
 # Vercel
 .vercel
 
-# Supabase (local)
+# Supabase (local dev — no commitear estado local)
 .supabase/
-supabase/
+supabase/.branches/
+supabase/.temp/
 
 # Playwright
 playwright-report/
