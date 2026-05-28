@@ -27,7 +27,7 @@ export default function CuentaSeguridadCard() {
         verificado={emailVerificado}
         onResend={async () => {
           const { error } = await resendVerification();
-          if (error) { toast.error(`No se pudo reenviar: ${error}`); return; }
+          if (error) { toast.error(error); return; }
           toast.success('Email de verificación reenviado');
         }}
       />

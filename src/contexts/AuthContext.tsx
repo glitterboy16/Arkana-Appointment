@@ -411,7 +411,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const changeEmail = async (newEmail: string) => {
     const { error } = await supabase.auth.updateUser({ email: newEmail });
-    if (error) return { error: error.message };
+    if (error) {
+      const msg = error.message;
+      if (msg.includes('already been registered') || msg.includes('already registered')) return { error: 'Ese correo ya está en uso por otra cuenta.' };
+      if (msg.includes('invalid') || msg.includes('valid email')) return { error: 'El formato del correo no es válido.' };
+      if (msg.includes('rate limit') || msg.includes('too many')) return { error: 'Demasiados intentos. Espera unos minutos.' };
+      if (msg.includes('Error sending') || msg.includes('sending email')) return { error: 'No se pudo enviar el correo de confirmación. Inténtalo en unos minutos.' };
+      return { error: 'No se pudo actualizar el correo. Inténtalo de nuevo.' };
+    }
     // Importante: Supabase no aplica el cambio hasta que el usuario confirma
     // desde el correo nuevo. Hasta entonces, la sesión sigue con el email
     // viejo. Por eso no actualizamos `usuario` aquí.
@@ -420,7 +427,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const changePassword = async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) return { error: error.message };
+    if (error) return { error: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.' };
     return { error: null };
   };
 
@@ -429,7 +436,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? `${window.location.origin}/nueva-password`
       : undefined;
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) return { error: error.message };
+    if (error) return { error: 'No se pudo enviar el enlace. Inténtalo de nuevo.' };
     return { error: null };
   };
 
@@ -442,7 +449,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: targetEmail,
       options: { emailRedirectTo: `${window.location.origin}${redirectPath}` },
     });
-    if (error) return { error: error.message };
+    if (error) return { error: 'No se pudo reenviar el email. Inténtalo de nuevo.' };
     return { error: null };
   };
 
