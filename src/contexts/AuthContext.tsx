@@ -204,10 +204,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       if (session?.user) {
         const token = session.access_token;
-        const [usr, neg] = await Promise.all([
+        let [usr, neg] = await Promise.all([
           fetchUsuario(session.user.id, token),
           fetchNegocio(session.user.id, token),
         ]);
+        // Primer acceso tras confirmar email: el perfil no existe aún porque
+        // signUp retornó sin sesión y lo saltó. Lo recreamos desde user_metadata.
+        if (!usr && session.user.email_confirmed_at) {
+          const meta = session.user.user_metadata as {
+            nombre?: string; rol?: RolUsuario; telefono?: string; nombreNegocio?: string;
+          } | undefined;
+          if (meta?.nombre && meta?.rol) {
+            const { data: newUsr } = await guardarUsuario(
+              { id: session.user.id, email: session.user.email ?? '', nombre: meta.nombre, rol: meta.rol, telefono: meta.telefono ?? null },
+              token,
+            );
+            if (newUsr) {
+              usr = newUsr;
+              if (meta.rol === 'negocio' && meta.nombreNegocio && !neg) {
+                const slug = generarSlug(meta.nombreNegocio);
+                const negResult = await postgrest<Negocio>('negocios', {
+                  method: 'POST',
+                  body: JSON.stringify({ usuario_id: session.user.id, nombre: meta.nombreNegocio, slug, telefono: meta.telefono ?? null }),
+                }, token);
+                neg = negResult.data;
+              }
+            }
+          }
+        }
         if (cancelled) return;
         setUsuario(usr);
         setNegocio(neg);
@@ -301,7 +325,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpNegocio = async ({ email, password, nombre, nombreNegocio, telefono }: SignUpNegocioData) => {
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { nombre, rol: 'negocio', telefono: telefono || null, nombreNegocio } },
+      options: {
+        data: { nombre, rol: 'negocio', telefono: telefono || null, nombreNegocio },
+        emailRedirectTo: `${window.location.origin}/panel`,
+      },
     });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
@@ -332,7 +359,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpCliente = async ({ email, password, nombre, telefono }: SignUpClienteData) => {
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { nombre, rol: 'cliente', telefono: telefono || null } },
+      options: {
+        data: { nombre, rol: 'cliente', telefono: telefono || null },
+        emailRedirectTo: `${window.location.origin}/app/buscar`,
+      },
     });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'No se pudo crear el usuario.' };
