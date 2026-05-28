@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
@@ -6,14 +5,6 @@ import './index.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
-
-Sentry.init({
-  dsn: 'https://f8083f4a4fbd946a87357916ccdd8799@o4511468672909312.ingest.de.sentry.io/4511468682018896',
-  environment: import.meta.env.MODE,
-  integrations: [Sentry.browserTracingIntegration()],
-  tracesSampleRate: import.meta.env.PROD ? 0.2 : 0,
-  enabled: import.meta.env.PROD,
-});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
