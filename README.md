@@ -138,7 +138,6 @@ El proyecto se abrirá en: **http://localhost**
 | `citas` | 18 | Reservas con cliente (registrado o anónimo), servicio, fecha y estado |
 | `negocio_fotos` | 2 | Galería de imágenes del negocio (Supabase Storage) |
 | `whatsapp_log` | 9 | Registro de cada notificación WhatsApp enviada (estado, error, message_id) |
-| `error_logs` | 4 | Errores de cliente capturados por el ErrorBoundary global |
 
 
 ### Storage Buckets
@@ -244,7 +243,6 @@ El proyecto se abrirá en: **http://localhost**
 ### 🔒 Seguridad y robustez
 - ✅ Cabeceras de seguridad estrictas vía `vercel.json` (CSP, HSTS, X-Frame-Options, Permissions-Policy)
 - ✅ Service worker desactivado para evitar caché agresivo en updates
-- ✅ ErrorBoundary global con persistencia en BBDD (`error_logs`)
 - ✅ Validación tipada de formularios con Zod
 - ✅ Tipos de BBDD generados desde Supabase (`database.types.ts`)
 
