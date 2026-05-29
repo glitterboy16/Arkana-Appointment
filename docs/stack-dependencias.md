@@ -41,7 +41,6 @@ Arkana Appointments se construye sobre un stack **moderno, tipado y gratuito en 
 | `date-fns` | 4.x | Formateo y cálculo de fechas en español. |
 | `react-hot-toast` | 2.x | Feedback inmediato de acciones sin bloquear UI. |
 | `react-qr-code` | 2.x | Generación del código QR con logo. |
-| `i18next` + `react-i18next` + `i18next-browser-languagedetector` | 25.x / 16.x / 8.x | Infraestructura i18n lista; MVP entregado en español. |
 | `@radix-ui/react-accordion`, `react-dialog`, `react-navigation-menu`, `react-slot`, `react-icons` | 1.x | Primitivos accesibles para accordion, sheet, modales y nav. |
 | `class-variance-authority` + `clsx` + `tailwind-merge` | — | Helpers para variantes de clases y merge de Tailwind. |
 
@@ -80,21 +79,7 @@ Arkana Appointments se construye sobre un stack **moderno, tipado y gratuito en 
 |---|---|---|
 | **Vercel** | CI/CD, hosting y previews por rama. | ✅ Activo |
 | **Mapbox** | Mapas interactivos (token público restringido por dominio). | ✅ Activo |
-| **Evolution API** (Railway) | Notificaciones WhatsApp vía Baileys. Puente hasta tener API oficial Meta. | ✅ Activo |
-| **Sentry** | Captura de errores JS en cliente. | 🔵 Próximamente |
-| **Betterstack** | Uptime monitoring (sin npm, solo dashboard). | 🔵 Próximamente |
-| **Umami Analytics** | Analíticas web sin cookies, cumple RGPD (script en `index.html`). | 🔵 Próximamente |
-
----
-
-## Infraestructura y despliegue
-
-| Componente | Proveedor | Plan |
-|---|---|---|
-| Frontend | Vercel | Hobby (gratuito) |
-| Backend / BD | Supabase | Free tier (EU) |
-| WhatsApp | Railway | ~5 USD/mes |
-| Dominio | `www.arkana-appointments.com` | Gestionado externamente |
+| **Evolution API** (Railway) | Notificaciones WhatsApp vía Baileys. Puente hasta tener API oficial Meta. | ✅ 
 
 ---
 

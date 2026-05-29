@@ -4,7 +4,7 @@ Los requisitos funcionales describen **qué hace** el sistema. Se agrupan por m�
 
 > · ✅ Entregado en el MVP
 > · 🟡 Entregado de forma parcial (con notas)
-> · 🔵 Pospuesto a roadmap post-MVP
+> · 🔵 Pospuesto
 
 ## 1.1. Módulo de autenticación y usuarios
 

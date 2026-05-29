@@ -27,7 +27,7 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 |---|---|---|
 | RNF-06 | Toda la comunicación va por HTTPS (forzado por Vercel + HSTS). | ✅ |
 | RNF-07 | Las contraseñas se almacenan con bcrypt gestionado por Supabase Auth. | ✅ |
-| RNF-08 | RLS activa en tablas críticas; operaciones admin ejecutadas con `SECURITY DEFINER`. | 🟡 Políticas endurecidas en roadmap. |
+| RNF-08 | RLS activa en tablas críticas; operaciones admin ejecutadas con `SECURITY DEFINER`. | 
 | RNF-09 | Las páginas privadas verifican sesión y email confirmado antes de mostrar contenido. | ✅ `AppLayout`, `ClienteLayout` y `AdminLayout` con guardas de rol + email. |
 | RNF-10 | Las claves privadas no llegan al navegador. Solo se exponen las claves públicas de Supabase y Mapbox. | ✅ |
 | RNF-11 | Archivos con datos sensibles (`.env`, configuración interna) excluidos del repositorio. | ✅ |
@@ -48,8 +48,7 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 | RNF-19 | Flujo de reserva en ≤ 5 pasos desde el QR. | ✅ QR → servicio → fecha/hora → datos → confirmación (4 pasos). |
 | RNF-20 | WCAG 2.1 nivel AA en contraste, navegación por teclado y etiquetas semánticas. | 🟡 Contraste y semántica básica cubiertos; auditoría formal en roadmap. |
 | RNF-21 | Mensajes de error comprensibles, sin trazas técnicas. | ✅ |
-| RNF-22 | Soporte multiidioma (español + inglés). | 🔵 MVP en español; infraestructura i18n lista. |
-| RNF-23 | Tema claro y oscuro en toda la app. | ✅ |
+| RNF-22 | Tema claro y oscuro en toda la app. | ✅ |
 
 ---
 
@@ -57,9 +56,9 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 
 | ID | Requisito | Métrica | Estado |
 |---|---|---|---|
-| RNF-24 | Disponibilidad mensual del servicio. | ≥ 99 % | ✅ Uptime heredado de Vercel + Supabase. |
-| RNF-25 | Degradación con elegancia: operación fallida → mensaje de error sin romper la sesión. | — | ✅ |
-| RNF-26 | Backups automáticos de la base de datos. | Diario, 7 días | ✅ Plan gratuito de Supabase. |
+| RNF-23 | Disponibilidad mensual del servicio. | ≥ 99 % | ✅ Uptime heredado de Vercel + Supabase. |
+| RNF-24 | Degradación con elegancia: operación fallida → mensaje de error sin romper la sesión. | — | ✅ |
+| RNF-25 | Backups automáticos de la base de datos. | Diario, 7 días | ✅ Plan gratuito de Supabase. |
 
 ---
 
@@ -67,11 +66,11 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 
 | ID | Requisito | Estado |
 |---|---|---|
-| RNF-27 | TypeScript en modo estricto. | ✅ |
-| RNF-28 | Separación por capas: `pages/`, `components/`, `contexts/`, `layouts/`, `lib/`, `hooks/`. | ✅ |
-| RNF-29 | Estrategia de ramas: `main` (producción) + `feature/*` para cada tanda de trabajo. | ✅ |
-| RNF-30 | Documentación funcional, técnica y manuales actualizados en `docs/`. | ✅ |
-| RNF-31 | Error boundaries en rutas críticas que capturan el error y permiten reintentar sin recargar. | ✅ |
+| RNF-26 | TypeScript en modo estricto. | ✅ |
+| RNF-27 | Separación por capas: `pages/`, `components/`, `contexts/`, `layouts/`, `lib/`, `hooks/`. | ✅ |
+| RNF-28 | Estrategia de ramas: `main` (producción) + `feature/*` para cada tanda de trabajo. | ✅ |
+| RNF-29 | Documentación funcional, técnica y manuales actualizados en `docs/`. | ✅ |
+| RNF-30 | Error boundaries en rutas críticas que capturan el error y permiten reintentar sin recargar. | ✅ |
 
 ---
 
@@ -79,7 +78,7 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 
 | ID | Requisito | Estado |
 |---|---|---|
-| RNF-32 | Chrome, Firefox, Safari y Edge (últimas 2 versiones) · iOS 15+ · Android 10+. | ✅ |
+| RNF-31 | Chrome, Firefox, Safari y Edge (últimas 2 versiones) · iOS 15+ · Android 10+. | ✅ |
 
 ---
 
@@ -87,10 +86,9 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 
 | ID | Requisito | Estado |
 |---|---|---|
-| RNF-33 | Despliegue continuo desde `main` en Vercel. | ✅ |
-| RNF-34 | Preview deployments por rama / PR. | ✅ |
-| RNF-35 | Base de datos y auth en Supabase (región EU). | ✅ |
-| RNF-36 | Variables de entorno gestionadas en Vercel (producción) y `.env.local` (desarrollo). | ✅ |
+| RNF-32 | Despliegue continuo desde `main` en Vercel. | ✅ |
+| RNF-33 | Base de datos y auth en Supabase (región EU). | ✅ |
+| RNF-34 | Variables de entorno gestionadas en Vercel (producción) y `.env.local` (desarrollo). | ✅ |
 
 ---
 
@@ -98,17 +96,9 @@ Los requisitos no funcionales definen **cómo** debe comportarse el sistema: atr
 
 | ID | Requisito | Estado |
 |---|---|---|
-| RNF-37 | Política de privacidad y términos accesibles desde cualquier página. | ✅ Footer en todas las páginas; rutas `/privacidad` y `/terminos`. |
+| RNF-35 | Política de privacidad y términos accesibles desde cualquier página. | ✅ Footer en todas las páginas; rutas `/privacidad` y `/terminos`. |
 | RNF-38 | Eliminación completa de datos a petición del titular (derecho al olvido). | ✅ RPC `admin_delete_usuario` borra en cascada auth, perfil y negocios. |
-| RNF-39 | Aviso de cookies conforme al RGPD. | ✅ |
-| RNF-40 | Páginas de estado, seguridad y sobre el proyecto accesibles públicamente. | ✅ `/estado`, `/seguridad`, `/sobre-nosotros`. |
+| RNF-37 | Aviso de cookies conforme al RGPD. | ✅ |
+| RNF-38 | Páginas de estado, seguridad y sobre el proyecto accesibles públicamente. | ✅ `/estado`, `/seguridad`, `/sobre-nosotros`. |
 
 ---
-
-## Monitoreo (roadmap)
-
-| ID | Requisito | Estado |
-|---|---|---|
-| RNF-41 | Captura de errores en producción con Sentry. | 🔵 |
-| RNF-42 | Uptime monitoring con Betterstack. | 🔵 |
-| RNF-43 | Analíticas privacy-first con Umami. | 🔵 |

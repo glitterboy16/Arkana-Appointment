@@ -204,11 +204,3 @@ Ver `manual-despliegue.md` para el procedimiento paso a paso. Resumen:
 3. Migraciones SQL aplicadas en el SQL Editor de Supabase.
 
 ---
-
-## 7. Roadmap post-MVP
-
-- Endurecer políticas RLS en todas las tablas.
-- Internacionalización español + inglés.
-- Vista calendario día/semana en el panel del negocio.
-- Integración con Sentry, Betterstack y Umami.
-- Auditoría WCAG 2.1 AA formal.
